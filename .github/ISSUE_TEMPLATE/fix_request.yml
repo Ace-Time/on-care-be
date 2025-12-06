@@ -1,0 +1,29 @@
+name: 🩹 fix 이슈 작성
+description: fix 코드 관련 이슈 템플릿 작성
+title: "[Fix]"
+labels: ["🩹 fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fix 코드에 대한 이슈 내용을 적어주세요
+  - type: textarea
+    id: relation
+    attributes:
+      label: 기존 코드의 문제점에 대해 간략하게 적어주세요.
+      description: 오류나 문제 상황에 대해 서술해주세요!
+      placeholder: 간략하게 오류를 적어주세요!
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ---
+  - type: textarea
+    id: description
+    attributes:
+      label: 수정한 코드 내용에 대해 적어주세요!
+      description: 수정한 내용에 대해 팀원들이 인지할 수 있도록 특이사항이 있다면 강조해 적어주세요.
+      placeholder: 수정사항을 적어주세요!
+    validations:
+      required: true
