@@ -1,0 +1,27 @@
+name: ♻️ refactor 이슈 작성
+description: 리팩토링할 이슈에 대해 작성해주세요
+title: "[Refactor]"
+labels: ["♻️ refactor"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        리팩토링에 대한 issue template입니다.
+  - type: textarea
+    id: relation
+    attributes:
+      label: 리팩토링할 내용에 대해 간략하게 적어주세요.
+      description: 기존 코드에서 어떤 부분이 수정될지 적어주세요!
+      placeholder: 간략하게 내용을 적어주세요!
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ---
+  - type: textarea
+    id: description
+    attributes:
+      label: 해당 리팩토링이 필요한 이유에 대해 적어주세요!
+      description: 리팩토링으로 인해 발생할 장점에 대해 서술해주세요.
+      placeholder: 리팩토링 관련 사항을 적어주세요!

@@ -1,0 +1,27 @@
+name: 🐛 bugfix 이슈 작성
+description: 발견한 버그와 수정에 대한 이슈 작성
+title: "[Bugfix]"
+labels: ["🐛 bugfix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        버그 수정에 대한 issue template입니다.
+  - type: textarea
+    id: description
+    attributes:
+      label: 버그 내용
+      description: 발견된 버그와 관련된 내용을 적어주세요
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ---
+  - type: textarea
+    id: howtofix
+    attributes:
+      label: 버그 수정
+      description: 버그를 어떻게 수정할지와 수정 후 예상되는 결과를 적어주세요!
+    validations:
+      required: true

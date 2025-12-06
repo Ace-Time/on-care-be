@@ -1,4 +1,4 @@
-package org.example.oncare;
+package org.ateam.oncare;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
