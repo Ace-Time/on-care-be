@@ -1,0 +1,17 @@
+name: 📝 docs 이슈 작성
+description: 문서 관련 이슈 템플릿 작성
+title: "[Docs]"
+labels: ["📝 docs"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        문서 작성에 대한 Issue를 작성해주세요
+  - type: textarea
+    id: relation
+    attributes:
+      label: 어떤 문서 추가인지 간략하게 적어주세요!
+      description: 추가할 문서에 대해 간략하게 적어주세요.
+      placeholder: 
+    validations:
+      required: true
