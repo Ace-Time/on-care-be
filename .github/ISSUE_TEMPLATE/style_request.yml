@@ -1,0 +1,17 @@
+name: 💄 style 이슈 작성
+description: 스타일 변경 관련 이슈 템플릿 작성
+title: "[Style]"
+labels: ["💄 style"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        스타일 변경에 대한 Issue를 작성해주세요
+  - type: textarea
+    id: relation
+    attributes:
+      label: 스타일에 대해 어떤 이슈인지 간략하게 적어주세요!
+      description: 추가하거나 바뀔 스타일 요소에 대해 간략하게 적어주세요.
+      placeholder: 
+    validations:
+      required: true
