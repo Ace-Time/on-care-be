@@ -1,4 +1,4 @@
-name: ✅ test 이슈 템플릿
+name: ✅ test 이슈 작성
 description: 테스트 코드 관련 이슈 템플릿 작성
 title: "[Test]"
 labels: ["✅ test"]
