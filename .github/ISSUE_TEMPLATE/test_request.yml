@@ -1,0 +1,17 @@
+name: ✅ test 이슈 템플릿
+description: 테스트 코드 관련 이슈 템플릿 작성
+title: "[Test]"
+labels: ["✅ test"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Test 코드에 대한 Issue를 작성해주세요
+  - type: textarea
+    id: relation
+    attributes:
+      label: 어떤 코드에 대한 테스트인지, 테스트 내용이 무엇인지 간략하게 적어주세요!
+      description: 테스트에 대해 간략하게 적어주세요.
+      placeholder: 
+    validations:
+      required: true
