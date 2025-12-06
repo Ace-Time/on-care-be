@@ -1,0 +1,27 @@
+name: ✨Feature 이슈 작성
+description: 프로젝트에서 구현해야할 기능 내용 작성
+title: "[Feature]"
+labels: ["✨ feat"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        새로운 기능 구현에 대한 issue template입니다.
+  - type: textarea
+    id: relation
+    attributes:
+      label: 개발하려는 새로운 기능에 대해 간략하게 적어주세요.
+      description: PR, Commit시 해당 이슈 번호를 사용해야함을 유의해주세요!
+      placeholder: 간략하게 기능을 소개해주세요!
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ---
+  - type: textarea
+    id: description
+    attributes:
+      label: 기능과 관련된 추가 내용을 적어주세요!
+      description: 구현할 기능과 관련해 팀원들이 인지할 내용이 있다면 적어주세요.
+      placeholder: 특이사항을 적어주세요!
