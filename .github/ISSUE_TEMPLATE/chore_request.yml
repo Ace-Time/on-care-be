@@ -1,0 +1,17 @@
+name: 🔨 chore 이슈 작성
+description: 기타 빌드/설정 관련 이슈 템플릿 작성
+title: "[Chore]"
+labels: ["🔨 chore"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        빌드/설정에 대한 Issue를 작성해주세요
+  - type: textarea
+    id: relation
+    attributes:
+      label: 변경 내용에 대해 간략하게 적어주세요!
+      description: 추가/변경될 내용에 대해 간략하게 적어주세요.
+      placeholder: 
+    validations:
+      required: true
