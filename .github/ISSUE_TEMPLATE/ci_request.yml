@@ -1,0 +1,17 @@
+name: 🚀 ci 이슈 작성
+description: CI 관련 이슈 템플릿 작성
+title: "[CI]"
+labels: ["🚀 ci"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        CI에 대한 Issue를 작성해주세요
+  - type: textarea
+    id: relation
+    attributes:
+      label: 구현사안에 대해 간략하게 적어주세요!
+      description: 이슈로 구현될 내용에 대해 간략하게 적어주세요.
+      placeholder: 
+    validations:
+      required: true
