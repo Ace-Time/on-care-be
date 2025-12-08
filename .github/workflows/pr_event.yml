@@ -25,13 +25,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
           # 코드리뷰 제외 할 파일 등록
-          ignore_patterns:
-            - "/glob/**"
-            - "**/dist/**"
-            - "**/*.lock"
-            - "**/*.txt"
-            - "**/*.md"
-            - ".github/**"
+          ignore_patterns: "/glob/**,**/dist/**,**/*.lock,**/*.txt,**/*.md,.github/**"
           # optional
           MODEL: o3-mini # https://platform.openai.com/docs/models
           OPENAI_API_ENDPOINT: https://api.openai.com/v1
