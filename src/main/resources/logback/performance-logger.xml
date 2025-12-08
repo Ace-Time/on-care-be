@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+    <!-- 로그 파일이 저장될 경로를 지정 -->
+    <property name="LOG_PATH" value="./logs"/>
+
+    <!-- 공통 패턴 -->
+    <!-- 로그 출력 형식을 지정
+                 %X{traceId}: MDC에 있는 uuid(요청 ~ 반환 키값) %d: 날짜시간, %-5level: 로그 레벨, %thread: 스레드 이름,
+                 %logger{36}: 로거 이름(최대 36자),%msg: 로그 메시지, %n: 줄바꿈 -->
+    <property name="PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{traceId}] %-5level [%thread] %logger{36} - %msg%n" />
+
+    <appender name="PERFORMANCE_WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/current/per_warn.log</file>
+
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/%d{yyyy/MM}/performance_warn/%d{yyyy-MM-dd}-per_warn.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+    </appender>
+
+</included>
