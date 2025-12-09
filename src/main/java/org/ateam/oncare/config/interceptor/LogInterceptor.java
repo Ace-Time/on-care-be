@@ -26,7 +26,7 @@ public class LogInterceptor implements HandlerInterceptor {
         // 1. 고유 ID 생성 (UUID 앞 8자리만 써도 충분히 식별 가능)
         String traceId = UUID.randomUUID().toString().substring(0, 8);
 
-        // 2. MDC에 저장 (Key 이름: "traceId")
+        // 2. MDC에 저장 (Key 이름: "traceId") Thread 전용 저장소(쓰레드 유지되는동안 유지됨)
         MDC.put("traceId", traceId);
 
         // 3. 시간 측정 시작
