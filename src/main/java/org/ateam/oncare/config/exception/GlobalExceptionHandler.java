@@ -1,4 +1,4 @@
-package org.ateam.oncare.config.excption;
+package org.ateam.oncare.config.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
