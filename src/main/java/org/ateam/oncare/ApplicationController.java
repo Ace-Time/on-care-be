@@ -1,4 +1,4 @@
-package org.ateam.oncare.common;
+package org.ateam.oncare;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
