@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration debug="true">
+    <!-- 로그 파일이 저장될 경로를 지정 -->
+    <property name="LOG_PATH" value="./logs"/>
+    <!-- 공통 패턴 -->
+    <!-- 로그 출력 형식을 지정
+                 %X{traceId}: MDC에 있는 uuid(요청 ~ 반환 키값) %d: 날짜시간, %-5level: 로그 레벨, %thread: 스레드 이름,
+                 %logger{36}: 로거 이름(최대 36자),%msg: 로그 메시지, %n: 줄바꿈 -->
+    <property name="PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{traceId}] %-5level [%thread] %logger{36} - %msg%n" />
+    <property name="DATE_DIR_PATTERN" value="%d{yyyy/MM, aux}"/>
+    <property name="DATE_FILE_PATTERN" value="%d{yyyy-MM-dd}"/>
+
+    <!-- 분린된 설정 파일 추가 -->
     <include resource="logback/request-logger.xml" />
     <include resource="logback/performance-logger.xml" />
 
 
+    <!--  info 레벨 이상의 로그 기록 시스템 설정 포함(jpa, spring 로그등)  -->
     <root level="INFO">
         <!-- 콘솔과 파일 모두에 로그를 출력 -->
         <appender-ref ref="Console"/>
@@ -24,6 +36,7 @@
     </logger>
 
 
+    <!-- 응답까지 오래걸리는 요청만 기록 현재(1초 이상) -->
     <logger name="PERFORMANCE_WARN" level="WARN">
         <appender-ref ref="PERFORMANCE_WARN"/>
     </logger>
