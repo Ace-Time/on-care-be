@@ -15,8 +15,11 @@ on:
 
 # 워크플로우 실행 작업 정의
 jobs:
-  test:
+  pr-request:
     runs-on: ubuntu-latest
+    # 실행 시간 제한 설정 (무한 루프 방지, 비용 절감)
+    timeout-minutes: 15
+
     steps: # name 한개한개가 task
       - name: ChatGPT codeReviewer
         uses: anc95/ChatGPT-CodeReview@main
@@ -24,20 +27,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           # 코드리뷰 제외 할 파일 등록
-          ignore_patterns: "/glob/**,**/dist/**,**/*.lock,**/*.txt,**/*.md,.github/**,**/.github/**"
+          ignore_patterns: "/glob/**,**/dist/**,**/*.lock,**/*.txt,**/*.md,.github/**,**/.github/**,**/*.xml,**/*.properties"
           # optional
-          MODEL: o3-mini # https://platform.openai.com/docs/models
+          MODEL: gpt-4o # https://platform.openai.com/docs/models
           OPENAI_API_ENDPOINT: https://api.openai.com/v1
           LANGUAGE: Korean
+          # [중요] 422 에러 방지를 위한 프롬프트 강화
           PROMPT: |
-            이 PR을 Google/Meta/Stripe 수준의 엄격한 코드 리뷰 관점으로 분석해주세요:
+            당신은 Google/Meta/Stripe 수준의 시니어 엔지니어입니다. 이 PR을 엄격하게 리뷰해주세요.
             
-            피드백은:
-              - P0(반드시 수정)/P1(중요)/P2(권장) 우선순위로 분류
-              - 문제보다 해결책 중심으로 제시
-              - 구체적인 코드 예시 포함
-              - "왜" 변경이 필요한지 원칙과 함께 설명
+            [리뷰 규칙]
+            1. 피드백은 우선순위를 명시하세요:
+               - 🚨 P0: 버그, 보안 취약점, 치명적인 설계 오류 (반드시 수정)
+               - ⚠️ P1: 성능 이슈, 유지보수성 문제, 주요 컨벤션 위반 (수정 권장)
+               - 💡 P2: 더 나은 방법 제안, 가독성 향상 (선택 사항)
+            2. 문제 지적보다는 "해결책"과 "구체적인 코드 예시"를 제시하세요.
+            3. "왜" 변경해야 하는지 기술적 근거를 설명하세요.
+            4. 칭찬할 점은 칭찬하고, 부드러운 어조와 이모지를 사용하세요.
             
-            최고 수준의 코드만 승인하고, "잘 돌아가니까 괜찮아"는 수용하지 않음.
-            응답 코드는 pr 코드 리뷰에 반드시 이모지를 항상 활용할 것(특히 상대방이 기분나쁘지 않게)
+            [치명적인 제약 사항 - 반드시 지킬 것]
+            1. 오직 "변경된 라인(Diff)"에 대해서만 코멘트하세요.
+            2. 변경되지 않은 주변 코드(Context Line)에는 절대 코멘트를 달지 마세요. (GitHub API 에러 발생 원인임)
+            3. 전체적인 칭찬이나 파일 전체에 대한 요약은 코멘트로 달지 마세요.
+            4. 확실한 수정 사항이 없다면 코멘트를 남기지 마세요. "잘 돌아갑니다" 같은 리뷰는 금지입니다.
 
