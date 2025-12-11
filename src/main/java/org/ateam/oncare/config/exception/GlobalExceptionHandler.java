@@ -21,7 +21,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IOException.class)
     public ResponseEntity<String> handleIOException(IOException e) {
         // ★ 여기서 로그를 한 번만 남기면 됩니다. (MDC traceId도 자동으로 같이 찍힘)
-        log.error("IO 작업 중 오류 발생: ", e);
+        log.error("IO 작업 중 오류 발생: ", e.getMessage());
 
         // 클라이언트에게 줄 응답 설정
         return ResponseEntity
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleAllException(Exception e) {
-        log.error("알 수 없는 시스템 오류 발생: ", e);
+        log.error("알 수 없는 시스템 오류 발생: ", e.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
