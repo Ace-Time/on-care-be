@@ -1,9 +1,7 @@
 package org.ateam.oncare.alarm.command.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
@@ -11,7 +9,9 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "notification_log")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class NotificationLog {
 
     @Id

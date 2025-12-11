@@ -2,14 +2,14 @@ package org.ateam.oncare.careworker.command.entity;
 
 // 2. 엔티티 클래스
 import jakarta.persistence.*;
-        import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "tag_of_care_worker")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @IdClass(TagOfCareWorkerId.class)
 public class TagOfCareWorker {
 

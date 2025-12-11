@@ -1,9 +1,7 @@
 package org.ateam.oncare.careworker.command.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -13,7 +11,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "todo_for_care_worker")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class TodoForCareWorker {
 
     @Id

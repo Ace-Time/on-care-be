@@ -3,9 +3,11 @@ package org.ateam.oncare.careworker.command.entity;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode

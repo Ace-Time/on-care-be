@@ -1,14 +1,13 @@
 package org.ateam.oncare.careworker.command.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "care_worker_service_type")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
 @IdClass(CareWorkerServiceTypeId.class)
 public class CareWorkerServiceType {
 
