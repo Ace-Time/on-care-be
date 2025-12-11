@@ -1,4 +1,4 @@
-package org.ateam.oncare;
+package org.ateam.oncare.beneficiary;
 
 import jakarta.persistence.*;
 import lombok.*;
