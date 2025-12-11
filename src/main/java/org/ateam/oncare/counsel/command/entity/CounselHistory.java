@@ -1,15 +1,18 @@
 package org.ateam.oncare.counsel.command.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.AccessLevel;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "counsel_history")
 public class CounselHistory {
 

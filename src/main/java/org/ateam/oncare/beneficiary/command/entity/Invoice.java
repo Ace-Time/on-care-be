@@ -1,15 +1,18 @@
 package org.ateam.oncare.beneficiary.command.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "invoice")
 public class Invoice {
 

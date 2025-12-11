@@ -8,6 +8,7 @@ import java.io.Serializable;
 // 1. 복합키 클래스
 @Embeddable
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode

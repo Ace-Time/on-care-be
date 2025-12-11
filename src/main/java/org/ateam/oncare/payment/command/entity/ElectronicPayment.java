@@ -1,12 +1,15 @@
 package org.ateam.oncare.payment.command.entity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "electronic_payment")
 public class ElectronicPayment {
 

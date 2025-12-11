@@ -1,15 +1,15 @@
 package org.ateam.oncare.beneficiary.command.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "cost_of_beneficiary")
 public class CostOfBeneficiary {
 
