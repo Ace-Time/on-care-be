@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.employee.query.mapper.EmployeeMapper">
+
+    <resultMap id="EmployeeListMap" type="org.ateam.oncare.employee.query.dto.EmployeeListDTO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
+        <result property="jobName" column="jobName"/>
+        <result property="statusField" column="statusField"/>
+    </resultMap>
+
+    <resultMap id="EmployeeDetailMap" type="org.ateam.oncare.employee.query.dto.EmployeeDetailDTO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="address" column="address"/>
+        <result property="emergencyNumber" column="emergency_number"/>
+        <result property="hireDate" column="hire_date"/>
+        <result property="jobName" column="jobName"/>
+    </resultMap>
+
+    <resultMap id="CareerMap" type="org.ateam.oncare.employee.query.dto.EmployeeDetailDTO$CareerDTO">
+        <result property="companyName" column="company_name"/>
+        <result property="workPeriod" column="work_period"/>
+        <result property="task" column="task"/>
+    </resultMap>
+
+    <select id="selectEmployeeList" resultMap="EmployeeListMap">
+        SELECT
+        e.id,
+        e.name,
+        e.phone,
+        j.name as jobName,
+        s.field as statusField
+        FROM employee e
+        LEFT JOIN m_job j ON e.job_code = j.id
+        LEFT JOIN m_status s ON e.status_id = s.status
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (e.name LIKE CONCAT('%', #{keyword}, '%')
+                OR e.phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="jobCode != null">
+                AND e.job_code = #{jobCode}
+            </if>
+            <if test="statusId != null">
+                AND e.status_id = #{statusId}
+            </if>
+        </where>
+        ORDER BY e.id DESC
+    </select>
+
+    <select id="selectEmployeeDetail" resultMap="EmployeeDetailMap">
+        SELECT
+        e.id,
+        e.name,
+        e.phone,
+        e.email,
+        e.address,
+        e.emergency_number,
+        e.hire_date,
+        j.name as jobName
+        FROM employee e
+        LEFT JOIN m_job j ON e.job_code = j.id
+        WHERE e.id = #{id}
+    </select>
+
+    <select id="selectEmployeeCareers" resultMap="CareerMap">
+        SELECT
+        company_name,
+        work_period,
+        task
+        FROM employee_career
+        WHERE employee_id = #{employeeId}
+        ORDER BY id ASC
+    </select>
+
+</mapper>

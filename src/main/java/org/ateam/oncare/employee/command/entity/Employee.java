@@ -28,8 +28,8 @@ public class Employee {
     @Column(name = "gender", nullable = false, length = 1)
     private String gender;
 
-    @Column(name = "adress", nullable = false, length = 500)
-    private String adress;
+    @Column(name = "address", nullable = false, length = 500)
+    private String address;
 
     @Column(name = "email", length = 50)
     private String email;
