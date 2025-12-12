@@ -16,7 +16,7 @@ public class EmployeeDetailDTO {
     private String name;
     private String phone;
     private String email;
-    private String adress; // 오타 유지
+    private String address; // 오타 유지
     private String emergencyNumber;
     private LocalDate hireDate;
     private Integer careerYears; // 경력 연수 (계산 필요 시)

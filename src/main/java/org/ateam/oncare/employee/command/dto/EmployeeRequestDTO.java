@@ -15,7 +15,7 @@ public class EmployeeRequestDTO {
     private String name;
     private LocalDate birth;
     private String gender;
-    private String adress; // 엔티티 필드명 유지
+    private String address; // 엔티티 필드명 유지
     private String email;
     private String phone;
     private String emergencyNumber;

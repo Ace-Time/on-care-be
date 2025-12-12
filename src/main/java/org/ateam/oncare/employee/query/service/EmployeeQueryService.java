@@ -1,38 +1,23 @@
 package org.ateam.oncare.employee.query.service;
 
-import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.employee.query.dto.EmployeeDetailDTO;
 import org.ateam.oncare.employee.query.dto.EmployeeListDTO;
 import org.ateam.oncare.employee.query.dto.EmployeeSearchCondition;
-import org.ateam.oncare.employee.query.mapper.EmployeeMapper;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true) // 조회 전용 트랜잭션
-public class EmployeeQueryService {
+public interface EmployeeQueryService {
 
-    private final EmployeeMapper employeeMapper;
+    /**
+     * 직원 목록 조회 (검색 조건 포함)
+     * @param condition 검색 조건 (키워드, 직군, 상태)
+     * @return 직원 목록 리스트
+     */
+    List<EmployeeListDTO> getEmployeeList(EmployeeSearchCondition condition);
 
-    // 목록 조회
-    public List<EmployeeListDTO> getEmployeeList(EmployeeSearchCondition condition) {
-        return employeeMapper.selectEmployeeList(condition);
-    }
-
-    // 상세 조회
-    public EmployeeDetailDTO getEmployeeDetail(Long id) {
-        // 1. 기본 정보 조회
-        EmployeeDetailDTO detail = employeeMapper.selectEmployeeDetail(id);
-
-        if (detail != null) {
-            // 2. 경력 리스트 조회 및 세팅
-            List<EmployeeDetailDTO.CareerDTO> careers = employeeMapper.selectEmployeeCareers(id);
-            detail.setCareers(careers);
-        }
-
-        return detail;
-    }
+    /**
+     * 직원 상세 조회 (기본 정보 + 경력 정보 포함)
+     * @param id 직원 ID
+     * @return 직원 상세 정보 DTO
+     */
+    EmployeeDetailDTO getEmployeeDetail(Long id);
 }

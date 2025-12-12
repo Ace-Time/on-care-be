@@ -4,7 +4,32 @@
 
 <mapper namespace="org.ateam.oncare.employee.query.mapper.EmployeeMapper">
 
-    <select id="selectEmployeeList" resultType="org.ateam.oncare.employee.query.dto.EmployeeListDTO">
+    <resultMap id="EmployeeListMap" type="org.ateam.oncare.employee.query.dto.EmployeeListDTO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
+        <result property="jobName" column="jobName"/>
+        <result property="statusField" column="statusField"/>
+    </resultMap>
+
+    <resultMap id="EmployeeDetailMap" type="org.ateam.oncare.employee.query.dto.EmployeeDetailDTO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="address" column="address"/>
+        <result property="emergencyNumber" column="emergency_number"/>
+        <result property="hireDate" column="hire_date"/>
+        <result property="jobName" column="jobName"/>
+    </resultMap>
+
+    <resultMap id="CareerMap" type="org.ateam.oncare.employee.query.dto.EmployeeDetailDTO$CareerDTO">
+        <result property="companyName" column="company_name"/>
+        <result property="workPeriod" column="work_period"/>
+        <result property="task" column="task"/>
+    </resultMap>
+
+    <select id="selectEmployeeList" resultMap="EmployeeListMap">
         SELECT
         e.id,
         e.name,
@@ -29,25 +54,25 @@
         ORDER BY e.id DESC
     </select>
 
-    <select id="selectEmployeeDetail" resultType="org.ateam.oncare.employee.query.dto.EmployeeDetailDTO">
+    <select id="selectEmployeeDetail" resultMap="EmployeeDetailMap">
         SELECT
         e.id,
         e.name,
         e.phone,
         e.email,
-        e.adress,
-        e.emergency_number as emergencyNumber,
-        e.hire_date as hireDate,
+        e.address,
+        e.emergency_number,
+        e.hire_date,
         j.name as jobName
         FROM employee e
         LEFT JOIN m_job j ON e.job_code = j.id
         WHERE e.id = #{id}
     </select>
 
-    <select id="selectEmployeeCareers" resultType="org.ateam.oncare.employee.query.dto.EmployeeSearchCondition">
+    <select id="selectEmployeeCareers" resultMap="CareerMap">
         SELECT
-        company_name as companyName,
-        work_period as workPeriod,
+        company_name,
+        work_period,
         task
         FROM employee_career
         WHERE employee_id = #{employeeId}
