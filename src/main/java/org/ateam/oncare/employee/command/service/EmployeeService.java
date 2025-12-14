@@ -8,7 +8,7 @@ import org.ateam.oncare.employee.command.dto.ResponseLoginEmployeeDTO;
 import java.util.Map;
 
 public interface EmployeeService {
-    ResponseLoginEmployeeDTO loginGetEmployee(RequestLogin loginRequest);
+    ResponseLoginEmployeeDTO getEmployee(RequestLogin loginRequest);
 
     Map<Long, String> getAuthorityMasters();
 

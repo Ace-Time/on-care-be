@@ -2,6 +2,7 @@ package org.ateam.oncare.auth.command.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.auth.command.dto.RequestLogin;
+import org.ateam.oncare.auth.command.dto.ResponseLoginEmployeeDTO;
 import org.ateam.oncare.auth.command.dto.ResponseToken;
 import org.ateam.oncare.auth.command.service.AuthService;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +33,18 @@ public class AuthController {
 
         Map<Long,String> authorities =  authService.getAuthorities();
         return ResponseEntity.ok(authorities);
+    }
+
+    /**
+     * modelMapper와 mapStruct 차이 비교를 위한 테스트 코드 추 후 삭제 예정
+     * @param loginRequest
+     * @return
+     */
+    @GetMapping("/mapStruct")
+    public ResponseEntity<ResponseLoginEmployeeDTO> mapStructTest(@RequestBody RequestLogin loginRequest) {
+
+        ResponseLoginEmployeeDTO responseDTO =  authService.mapStructTest(loginRequest);
+        return ResponseEntity.ok(responseDTO);
     }
 
 }

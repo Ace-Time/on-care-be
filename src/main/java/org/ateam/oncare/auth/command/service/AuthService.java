@@ -1,6 +1,7 @@
 package org.ateam.oncare.auth.command.service;
 
 import org.ateam.oncare.auth.command.dto.RequestLogin;
+import org.ateam.oncare.auth.command.dto.ResponseLoginEmployeeDTO;
 import org.ateam.oncare.auth.command.dto.ResponseToken;
 import org.ateam.oncare.global.eventType.MasterDataEvent;
 import org.springframework.context.event.EventListener;
@@ -15,4 +16,5 @@ public interface AuthService {
 
     void updateAuthorityEvent(MasterDataEvent masterDataEvent);
 
+    ResponseLoginEmployeeDTO mapStructTest(RequestLogin loginRequest);
 }

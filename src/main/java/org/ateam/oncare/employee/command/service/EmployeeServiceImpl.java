@@ -7,7 +7,9 @@ import org.ateam.oncare.employee.command.dto.RequestAuthorityDTO;
 import org.ateam.oncare.employee.command.dto.ResponseAuthorityDTO;
 import org.ateam.oncare.employee.command.dto.ResponseLoginEmployeeDTO;
 import org.ateam.oncare.employee.command.entity.Authority;
+import org.ateam.oncare.employee.command.entity.Employee;
 import org.ateam.oncare.employee.command.repository.AuthorityRepository;
+import org.ateam.oncare.employee.command.repository.EmployeeRepository;
 import org.ateam.oncare.global.emun.MasterInternalType;
 import org.ateam.oncare.global.eventType.MasterDataEvent;
 import org.modelmapper.ModelMapper;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,15 +26,19 @@ import java.util.stream.Collectors;
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final AuthorityRepository authorityRepository;
+    private final EmployeeRepository employeeRepository;
     private final ModelMapper modelMapper;
     private final ApplicationEventPublisher applicationEventPublisher; // 변경 사항을 알리기 위함.
 
 
     @Override
-    public ResponseLoginEmployeeDTO loginGetEmployee(RequestLogin loginRequest) {
+    public ResponseLoginEmployeeDTO getEmployee(RequestLogin loginRequest) {
+        Employee employee = employeeRepository.findByEmail(loginRequest.getUseremail())
+                .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
 
+        ResponseLoginEmployeeDTO loginEmployeeDTO = modelMapper.map(employee, ResponseLoginEmployeeDTO.class);
 
-        return null;
+        return loginEmployeeDTO;
     }
 
     @Override

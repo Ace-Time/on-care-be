@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.auth.command.dto.ResponseLoginEmployeeDTO;
 import org.ateam.oncare.auth.command.dto.RequestLogin;
 import org.ateam.oncare.auth.command.dto.ResponseToken;
+import org.ateam.oncare.auth.command.mapper.EmployeeMapper;
 import org.ateam.oncare.employee.command.service.EmployeeService;
 import org.ateam.oncare.global.emun.MasterInternalType;
 import org.ateam.oncare.global.eventType.MasterDataEvent;
@@ -31,6 +32,31 @@ public class AuthServiceImpl implements AuthService {
     private final EmployeeService employeeService;
     private final ModelMapper modelMapper;
 
+    private final EmployeeMapper employeeOfLoginMapper;
+
+    /**
+     * modelMapper와 mapStruct 차이 비교를 위한 테스트 코드 추 후 삭제 예정
+     * @param loginRequest
+     * @return
+     */
+    @Override
+    public ResponseLoginEmployeeDTO mapStructTest(RequestLogin loginRequest) {
+
+        var employee = employeeService.getEmployee(loginRequest);
+
+        Long s_modelMapper =  System.currentTimeMillis();
+        ResponseLoginEmployeeDTO modelMapperOfEmployee = modelMapper.map(employee, ResponseLoginEmployeeDTO.class);
+        Long useTime_ModelMapper =  System.currentTimeMillis() - s_modelMapper;
+        log.debug("modelMapper 소요시간 :{}, data : {}",useTime_ModelMapper, modelMapperOfEmployee);
+
+        Long s_mapStruct =  System.currentTimeMillis();
+        ResponseLoginEmployeeDTO mapStructOfEmployee = employeeOfLoginMapper.toLoginDTO(employee);
+        Long useTime_s_mapStruct =  System.currentTimeMillis() - s_mapStruct;
+        log.debug("mapStruct 소요시간 :{}, data : {}",useTime_s_mapStruct,mapStructOfEmployee);
+
+        return mapStructOfEmployee;
+    }
+
 
     @Override
     public ResponseToken login(RequestLogin loginRequest) {
@@ -43,7 +69,6 @@ public class AuthServiceImpl implements AuthService {
 
         log.debug("authentication:{}",authentication);
 
-        ResponseLoginEmployeeDTO employee = modelMapper.map(employeeService.loginGetEmployee(loginRequest), ResponseLoginEmployeeDTO.class);
 
         return null;
     }
