@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ateam.oncare.counsel.query.mapper.CounselQueryMapper">
+    <resultMap id="customerListResponse" type="org.ateam.oncare.counsel.query.dto.CustomerListResponse">
+        <id property="customerId" column="customer_id"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
+        <result property="customerCategoryName" column="customer_category"/>
+        <result property="consultDate" column="last_consult_date"/>
+        <result property="consultCount" column="consult_count"/>
+        <result property="guardianName" column="guardian_name"/>
+        <result property="guardianPhone" column="guardian_phone"/>
+    </resultMap>
+    <select id="findAllCustomers" resultMap="customerListResponse">
+        SELECT
+               customer_id,
+               name,
+               phone,
+               customer_category,
+               last_counsel_date,
+               consult_count,
+               guardian_name,
+               guardian_phone
+          FROM (
+                 SELECT
+                     b.id AS customer_id,
+                     b.name,
+                     b.phone,
+                     CASE
+                         WHEN b.status = 0 THEN '이탈고객'
+                         ELSE '기존고객'
+                         END AS customer_category,
+                     b.last_counsel_date,
+                     (SELECT COUNT(*) FROM counsel_history WHERE beneficiary_id = b.id) AS consult_count,
+                     g.name AS guardian_name,
+                     g.phone AS guardian_phone
+                 FROM beneficiary b
+                          LEFT JOIN guardian g ON b.id = g.beneficiary_id AND g.is_primary = 'Y'
+
+                 UNION ALL
+
+                 SELECT
+                     p.id AS customer_id,
+                     p.name,
+                     p.phone,
+                     CASE
+                         WHEN p.willingness = 'N' THEN '이탈고객'
+                         WHEN p.current_stage = 1 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 3 DAY) THEN '이탈고객'
+                         WHEN p.current_stage = 2 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 70 DAY) THEN '이탈고객'
+                         WHEN p.current_stage = 3 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 20 DAY) THEN '이탈고객'
+                         ELSE '잠재고객'
+                         END AS customer_category,
+                     p.last_counsel_date,
+                     (SELECT COUNT(*) FROM counsel_history WHERE potential_id = p.id) AS consult_count,
+                     NULL AS guardian_name,
+                     NULL AS guardian_phone
+                 FROM potential_customer p
+                 WHERE p.current_stage &lt; 4
+             ) AS total_list
+        ORDER BY last_counsel_date DESC
+    </select>
+    <select id="searchCustomersByPhone" resultMap="customerListResponse">
+        SELECT
+            customer_id,
+            name,
+            phone,
+            customer_category,
+            last_counsel_date,
+            consult_count,
+            guardian_name,
+            guardian_phone
+        FROM (
+                 SELECT
+                     b.id AS customer_id,
+                     b.name,
+                     b.phone,
+                     CASE WHEN b.status = 0 THEN '이탈고객' ELSE '기존고객' END AS customer_category,
+                     b.last_counsel_date,
+                     (SELECT COUNT(*) FROM counsel_history WHERE beneficiary_id = b.id) AS consult_count,
+                     g.name AS guardian_name,
+                     g.phone AS guardian_phone
+                 FROM beneficiary b
+                          LEFT JOIN guardian g ON b.id = g.beneficiary_id AND g.is_primary = 'Y'
+                 WHERE REPLACE(b.phone, '-', '') LIKE CONCAT('%', #{keyword}, '%')
+                    OR REPLACE(g.phone, '-', '') LIKE CONCAT('%', #{keyword}, '%')
+
+                 UNION ALL
+
+                 SELECT
+                     p.id AS customer_id,
+                     p.name,
+                     p.phone,
+                     CASE
+                         WHEN p.willingness = 'N' THEN '이탈고객'
+                         WHEN p.current_stage = 1 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 3 DAY) THEN '이탈고객'
+                         WHEN p.current_stage = 2 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 60 DAY) THEN '이탈고객'
+                         WHEN p.current_stage = 3 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 14 DAY) THEN '이탈고객'
+                         ELSE '잠재고객'
+                         END AS customer_category,
+                     p.last_counsel_date,
+                     (SELECT COUNT(*) FROM counsel_history WHERE potential_id = p.id) AS consult_count,
+                     NULL AS guardian_name,
+                     NULL AS guardian_phone
+                 FROM potential_customer p
+                 WHERE p.current_stage &lt; 4
+                   AND REPLACE(p.phone, '-', '') LIKE CONCAT('%', #{keyword}, '%')
+             ) AS total_list
+        ORDER BY last_counsel_date DESC
+    </select>
+    <select id="searchCustomersByName" resultMap="customerListResponse">
+        SELECT
+            customer_id,
+            name,
+            phone,
+            customer_category,
+            last_counsel_date,
+            consult_count,
+            guardian_name,
+            guardian_phone
+        FROM (
+                 SELECT
+                     b.id AS customer_id,
+                     b.name,
+                     b.phone,
+                     CASE WHEN b.status = 0 THEN '이탈고객' ELSE '기존고객' END AS customer_category,
+                     b.last_counsel_date,
+                     (SELECT COUNT(*) FROM counsel_history WHERE beneficiary_id = b.id) AS consult_count,
+                     g.name AS guardian_name,
+                     g.phone AS guardian_phone
+                 FROM beneficiary b
+                          LEFT JOIN guardian g ON b.id = g.beneficiary_id AND g.is_primary = 'Y'
+                 WHERE b.name LIKE CONCAT('%', #{keyword}, '%')
+                    OR g.name LIKE CONCAT('%', #{keyword}, '%')
+
+                 UNION ALL
+
+                 SELECT
+                     p.id AS customer_id,
+                     p.name,
+                     p.phone,
+                     CASE
+                         WHEN p.willingness = 'N' THEN '이탈고객'
+                         WHEN p.current_stage = 1 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 3 DAY) THEN '이탈고객'
+                         WHEN p.current_stage = 2 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 60 DAY) THEN '이탈고객'
+                         WHEN p.current_stage = 3 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 14 DAY) THEN '이탈고객'
+                         ELSE '잠재고객'
+                         END AS customer_category,
+                     p.last_counsel_date,
+                     (SELECT COUNT(*) FROM counsel_history WHERE potential_id = p.id) AS consult_count,
+                     NULL AS guardian_name,
+                     NULL AS guardian_phone
+                 FROM potential_customer p
+                 WHERE p.current_stage &lt; 4
+                   AND p.name LIKE CONCAT('%', #{keyword}, '%')
+             ) AS total_list
+        ORDER BY last_counsel_date DESC
+    </select>
+
+</mapper>
