@@ -1,5 +1,6 @@
 package org.ateam.oncare.counsel.query.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
 import org.ateam.oncare.counsel.query.mapper.CounselQueryMapper;
@@ -12,13 +13,9 @@ import java.util.List;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CounselQueryServiceImpl implements CounselQueryService {
     private final CounselQueryMapper counselQueryMapper;
-
-    @Autowired
-    public CounselQueryServiceImpl(CounselQueryMapper counselQueryMapper) {
-        this.counselQueryMapper = counselQueryMapper;
-    }
 
     @Override
     public @Nullable List<CustomerListResponse> searchCustomers(String keyword) {
