@@ -9,6 +9,8 @@ import java.time.LocalTime;
 @Getter
 @Setter
 public class ScheduleDayItemDto {
+    private Long matchingId;
+
     private LocalDate date;
 
     private Long beneficiaryId;

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.ateam.oncare.schedule.query.mapper.ScheduleQueryMapper">
+<mapper namespace="org.ateam.oncare.schedule.query.mapper.ScheduleMapper">
 
     <resultMap id="ScheduleMonthCountMap" type="org.ateam.oncare.schedule.query.dto.ScheduleMonthCountDto">
         <result property="date" column="schedule_date"/>
@@ -21,6 +21,7 @@
         ),
         valid_matching AS (
         SELECT
+        m.id AS matching_id,
         m.beneficiary_id,
         m.care_worker_id,
         dates.d AS schedule_date,
@@ -33,10 +34,10 @@
         ) AS rn
         FROM matching m
         JOIN dates
-        ON dates.d &gt;= m.start_date
+        ON dates.d &gt;= DATE(m.start_date)
         AND (
-        (m.status = 'Y' AND (m.end_date IS NULL OR dates.d &lt;= m.end_date))
-        OR (m.status = 'N' AND m.end_date IS NOT NULL AND dates.d &lt;= m.end_date)
+        (m.status = 'Y' AND (m.end_date IS NULL OR dates.d &lt;= DATE(m.end_date)))
+        OR (m.status = 'N' AND m.end_date IS NOT NULL AND dates.d &lt;= DATE(m.end_date))
         )
         <where>
             <if test="beneficiaryId != null">
@@ -112,6 +113,7 @@
 
 
     <resultMap id="ScheduleDayItemMap" type="org.ateam.oncare.schedule.query.dto.ScheduleDayItemDto">
+        <result property="matchingId" column="matching_id"/>
         <result property="date" column="schedule_date"/>
         <result property="beneficiaryId" column="beneficiary_id"/>
         <result property="beneficiaryName" column="beneficiary_name"/>
@@ -127,6 +129,7 @@
     <select id="selectDaySchedules" resultMap="ScheduleDayItemMap">
         WITH valid_matching AS (
         SELECT
+        m.id AS matching_id,
         m.beneficiary_id,
         m.care_worker_id,
         #{date} AS schedule_date,
@@ -135,10 +138,10 @@
         ORDER BY m.start_date DESC
         ) AS rn
         FROM matching m
-        WHERE #{date} &gt;= m.start_date
+        WHERE #{date} &gt;= DATE(m.start_date)
         AND (
-        (m.status = 'Y' AND (m.end_date IS NULL OR #{date} &lt;= m.end_date))
-        OR (m.status = 'N' AND m.end_date IS NOT NULL AND #{date} &lt;= m.end_date)
+        (m.status = 'Y' AND (m.end_date IS NULL OR #{date} &lt;= DATE(m.end_date)))
+        OR (m.status = 'N' AND m.end_date IS NOT NULL AND #{date} &lt;= DATE(m.end_date))
         )
         <if test="beneficiaryId != null">
             AND m.beneficiary_id = #{beneficiaryId}
@@ -149,6 +152,7 @@
         )
 
         SELECT
+        vm.matching_id AS matching_id,
         vm.schedule_date AS schedule_date,
         vm.beneficiary_id AS beneficiary_id,
         b.name AS beneficiary_name,
@@ -156,13 +160,11 @@
         e.name AS care_worker_name,
         bs.service_type_id AS service_type_id,
         st.name AS service_type_name,
-        bs.start_time AS start_time,
-        bs.end_time AS end_time,
-        TIMESTAMPDIFF(
-        MINUTE,
-        CONCAT(vm.schedule_date, ' ', bs.start_time),
-        CONCAT(vm.schedule_date, ' ', bs.end_time)
-        ) AS duration_minutes
+
+        TIME(bs.start_time) AS start_time,
+        TIME(bs.end_time) AS end_time,
+
+        TIMESTAMPDIFF(MINUTE, bs.start_time, bs.end_time) AS duration_minutes
         FROM valid_matching vm
         JOIN beneficiary_schedule bs
         ON bs.beneficiary_id = vm.beneficiary_id
@@ -222,6 +224,61 @@
         ELSE 99
         END,
         bs.start_time
+    </select>
+
+
+    <select id="selectScheduleDetail" resultMap="ScheduleDayItemMap">
+        SELECT
+        m.id AS matching_id,
+        #{date} AS schedule_date,
+        b.id AS beneficiary_id,
+        b.name AS beneficiary_name,
+        cw.id AS care_worker_id,
+        e.name AS care_worker_name,
+        bs.service_type_id AS service_type_id,
+        st.name AS service_type_name,
+
+        TIME(bs.start_time) AS start_time,
+        TIME(bs.end_time) AS end_time,
+
+        TIMESTAMPDIFF(MINUTE, bs.start_time, bs.end_time) AS duration_minutes
+        FROM matching m
+        JOIN beneficiary b
+        ON b.id = m.beneficiary_id
+        JOIN care_worker cw
+        ON cw.id = m.care_worker_id
+        JOIN employee e
+        ON e.id = cw.employee_id
+        JOIN beneficiary_schedule bs
+        ON bs.beneficiary_id = m.beneficiary_id
+        AND bs.day = (
+        CASE DAYOFWEEK(#{date})
+        WHEN 1 THEN 7
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 4
+        WHEN 6 THEN 5
+        WHEN 7 THEN 6
+        END
+        )
+        JOIN m_service_type st
+        ON st.id = bs.service_type_id
+        WHERE m.id = #{matchingId}
+        AND #{date} &gt;= DATE(m.start_date)
+        AND (
+        (m.status = 'Y' AND (m.end_date IS NULL OR #{date} &lt;= DATE(m.end_date)))
+        OR (m.status = 'N' AND m.end_date IS NOT NULL AND #{date} &lt;= DATE(m.end_date))
+        )
+
+        <if test="serviceTypeId != null">
+            AND bs.service_type_id = #{serviceTypeId}
+        </if>
+        <if test="startTime != null">
+            AND TIME(bs.start_time) = #{startTime}
+        </if>
+
+        LIMIT 1
     </select>
 
 </mapper>
