@@ -3,7 +3,7 @@ package org.ateam.oncare.careworker.query.service;
 import org.ateam.oncare.careworker.query.dto.CalendarScheduleDto;
 import org.ateam.oncare.careworker.query.dto.PersonalTypeDto;
 import org.ateam.oncare.careworker.query.dto.ScheduleDetailDto;
-import org.ateam.oncare.careworker.query.mapper.ScheduleMapper;
+import org.ateam.oncare.careworker.query.mapper.CareWorkerScheduleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +16,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class ScheduleQueryService {
 
-    private final ScheduleMapper scheduleMapper;
+    private final CareWorkerScheduleMapper scheduleMapper;
 
     // 1. 기간별 조회
     public List<CalendarScheduleDto> getSchedules(Long caregiverId, LocalDate startDate, LocalDate endDate) {
