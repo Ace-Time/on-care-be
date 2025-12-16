@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BeneficiaryDetailMapper">
+
+    <resultMap id="BeneficiaryDetailMap"
+               type="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse">
+
+        <id property="beneficiaryId" column="beneficiary_id"/>
+
+        <result property="name" column="name"/>
+        <result property="gender" column="gender"/>
+        <result property="birthdate" column="birthdate"/>
+        <result property="phone" column="phone"/>
+        <result property="address" column="address"/>
+        <result property="status" column="status"/>
+
+        <result property="careLevel" column="care_level"/>
+        <result property="careLevelEndDate" column="care_level_end_date"/>
+        <result property="riskLevel" column="risk_level"/>
+
+        <result property="managerName" column="manager_name"/>
+        <result property="serviceType" column="service_type"/>
+
+        <result property="guardianName" column="guardian_name"/>
+        <result property="guardianRelation" column="guardian_relation"/>
+        <result property="guardianPhone" column="guardian_phone"/>
+
+        <result property="monthlyLimit" column="monthly_limit"/>
+        <result property="usedAmount" column="used_amount"/>
+        <result property="remainingAmount" column="remaining_amount"/>
+        <result property="usedRate" column="used_rate"/>
+
+        <collection property="tags"
+                    ofType="string"
+                    select="selectBeneficiaryTags"
+                    column="beneficiary_id"/>
+
+        <collection property="riskFactors"
+                    ofType="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse$RiskFactorItem"
+                    select="selectBeneficiaryRiskFactors"
+                    column="beneficiary_id"/>
+    </resultMap>
+
+    <select id="selectBeneficiaryDetail"
+            parameterType="long"
+            resultMap="BeneficiaryDetailMap">
+
+        SELECT
+        b.id AS beneficiary_id,
+        b.name,
+        b.gender,
+        DATE_FORMAT(b.birthdate, '%Y-%m-%d') AS birthdate,
+        b.phone,
+        b.address,
+
+        CASE WHEN b.status = 1 THEN '서비스 중' ELSE '서비스 해지' END AS status,
+
+        mcl.level AS care_level,
+        bcl.end_date AS care_level_end_date,
+
+        CASE
+        WHEN IFNULL(rsum.risk_total, 0) &lt; 10 THEN '저위험'
+        WHEN IFNULL(rsum.risk_total, 0) &lt; 15 THEN '중위험'
+        ELSE '고위험'
+        END AS risk_level,
+
+        e.name AS manager_name,
+        mst.name AS service_type,
+
+        g.name AS guardian_name,
+        g.relation AS guardian_relation,
+        g.phone AS guardian_phone,
+
+        mcl.monthly_limit,
+
+        /* ✅ 사용액 = (서비스: cost_of_beneficiary 이번달) + (렌탈: 이번달 기준 유지/계약중) */
+        (
+        IFNULL((
+        SELECT cob.monthly_amount
+        FROM cost_of_beneficiary cob
+        WHERE cob.beneficiary_id = b.id
+        AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')    <!-- 서비스 현재월기준 -->
+        ), 0)
+        +
+        IFNULL((
+        SELECT SUM(cp.rental_amount)
+        FROM rental_contract rc
+        JOIN contract_status cs
+        ON cs.id = rc.contract_status_cd
+        JOIN rental_product rp
+        ON rp.rental_contract_cd = rc.id
+        JOIN care_product cp
+        ON cp.id = rp.product_id
+        WHERE rc.beneficiary_id = b.id
+        AND cs.name IN ('유지', '계약중')
+        AND rc.start_date &lt;= LAST_DAY(CURDATE())
+        AND (
+        rc.end_date IS NULL
+        OR rc.end_date &gt;= DATE_FORMAT(CURDATE(), '%Y-%m-01')   <!-- 렌탈 현재월기준 -->
+        )
+        ), 0)
+        ) AS used_amount,
+
+        /* ✅ 잔액 */
+        (
+        mcl.monthly_limit
+        -
+        (
+        IFNULL((
+        SELECT cob.monthly_amount
+        FROM cost_of_beneficiary cob
+        WHERE cob.beneficiary_id = b.id
+        AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
+        ), 0)
+        +
+        IFNULL((
+        SELECT SUM(cp.rental_amount)
+        FROM rental_contract rc
+        JOIN contract_status cs
+        ON cs.id = rc.contract_status_cd
+        JOIN rental_product rp
+        ON rp.rental_contract_cd = rc.id
+        JOIN care_product cp
+        ON cp.id = rp.product_id
+        WHERE rc.beneficiary_id = b.id
+        AND cs.name IN ('유지', '계약중')
+        AND rc.start_date &lt;= LAST_DAY(CURDATE())
+        AND (
+        rc.end_date IS NULL
+        OR rc.end_date &gt;= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+        )
+        ), 0)
+        )
+        ) AS remaining_amount,
+
+        /* ✅ 사용률 */
+        ROUND(
+        (
+        (
+        IFNULL((
+        SELECT cob.monthly_amount
+        FROM cost_of_beneficiary cob
+        WHERE cob.beneficiary_id = b.id
+        AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
+        ), 0)
+        +
+        IFNULL((
+        SELECT SUM(cp.rental_amount)
+        FROM rental_contract rc
+        JOIN contract_status cs
+        ON cs.id = rc.contract_status_cd
+        JOIN rental_product rp
+        ON rp.rental_contract_cd = rc.id
+        JOIN care_product cp
+        ON cp.id = rp.product_id
+        WHERE rc.beneficiary_id = b.id
+        AND cs.name IN ('유지', '계약중')
+        AND rc.start_date &lt;= LAST_DAY(CURDATE())
+        AND (
+        rc.end_date IS NULL
+        OR rc.end_date &gt;= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+        )
+        ), 0)
+        )
+        / NULLIF(mcl.monthly_limit, 0)
+        ) * 100
+        , 1) AS used_rate
+
+        FROM beneficiary b
+
+        LEFT JOIN beneficiary_care_level bcl
+        ON bcl.beneficiary_id = b.id
+
+        LEFT JOIN beneficiary_count bc
+        ON bc.beneficiary_care_level_id = bcl.id
+
+        LEFT JOIN m_care_level mcl
+        ON mcl.id = bc.m_care_level_id
+
+        LEFT JOIN (
+        SELECT
+        rom.beneficiary_id,
+        SUM(rf.score) AS risk_total
+        FROM riskOfMember rom
+        JOIN m_risk_factor rf ON rf.id = rom.risk_id
+        GROUP BY rom.beneficiary_id
+        ) rsum
+        ON rsum.beneficiary_id = b.id
+
+        LEFT JOIN matching mt
+        ON mt.beneficiary_id = b.id
+        AND mt.status = 'Y'
+
+        LEFT JOIN care_worker cw
+        ON cw.id = mt.care_worker_id
+
+        LEFT JOIN employee e
+        ON e.id = cw.employee_id
+
+        LEFT JOIN guardian g
+        ON g.beneficiary_id = b.id
+        AND g.is_primary = 'Y'
+
+        LEFT JOIN m_service_type mst
+        ON mst.id = (
+        SELECT bs.service_type_id
+        FROM beneficiary_schedule bs
+        WHERE bs.beneficiary_id = b.id
+        ORDER BY bs.start_time ASC
+        LIMIT 1
+        )
+
+        WHERE b.id = #{beneficiaryId}
+        LIMIT 1
+    </select>
+
+    <select id="selectBeneficiaryTags"
+            parameterType="long"
+            resultType="string">
+        SELECT pt.tag
+        FROM tag_of_beneficiary tob
+        JOIN personal_tag pt ON pt.id = tob.tag_id
+        WHERE tob.beneficiary_id = #{beneficiaryId}
+        ORDER BY pt.id
+    </select>
+
+    <select id="selectBeneficiaryRiskFactors"
+            parameterType="long"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse$RiskFactorItem">
+        SELECT
+        rf.id,
+        rf.name,
+        rf.score
+        FROM riskOfMember rom
+        JOIN m_risk_factor rf ON rf.id = rom.risk_id
+        WHERE rom.beneficiary_id = #{beneficiaryId}
+        ORDER BY rf.id
+    </select>
+
+</mapper>
