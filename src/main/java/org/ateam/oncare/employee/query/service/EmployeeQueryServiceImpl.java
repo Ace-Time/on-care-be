@@ -24,17 +24,25 @@ public class EmployeeQueryServiceImpl implements EmployeeQueryService {
 
     @Override
     public EmployeeDetailDTO getEmployeeDetail(Long id) {
-        // 1. 기본 정보 조회
+        // 1. 직원 기본 상세 정보 조회
         EmployeeDetailDTO detail = employeeMapper.selectEmployeeDetail(id);
 
-        // 직원이 존재할 경우에만 경력 정보 추가 조회
         if (detail != null) {
-            // 2. 경력 정보 조회 (MyBatis Mapper 호출)
-            List<EmployeeDetailDTO.CareerDTO> careers = employeeMapper.selectEmployeeCareers(id);
-            // 3. DTO에 경력 리스트 주입
-            detail.setCareers(careers);
-        }
+            // 2. 경력 리스트 조회 및 세팅
+            detail.setCareers(employeeMapper.selectEmployeeCareers(id));
 
+            // ★ [여기가 빠져있는지 확인하세요!] ★
+            // 자격증 리스트를 조회해서 DTO에 넣어줘야 합니다.
+            detail.setCertificates(employeeMapper.selectEmployeeCertificates(id));
+
+            // 서비스 유형 (방문요양, 방문목욕 등)
+            detail.setServiceTypes(employeeMapper.selectServiceTypes(id));
+
+            // 보수 교육 이력
+            detail.setEducations(employeeMapper.selectEducations(id));
+        }
         return detail;
+
+
     }
 }

@@ -15,3 +15,8 @@ spring:
     properties:
       hibernate:
         '[format_sql]' : true
+
+# MyBatis SQL 로깅
+logging:
+  level:
+    org.ateam.oncare.careworker.query.mapper: DEBUG

@@ -11,22 +11,30 @@ import java.util.List;
 @Setter
 @ToString
 public class EmployeeDetailDTO {
-    // 기본 정보
     private Long id;
     private String name;
     private String phone;
     private String email;
-    private String address; // 오타 유지
+    private String address;
     private String emergencyNumber;
     private LocalDate hireDate;
-    private Integer careerYears; // 경력 연수 (계산 필요 시)
 
-    // 조인된 정보
-    private String jobName;
-    private String deptName; // 부서명 (있다면)
+    // 조인해서 가져올 데이터들
+    private String deptName;    // 추가: 부서명
+    private String jobName;     // 직책명
+    private String statusField; // 추가: 상태명
 
-    // 리스트 정보
+    // 경력 리스트
     private List<CareerDTO> careers;
+
+    // 자격증 리스트
+    private List<CertificateViewDTO> certificates;
+
+    // 제공 가능한 서비스 유형
+    private List<ServiceTypeDTO> serviceTypes;
+
+    // 보수 교육 이력
+    private List<EducationDTO> educations;
 
     @Data
     public static class CareerDTO {
@@ -34,4 +42,6 @@ public class EmployeeDetailDTO {
         private String workPeriod;
         private String task;
     }
+
+
 }
