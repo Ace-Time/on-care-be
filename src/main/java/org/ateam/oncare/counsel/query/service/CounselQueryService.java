@@ -1,6 +1,7 @@
 package org.ateam.oncare.counsel.query.service;
 
 
+import org.ateam.oncare.counsel.query.dto.CounselDetailResponse;
 import org.ateam.oncare.counsel.query.dto.CounselListResponse;
 import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
 import org.jspecify.annotations.Nullable;
@@ -15,4 +16,6 @@ public interface CounselQueryService {
     @Nullable List<CustomerListResponse> searchCustomers(String keyword);
 
     @Nullable Slice<CounselListResponse> findCounselsByCustomerId(BigInteger customerId, String customerType, String counselCategoryName, Pageable pageable);
+
+    @Nullable CounselDetailResponse findCounselDetailById(BigInteger counselHistoryId);
 }
