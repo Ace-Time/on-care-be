@@ -196,5 +196,35 @@
         ORDER BY ch.consult_date DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
+    <resultMap id="counselDetailResponse" type="org.ateam.oncare.counsel.query.dto.CounselDetailResponse">
+        <id property="counselHistoryId" column="counsel_history_id"/>
+        <result property="counselCategoryName" column="m_counsel_category_name"/>
+        <result property="detail" column="detail"/>
+        <result property="summary" column="summary"/>
+        <result property="followUp" column="follow_up"/>
+        <result property="followUpNecessary" column="follow_up_necessary"/>
+        <result property="counselorName" column="counselor_name"/>
+        <result property="consultDate" column="consult_date"/>
+    </resultMap>
+    <select id="findCounselDetailById" parameterType="java.math.BigInteger" resultMap="counselDetailResponse">
+        SELECT
+            ch.id                   AS counsel_history_id,
+            mcc.name                 AS m_counsel_category_name,
+            ch.detail,
+            ch.summary,
+            ch.follow_up,
+            ch.follow_up_necessary,
+            e.name                  AS counselor_name,
+            ch.consult_date
+        FROM
+            counsel_history ch
+                LEFT JOIN
+            m_counsel_category mcc ON ch.counsel_category_id = mcc.id
+                LEFT JOIN
+            employee e ON ch.counselor_id = e.id
+        WHERE
+            ch.id = #{counselHistoryId}
+    </select>
+
 
 </mapper>

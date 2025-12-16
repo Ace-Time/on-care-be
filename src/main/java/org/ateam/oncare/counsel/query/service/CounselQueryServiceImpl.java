@@ -2,6 +2,7 @@ package org.ateam.oncare.counsel.query.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ateam.oncare.counsel.query.dto.CounselDetailResponse;
 import org.ateam.oncare.counsel.query.dto.CounselListResponse;
 import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
 import org.ateam.oncare.counsel.query.mapper.CounselQueryMapper;
@@ -50,5 +51,10 @@ public class CounselQueryServiceImpl implements CounselQueryService {
             counselList.remove(pageSize);    // 사용자에게는 요청한 5개만 줘야 하므로, 마지막 1개(검증용)는 리스트에서 제거
         }
         return new SliceImpl<>(counselList, pageable, hasNext);
+    }
+
+    @Override
+    public @Nullable CounselDetailResponse findCounselDetailById(BigInteger counselHistoryId) {
+        return counselQueryMapper.findCounselDetailById(counselHistoryId);
     }
 }
