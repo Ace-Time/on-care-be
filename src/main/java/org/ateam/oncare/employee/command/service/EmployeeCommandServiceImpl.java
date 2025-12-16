@@ -21,7 +21,7 @@ public class EmployeeCommandServiceImpl implements EmployeeCommandService {
     private final EmployeeCareerCommandRepository employeeCareerCommandRepository;
 
     @Override
-    public Long registerEmployee(EmployeeRequestDTO dto) {
+    public Integer registerEmployee(EmployeeRequestDTO dto) {
         // 1. Employee 엔티티 생성 및 값 세팅
         Employee employee = new Employee();
         employee.setName(dto.getName());
@@ -43,7 +43,7 @@ public class EmployeeCommandServiceImpl implements EmployeeCommandService {
 
         // 2. 직원 저장
         Employee savedEmployee = employeeCommandRepository.save(employee);
-        Long empId = savedEmployee.getId();
+        Integer empId = savedEmployee.getId();
 
         // 3. 경력(Career) 저장 (별도 테이블 처리)
         if (dto.getCareers() != null && !dto.getCareers().isEmpty()) {
@@ -65,7 +65,7 @@ public class EmployeeCommandServiceImpl implements EmployeeCommandService {
     }
 
     @Override
-    public void updateEmployee(Long id, EmployeeRequestDTO dto) {
+    public void updateEmployee(Integer id, EmployeeRequestDTO dto) {
         // 1. 기존 직원 조회
         Employee employee = employeeCommandRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 직원이 없습니다. id=" + id));
