@@ -6,7 +6,6 @@ import org.ateam.oncare.counsel.query.dto.CounselListResponse;
 import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
 import org.ateam.oncare.counsel.query.mapper.CounselQueryMapper;
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -35,13 +34,15 @@ public class CounselQueryServiceImpl implements CounselQueryService {
     }
 
     @Override
-    public @Nullable Slice<CounselListResponse> findCounselsByCustomerId(BigInteger customerId, String customerType, Pageable pageable) {
+    public @Nullable Slice<CounselListResponse> findCounselsByCustomerId(BigInteger customerId, String customerType,
+                                                                         String counselCategoryName, Pageable pageable) {
         int pageSize = pageable.getPageSize(); // 5
         int limit = pageSize + 1;              // 6 (검증용)
         long offset = pageable.getOffset();
 
         // DB 조회
-        List<CounselListResponse> counselList = counselQueryMapper.findCounselsByCustomerId(customerId, customerType, limit, offset);
+        List<CounselListResponse> counselList = counselQueryMapper.findCounselsByCustomerId(customerId, customerType,
+                counselCategoryName, limit, offset);
 
         boolean hasNext = false;             // 다음 페이지가 없으면 스크롤 안되도록
         if (counselList.size() > pageSize) {

@@ -19,5 +19,6 @@ public interface CounselQueryMapper {
 
     List<CounselListResponse> findCounselsByCustomerId(@Param("customerId")BigInteger customerId,
                                                        @Param("customerType")String customerType,
+                                                       @Param("counselCategoryName")String counselCategoryName,
                                                        @Param("limit")int limit, @Param("offset")long offset);
 }

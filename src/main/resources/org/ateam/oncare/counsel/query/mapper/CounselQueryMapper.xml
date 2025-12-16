@@ -188,6 +188,9 @@
                     AND ch.beneficiary_id = #{customerId}
                 </otherwise>
             </choose>
+            <if test="counselCategoryName != null and counselCategoryName != ''">
+                AND mcc.name = #{counselCategoryName}
+            </if>
         </where>
 
         ORDER BY ch.consult_date DESC
