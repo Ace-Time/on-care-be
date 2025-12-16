@@ -58,12 +58,28 @@ dependencies {
     //==================== log를 위한 라이브러리 ====================
     // Logback - 로깅을 위한 구현체 라이브러리
     implementation 'ch.qos.logback:logback-classic'
-
     // Apache POI - Excel 파일 처리를 위한 기본 라이브러리
     implementation 'org.apache.poi:poi:5.2.3'
-
     // Apache POI OOXML - .xlsx 형식의 Excel 파일 처리를 위한 확장 라이브러리
     implementation 'org.apache.poi:poi-ooxml:5.2.3'
+
+
+    // 1. Spring Cache 추상화 기능
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    // 2. Caffeine Cache (High Performance Local Cache)
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
+
+    //=========== MapStruct를 라이브러리 추가 =============
+    // 1. MapStruct 라이브러리 (핵심 기능)
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    // 2. MapStruct Processor (반드시 Lombok 뒤에 와야 함!)
+    // 컴파일 시점에 인터페이스를 보고 Impl 클래스를 만들어줍니다.
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    // (선택) Lombok Builder와 MapStruct를 같이 쓸 때 호환성을 높여주는 라이브러리
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+
 }
 
 tasks.named('test') {
