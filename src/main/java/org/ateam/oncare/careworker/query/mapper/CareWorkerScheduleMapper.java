@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Mapper
-public interface ScheduleMapper {
+public interface CareWorkerScheduleMapper {
 
     // 1. 기간별 일정 조회 (캘린더용)
     List<CalendarScheduleDto> selectSchedulesByPeriod(
