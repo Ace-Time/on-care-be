@@ -19,7 +19,7 @@ public class AuthoritiesOfEmployee {
 
     @Id // 복합키 구성요소 2
     @Column(name = "employee_id", nullable = false)
-    private Long employeeId;
+    private Integer employeeId;
 
     // 복합키 처리를 위한 내부 static 클래스 (별도 파일로 분리해도 됨)
     @Data
@@ -27,7 +27,7 @@ public class AuthoritiesOfEmployee {
     @AllArgsConstructor
     public static class PK implements Serializable {
         private Long authorityCode;
-        private Long employeeId;
+        private Integer employeeId;
     }
 
 }

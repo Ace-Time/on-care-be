@@ -1,30 +1,43 @@
 package org.ateam.oncare.auth.command.controller;
 
+import jakarta.servlet.ServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.auth.command.dto.RequestLogin;
+import org.ateam.oncare.auth.command.dto.ResponseLoginDTO;
 import org.ateam.oncare.auth.command.dto.ResponseLoginEmployeeDTO;
 import org.ateam.oncare.auth.command.dto.ResponseToken;
 import org.ateam.oncare.auth.command.service.AuthService;
+import org.ateam.oncare.auth.security.CookieUtil;
+import org.ateam.oncare.global.customannotation.annotation.ClientIp;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordEncoder passwordEncoder;
 
-    @GetMapping("/login")
-    public ResponseEntity<ResponseToken> login(@RequestBody RequestLogin loginRequest) {
+    @PostMapping("/login")
+    public ResponseEntity<ResponseLoginDTO> login(@RequestBody RequestLogin loginRequest, @ClientIp String clientIp) {
+        ResponseToken tokenResponse =  authService.login(loginRequest, clientIp);
 
-        ResponseToken tokenResponse =  authService.login(loginRequest);
-        return ResponseEntity.ok(null);
+        ResponseLoginDTO reponseBody = new ResponseLoginDTO(
+                tokenResponse.getAccessToken(),
+                tokenResponse.getTokenType());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, tokenResponse.getCookie().toString())
+                .body(reponseBody);
     }
 
 
@@ -33,6 +46,16 @@ public class AuthController {
 
         Map<Long,String> authorities =  authService.getAuthorities();
         return ResponseEntity.ok(authorities);
+    }
+
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ResponseToken> refreshToken(
+                                @CookieValue(name = CookieUtil.REFRESH_COOKIE, required = false) String refreshToken,
+                                ServletRequest request) {
+        log.debug("리프래시 컨트롤러");
+        log.debug("리프래시 요청 refreshToken:{}",refreshToken);
+        return ResponseEntity.ok(authService.refreshToken(refreshToken,request));
     }
 
     /**

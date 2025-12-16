@@ -1,5 +1,6 @@
 package org.ateam.oncare.auth.command.service;
 
+import jakarta.servlet.ServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.auth.command.dto.ResponseLoginEmployeeDTO;
@@ -9,7 +10,8 @@ import org.ateam.oncare.auth.command.mapper.EmployeeMapper;
 import org.ateam.oncare.employee.command.service.EmployeeService;
 import org.ateam.oncare.global.emun.MasterInternalType;
 import org.ateam.oncare.global.eventType.MasterDataEvent;
-import org.ateam.oncare.security.JwtTokenProvider;
+import org.ateam.oncare.auth.security.JwtTokenProvider;
+import org.jspecify.annotations.Nullable;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,11 +30,11 @@ import java.util.Map;
 public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
     private final EmployeeService employeeService;
     private final ModelMapper modelMapper;
-
+    private final JwtTokenProvider tokenProvider;
     private final EmployeeMapper employeeOfLoginMapper;
+    private final TokenService tokenService;
 
     /**
      * modelMapper와 mapStruct 차이 비교를 위한 테스트 코드 추 후 삭제 예정
@@ -57,9 +59,19 @@ public class AuthServiceImpl implements AuthService {
         return mapStructOfEmployee;
     }
 
+    @Override
+    public @Nullable ResponseToken refreshToken(String refreshToken, ServletRequest request) {
+        ResponseToken responseToken =
+                tokenService.verifyByRefreshToken(refreshToken,request);
+
+
+
+        return null;
+    }
+
 
     @Override
-    public ResponseToken login(RequestLogin loginRequest) {
+    public ResponseToken login(RequestLogin loginRequest, String clientIp) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getUseremail(),
@@ -67,10 +79,10 @@ public class AuthServiceImpl implements AuthService {
                 )
         );
 
-        log.debug("authentication:{}",authentication);
+        ResponseToken responseToken =
+                tokenService.generateToken(clientIp,authentication, loginRequest.getUseremail());
 
-
-        return null;
+        return responseToken;
     }
 
     @Override
