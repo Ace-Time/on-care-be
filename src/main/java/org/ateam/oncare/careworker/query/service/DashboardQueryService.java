@@ -30,4 +30,32 @@ public class DashboardQueryService {
     public List<HomeTodoDto> getTodos(Long caregiverId) {
         return dashboardMapper.selectTodos(caregiverId);
     }
+
+    public BeneficiaryDetailDto getBeneficiaryDetail(Long beneficiaryId) {
+        BeneficiaryDetailDto detail = dashboardMapper.selectBeneficiaryDetail(beneficiaryId);
+
+        if (detail != null) {
+            // 보호자 정보 설정
+            detail.setGuardians(dashboardMapper.selectGuardians(beneficiaryId));
+
+            // 위험요소 설정
+            detail.setRiskFactors(dashboardMapper.selectRiskFactors(beneficiaryId));
+
+            // 태그 설정
+            detail.setTags(dashboardMapper.selectTags(beneficiaryId));
+
+            // 특이사항 설정
+            detail.setSignificants(dashboardMapper.selectSignificants(beneficiaryId));
+        }
+
+        return detail;
+    }
+
+    public TodoDetailDto getTodoDetail(Long todoId) {
+        return dashboardMapper.selectTodoDetail(todoId);
+    }
+
+    public CareLogDetailDto getCareLogBySchedule(Long vsId) {
+        return dashboardMapper.selectCareLogBySchedule(vsId);
+    }
 }

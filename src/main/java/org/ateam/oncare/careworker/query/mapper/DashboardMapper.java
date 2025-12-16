@@ -18,4 +18,25 @@ public interface DashboardMapper {
 
     // 할 일 목록
     List<HomeTodoDto> selectTodos(@Param("caregiverId") Long caregiverId);
+
+    // 수급자 상세 정보 조회
+    BeneficiaryDetailDto selectBeneficiaryDetail(@Param("beneficiaryId") Long beneficiaryId);
+
+    // 수급자 보호자 목록
+    List<BeneficiaryDetailDto.GuardianDto> selectGuardians(@Param("beneficiaryId") Long beneficiaryId);
+
+    // 수급자 위험요소 목록
+    List<String> selectRiskFactors(@Param("beneficiaryId") Long beneficiaryId);
+
+    // 수급자 태그 목록
+    List<String> selectTags(@Param("beneficiaryId") Long beneficiaryId);
+
+    // 수급자 특이사항 목록
+    List<String> selectSignificants(@Param("beneficiaryId") Long beneficiaryId);
+
+    // 할 일 상세 정보 조회
+    TodoDetailDto selectTodoDetail(@Param("todoId") Long todoId);
+
+    // 특정 일정의 요양일지 조회
+    CareLogDetailDto selectCareLogBySchedule(@Param("vsId") Long vsId);
 }

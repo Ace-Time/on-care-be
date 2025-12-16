@@ -4,6 +4,7 @@ import org.ateam.oncare.careworker.query.dto.*;
 import org.ateam.oncare.careworker.query.service.DashboardQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -44,6 +45,27 @@ public class DashboardQueryController {
     @GetMapping("/todos")
     public ApiResponse<List<HomeTodoDto>> getTodos() {
         List<HomeTodoDto> data = dashboardQueryService.getTodos(TEST_CAREGIVER_ID);
+        return ApiResponse.success(data);
+    }
+
+    // 5. 수급자 상세 정보 (토큰 X)
+    @GetMapping("/beneficiary/{beneficiaryId}")
+    public ApiResponse<BeneficiaryDetailDto> getBeneficiaryDetail(@PathVariable Long beneficiaryId) {
+        BeneficiaryDetailDto data = dashboardQueryService.getBeneficiaryDetail(beneficiaryId);
+        return ApiResponse.success(data);
+    }
+
+    // 6. 할 일 상세 정보 (토큰 X)
+    @GetMapping("/todo/{todoId}")
+    public ApiResponse<TodoDetailDto> getTodoDetail(@PathVariable Long todoId) {
+        TodoDetailDto data = dashboardQueryService.getTodoDetail(todoId);
+        return ApiResponse.success(data);
+    }
+
+    // 7. 특정 일정의 요양일지 조회 (토큰 X)
+    @GetMapping("/schedule/{vsId}/carelog")
+    public ApiResponse<CareLogDetailDto> getCareLogBySchedule(@PathVariable Long vsId) {
+        CareLogDetailDto data = dashboardQueryService.getCareLogBySchedule(vsId);
         return ApiResponse.success(data);
     }
 }
