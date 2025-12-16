@@ -46,12 +46,23 @@
         SELECT
             vs.vs_id AS scheduleId,
             b.name AS recipientName,
-            '' AS grade,
+            COALESCE(mcl.level, '등급없음') AS grade,
             CONCAT(TIME_FORMAT(vs.start_dt, '%H:%i'), ' - ', TIME_FORMAT(vs.end_dt, '%H:%i')) AS visitTime,
             b.address AS address,
             vs.visit_status AS status
         FROM visit_schedule vs
                  JOIN beneficiary b ON vs.beneficiary_id = b.id
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id, start_date, end_date
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
         WHERE vs.care_worker_id = #{caregiverId}
           AND DATE(vs.start_dt) = CURRENT_DATE
         ORDER BY vs.start_dt ASC
