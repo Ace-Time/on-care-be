@@ -1,5 +1,6 @@
 package org.ateam.oncare.counsel.query.mapper;
 
+import org.ateam.oncare.counsel.query.dto.CounselListResponse;
 import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,8 +26,7 @@ class CounselQueryMapperTest {
     @DisplayName("전체 조회 시 이탈 고객(status=0)은 카테고리가 '이탈고객'으로 매핑되어야 한다")
     void testFindAllCustomers_Churned() {
         // Given
-        // DB에 status=0인 수급자 데이터가 존재한다고 가정 (예: ID 2번)
-        // 실제 환경에서는 @Sql 등을 이용해 테스트 데이터를 사전에 insert 해야 함
+        // 3번 회원은 기존 고객 중 status가 0인 고객
         long churnedCustomerId = 3L;
         String expectedName = "박종원";
 
@@ -65,5 +66,45 @@ class CounselQueryMapperTest {
         // Then
         assertThat(result).isNotEmpty();
         assertThat(result.get(0).getPhone().replaceAll("-", "")).contains(keyword);
+    }
+
+    @Test
+    @DisplayName("이탈고객이 잠재고객인지 기존고객인지 정확히 구분돼야한다.")
+    void testCustomerType() {
+        // Given
+        // DML 기준: '박종원'(ID 3)은 beneficiary 테이블의 status=0 (이탈한 기존고객)
+        // DML 기준: '최순자'(ID 4)는 potential_customer 테이블의 willingness='N' (이탈한 잠재고객)
+        String churnedBeneficiaryName = "박종원";
+        String churnedPotentialName = "최순자";
+
+        // When
+        // Mapper의 이름 검색 기능 사용
+        List<CustomerListResponse> beneficiaryResult = counselQueryMapper.searchCustomersByName(churnedBeneficiaryName);
+        List<CustomerListResponse> potentialResult = counselQueryMapper.searchCustomersByName(churnedPotentialName);
+
+        // Then
+        // 1. 이탈 수급자 검증
+        CustomerListResponse targetBeneficiary = beneficiaryResult.stream()
+                .filter(c -> c.getName().equals(churnedBeneficiaryName))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("테스트 데이터 '박종원'을 찾을 수 없습니다."));
+
+        assertThat(targetBeneficiary.getCustomerCategoryName()).isEqualTo("이탈고객");
+        // beneficiary 테이블에서 왔으므로 'beneficiary'여야 함
+        assertThat(targetBeneficiary.getCustomerType())
+                .as("수급자 테이블 데이터는 customerType이 beneficiary여야 합니다.")
+                .isEqualTo("beneficiary");
+
+        // 2. 이탈 잠재고객 검증
+        CustomerListResponse targetPotential = potentialResult.stream()
+                .filter(c -> c.getName().equals(churnedPotentialName))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("테스트 데이터 '최순자'를 찾을 수 없습니다."));
+
+        assertThat(targetPotential.getCustomerCategoryName()).isEqualTo("이탈고객");
+        // potential_customer 테이블에서 왔으므로 'potential'이어야 함
+        assertThat(targetPotential.getCustomerType())
+                .as("잠재고객 테이블 데이터는 customerType이 potential이어야 합니다.")
+                .isEqualTo("potential");
     }
 }

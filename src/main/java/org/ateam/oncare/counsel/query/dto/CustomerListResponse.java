@@ -19,4 +19,5 @@ public class CustomerListResponse {
     private int consultCount;
     private String guardianName;
     private String guardianPhone;
+    private String customerType;
 }
