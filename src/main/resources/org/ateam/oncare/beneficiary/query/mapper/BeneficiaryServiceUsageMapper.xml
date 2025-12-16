@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BeneficiaryServiceUsageMapper">
+
+    <!-- ✅ 서비스 사용 이력 (월별) : 금액은 월 누계(cost_of_beneficiary) -->
+    <select id="selectServiceUsageHistory"
+            parameterType="long"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.ServiceUsageResponse$ServiceUsageMonthItem">
+
+        SELECT
+        cob.month           AS month,
+        cob.monthly_amount  AS totalAmount
+        FROM cost_of_beneficiary cob
+        WHERE cob.beneficiary_id = #{beneficiaryId}
+        ORDER BY cob.month DESC
+
+    </select>
+
+    <!-- ✅ 특정 월의 서비스 타입별 "횟수" (1일 2회면 2회로 카운트됨) -->
+    <select id="selectServiceTypesByMonth"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.ServiceUsageResponse$ServiceTypeItem">
+
+        SELECT
+        mst.id   AS serviceTypeId,
+        mst.name AS serviceTypeName,
+        COUNT(bs.id) AS usageCount
+        FROM beneficiary_schedule bs
+        JOIN m_service_type mst
+        ON mst.id = bs.service_type_id
+        WHERE bs.beneficiary_id = #{beneficiaryId}
+        AND DATE_FORMAT(bs.start_time, '%Y-%m') = #{month}
+        GROUP BY mst.id, mst.name
+        ORDER BY mst.id
+
+    </select>
+
+</mapper>
