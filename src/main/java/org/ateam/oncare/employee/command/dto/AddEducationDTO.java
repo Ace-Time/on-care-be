@@ -1,4 +1,4 @@
-package org.ateam.oncare.careworker.command.dto;
+package org.ateam.oncare.employee.command.dto;
 
 import lombok.*;
 

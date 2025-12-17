@@ -30,11 +30,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) //CorsConfigurationSource 설정을 찾아 적용(CORS 설정)
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) //세션을 사용하지 않음 JWT인증
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); //security 인증전 filter를 가로채 JWT 인증 절차 진행
+                .cors(Customizer.withDefaults()) //CorsConfigurationSource 설정을 찾아 적용(CORS 설정)
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) //세션을 사용하지 않음 JWT인증
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); //security 인증전 filter를 가로채 JWT 인증 절차 진행
 
         http.authorizeHttpRequests(auth -> auth
 //                .requestMatchers("/**").permitAll() // 개발 기간동안 모든 요청 허용

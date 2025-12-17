@@ -19,7 +19,7 @@ public class EmployeeCommandController {
      */
     @PostMapping
     public ResponseEntity<String> registerEmployee(@RequestBody EmployeeRequestDTO dto) {
-        Long createdId = employeeCommandService.registerEmployee(dto);
+        Integer createdId = employeeCommandService.registerEmployee(dto);
         return ResponseEntity.ok("직원 등록이 완료되었습니다. (ID: " + createdId + ")");
     }
 
@@ -28,7 +28,7 @@ public class EmployeeCommandController {
      * [PUT] /api/employees/{id}
      */
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateEmployee(@PathVariable Long id, @RequestBody EmployeeRequestDTO dto) {
+    public ResponseEntity<String> updateEmployee(@PathVariable Integer id, @RequestBody EmployeeRequestDTO dto) {
         employeeCommandService.updateEmployee(id, dto);
         return ResponseEntity.ok("직원 정보가 수정되었습니다. (ID: " + id + ")");
     }

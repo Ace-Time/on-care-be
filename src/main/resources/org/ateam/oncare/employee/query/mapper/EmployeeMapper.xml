@@ -39,6 +39,30 @@
         <result property="status" column="status"/>
     </resultMap>
 
+    <resultMap id="VisitScheduleMap" type="org.ateam.oncare.employee.query.dto.VisitScheduleVO">
+        <id property="vsId" column="vs_id"/>
+        <result property="startDt" column="start_dt"/>
+        <result property="endDt" column="end_dt"/>
+        <result property="visitStatus" column="visit_status"/>
+        <result property="serviceTypeId" column="service_type_id"/>
+        <result property="beneficiaryName" column="beneficiary_name"/>
+    </resultMap>
+
+    <select id="selectSchedulesByEmployeeId" resultMap="VisitScheduleMap">
+        SELECT
+        vs.vs_id,
+        vs.start_dt,
+        vs.end_dt,
+        vs.visit_status,
+        vs.service_type_id,
+        b.name AS beneficiary_name
+        FROM visit_schedule vs
+        INNER JOIN beneficiary b ON vs.beneficiary_id = b.id
+        INNER JOIN care_worker cw ON vs.care_worker_id = cw.id
+        WHERE cw.employee_id = #{employeeId}
+        ORDER BY vs.start_dt ASC
+    </select>
+
     <resultMap id="ServiceTypeMap" type="org.ateam.oncare.employee.query.dto.ServiceTypeDTO">
         <result property="id" column="m_service_type_id"/>
         <result property="name" column="service_name"/>
@@ -60,11 +84,11 @@
         e.phone,
         d.dept_name as deptName,   -- 부서명
         j.name as jobName,         -- 직책명
-        s.field as statusField     -- 상태명
+        s.`field` as statusField     -- 상태명
         FROM employee e
         LEFT JOIN m_department d ON e.dept_code = d.id      -- 부서 조인
         LEFT JOIN m_job j ON e.job_code = j.id              -- 직책 조인
-        LEFT JOIN m_status s ON e.status_id = s.status      -- 상태 조인 (PK가 status임)
+        LEFT JOIN m_status s ON e.status_id = s.`status`      -- 상태 조인 (PK가 status임)
         <where>
             <if test="keyword != null and keyword != ''">
                 AND (e.name LIKE CONCAT('%', #{keyword}, '%')
@@ -91,11 +115,11 @@
         e.hire_date,
         d.dept_name as deptName,    -- 부서명
         j.name as jobName,          -- 직책명
-        s.field as statusField      -- 상태명
+        s.`field` as statusField      -- 상태명
         FROM employee e
         LEFT JOIN m_department d ON e.dept_code = d.id      -- 부서 조인
         LEFT JOIN m_job j ON e.job_code = j.id              -- 직책 조인
-        LEFT JOIN m_status s ON e.status_id = s.status      -- 상태 조인
+        LEFT JOIN m_status s ON e.status_id = s.`status`      -- 상태 조인
         WHERE e.id = #{id}
     </select>
 
@@ -116,7 +140,7 @@
         cwc.license_no,
         cwc.issue_date,
         cwc.expire_date,
-        cwc.status
+        cwc.`status`
         FROM care_worker_certificate cwc
 
         /* 1. 자격증 보유 현황(cwc) -> 요양보호사(cw) 조인 */
@@ -148,7 +172,7 @@
         e.edu_date,
         e.next_edu_date,
         e.is_overdue,
-        e.status,
+        e.`status`,
         cert.certificate_name as license_name -- 자격증 이름도 같이 보여주기
         FROM education e
         JOIN care_worker_certificate cwc ON e.care_worker_certificate_id = cwc.id
@@ -157,5 +181,49 @@
         WHERE cw.employee_id = #{employeeId}
         ORDER BY e.edu_date DESC
     </select>
+
+    <resultMap id="AssignedBeneficiaryMap" type="org.ateam.oncare.employee.query.dto.AssignedBeneficiaryDTO">
+        <id property="matchingId" column="matching_id"/>
+        <result property="beneficiaryId" column="beneficiary_id"/>
+        <result property="name" column="beneficiary_name"/>
+        <result property="birthDate" column="birth_date"/>
+        <result property="gender" column="gender"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <select id="selectAssignedBeneficiaries" resultMap="AssignedBeneficiaryMap">
+        SELECT
+        m.id AS matching_id,
+        b.id AS beneficiary_id,
+        b.name AS beneficiary_name,
+        b.birth_date,
+        b.gender,
+        m.start_date,
+        m.end_date,
+        m.`status`
+        FROM matching m
+        INNER JOIN beneficiary b ON m.beneficiary_id = b.id
+        INNER JOIN care_worker cw ON m.care_worker_id = cw.id
+        WHERE cw.employee_id = #{employeeId}
+        AND m.`status` = 'Y'
+    </select>
+
+    <insert id="insertEmployee" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO employee (
+        name, phone, dept_code, job_code, status_id, hire_date
+        ) VALUES (
+        #{name}, #{phone}, #{deptCode}, #{jobCode}, #{statusId}, #{hireDate}
+        )
+    </insert>
+
+    <insert id="insertCareWorker">
+        INSERT INTO care_worker (
+        employee_id
+        ) VALUES (
+        #{employeeId}
+        )
+    </insert>
 
 </mapper>

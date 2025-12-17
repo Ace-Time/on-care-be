@@ -1,4 +1,4 @@
-package org.ateam.oncare.careworker.command.repository;
+package org.ateam.oncare.employee.command.repository;
 
 import org.ateam.oncare.careworker.command.entity.CareWorkerCertificate;
 import org.springframework.data.jpa.repository.JpaRepository;
