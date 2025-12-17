@@ -2,7 +2,7 @@ package org.ateam.oncare.employee.command.service;
 
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.beneficiary.command.entity.Beneficiary;
-import org.ateam.oncare.beneficiary.command.repository.BeneficiaryRepository;
+import org.ateam.oncare.employee.command.repository.BeneficiaryRepository;
 import org.ateam.oncare.employee.command.dto.AssignedBeneficiaryDTO;
 import org.ateam.oncare.employee.command.repository.AssignedBeneficiaryRepository;
 import org.ateam.oncare.schedule.command.entity.Matching;
