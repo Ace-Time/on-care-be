@@ -20,5 +20,5 @@ public interface AuthService {
 
     ResponseLoginEmployeeDTO mapStructTest(RequestLogin loginRequest);
 
-    @Nullable ResponseToken refreshToken(String refreshToken, ServletRequest request);
+    @Nullable ResponseToken refreshToken(String refreshToken, ServletRequest request,String clientIp);
 }
