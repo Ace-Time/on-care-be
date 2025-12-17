@@ -46,6 +46,9 @@ public class VisitSchedule {
     @Column(name = "beneficiary_id", nullable = false)
     private Long beneficiaryId;
 
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
+
     public enum VisitStatus {
         SCHEDULED, IN_PROGRESS, DONE
     }
