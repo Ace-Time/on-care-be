@@ -55,8 +55,8 @@ public class CounselingLogs {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "employee_id", nullable = false)
-    private Long employeeId;
+    @Column(name = "care_worker_id", nullable = false)
+    private Long careworkerId;
 
     @Column(name = "beneficiary_id", nullable = false)
     private Long beneficiaryId;
