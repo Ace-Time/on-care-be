@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor // 롬복 생성자
-public class ResponseLoginDTO {
+public class ResponseTokenDTO {
     private String accessToken;
     private String tokenType; // 보통 "Bearer"
 }

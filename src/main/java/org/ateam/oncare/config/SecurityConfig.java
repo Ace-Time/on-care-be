@@ -54,7 +54,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
 
         // 허용할 HTTP 메소드 (GET, POST 등)
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // 허용할 헤더 (Authorization 등) 모든 헤더 허용
         configuration.setAllowedHeaders(Arrays.asList("*"));

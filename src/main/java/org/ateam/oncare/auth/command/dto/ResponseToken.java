@@ -6,15 +6,11 @@ import org.springframework.http.ResponseCookie;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class ResponseToken {
     private String accessToken;
     private ResponseCookie cookie;
     private String tokenType;
-
-    public ResponseToken(String accessToken, ResponseCookie cookie, String tokenType) {
-        this.accessToken = accessToken;
-        this.cookie = cookie;
-        this.tokenType = tokenType;
-    }
+    private int employeeId;
 }

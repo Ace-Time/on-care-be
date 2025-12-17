@@ -7,6 +7,7 @@ import org.ateam.oncare.auth.command.dto.ResponseLoginEmployeeDTO;
 import org.ateam.oncare.auth.command.dto.RequestLogin;
 import org.ateam.oncare.auth.command.dto.ResponseToken;
 import org.ateam.oncare.auth.command.mapper.EmployeeMapper;
+import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import org.ateam.oncare.employee.command.service.EmployeeService;
 import org.ateam.oncare.global.emun.MasterInternalType;
 import org.ateam.oncare.global.eventType.MasterDataEvent;
@@ -60,13 +61,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public @Nullable ResponseToken refreshToken(String refreshToken, ServletRequest request) {
+    public @Nullable ResponseToken refreshToken(String refreshToken, ServletRequest request ,String clientIp) {
         ResponseToken responseToken =
-                tokenService.verifyByRefreshToken(refreshToken,request);
+                tokenService.verifyByRefreshToken(refreshToken,request, clientIp);
 
 
 
-        return null;
+        return responseToken;
     }
 
 
@@ -79,8 +80,10 @@ public class AuthServiceImpl implements AuthService {
                 )
         );
 
+        EmployeeImpl employee = (EmployeeImpl)authentication.getPrincipal();
+
         ResponseToken responseToken =
-                tokenService.generateToken(clientIp,authentication, loginRequest.getUseremail());
+                tokenService.generateToken(clientIp,employee);
 
         return responseToken;
     }
