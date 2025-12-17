@@ -25,4 +25,14 @@ public interface EmployeeMapper {
 
     // 교육 이력 조회
     List<EducationDTO> selectEducations(Long employeeId);
+
+    // 요양보호사(담당수급자) 일정 조회
+    List<VisitScheduleVO> selectSchedulesByEmployeeId(Integer employeeId);
+
+    // 방문 일정 조회 (상세)
+    List<VisitScheduleVO> selectVisitSchedules(java.util.Map<String, Object> params);
+
+    void insertEmployee(org.ateam.oncare.employee.command.dto.EmployeeRegisterDto dto);
+
+    void insertCareWorker(@org.apache.ibatis.annotations.Param("employeeId") Long employeeId);
 }

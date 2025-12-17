@@ -1,8 +1,8 @@
-package org.ateam.oncare.careworker.query.controller;
+package org.ateam.oncare.employee.query.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.careworker.command.domain.CertAndEduStatus;
-import org.ateam.oncare.careworker.query.service.CertAndEduQueryService;
+import org.ateam.oncare.employee.command.domain.CertAndEduStatus;
+import org.ateam.oncare.employee.query.service.CertAndEduQueryService;
 import org.ateam.oncare.employee.query.dto.CertificateViewDTO;
 import org.ateam.oncare.employee.query.dto.EducationDTO;
 import org.springframework.http.ResponseEntity;
@@ -30,16 +30,20 @@ public class CertAndEduQueryController {
     }
 
     @GetMapping("/certificates")
-    public ResponseEntity<List<CertificateViewDTO>> getCertificates(
+    public ResponseEntity<?> getCertificates(
             @RequestParam(required = false) String status) { // "PENDING" 받음
+        try {
+            // 1. [번역] "PENDING" -> 0 (숫자로 변환)
+            Integer statusCode = null;
+            if (status != null && !status.isBlank()) {
+                statusCode = CertAndEduStatus.toCode(status);
+            }
 
-        // 1. [번역] "PENDING" -> 0 (숫자로 변환)
-        Integer statusCode = null;
-        if (status != null && !status.isBlank()) {
-            statusCode = CertAndEduStatus.toCode(status);
+            // 2. 숫자를 넘겨서 조회
+            return ResponseEntity.ok(CertAndEduQueryService.getCertificates(statusCode));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error: " + e.getMessage() + "\n" + e.toString());
         }
-
-        // 2. 숫자를 넘겨서 조회
-        return ResponseEntity.ok(CertAndEduQueryService.getCertificates(statusCode));
     }
 }

@@ -1,13 +1,17 @@
-package org.ateam.oncare.careworker.command.service;
+package org.ateam.oncare.employee.command.service;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.careworker.command.domain.CertAndEduStatus; // ★ Enum Import
-import org.ateam.oncare.careworker.command.dto.AddCertificateDTO;
-import org.ateam.oncare.careworker.command.dto.AddEducationDTO;
-import org.ateam.oncare.careworker.command.dto.CertificateStatusUpdateDTO; // ★ DTO Import
+import org.ateam.oncare.employee.command.domain.CertAndEduStatus; // ★ Enum Import
+import org.ateam.oncare.employee.command.dto.AddCertificateDTO;
+import org.ateam.oncare.employee.command.dto.AddEducationDTO;
+import org.ateam.oncare.employee.command.dto.CertificateStatusUpdateDTO; // ★ DTO Import
 import org.ateam.oncare.careworker.command.entity.*;
-import org.ateam.oncare.careworker.command.repository.*;
+import org.ateam.oncare.employee.command.entity.Employee;
+import org.ateam.oncare.employee.command.repository.CareWorkerCertificateRepository;
+import org.ateam.oncare.employee.command.repository.CareWorkerInfoRepository;
+import org.ateam.oncare.employee.command.repository.EducationRepository;
+import org.ateam.oncare.employee.command.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +23,23 @@ public class CertAndEduCommandServiceImpl implements CertAndEduCommandService {
     private final CareWorkerInfoRepository careWorkerRepository;
     private final CareWorkerCertificateRepository certificateRepository;
     private final EducationRepository educationRepository;
+    private final EmployeeRepository employeeRepository;
     private final EntityManager entityManager;
 
     @Override
     public void addCertificate(Long employeeId, AddCertificateDTO dto) {
         // 1. 요양보호사 조회
         CareWorker careWorker = careWorkerRepository.findByEmployeeId(employeeId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 직원은 요양보호사로 등록되어 있지 않습니다."));
+                .orElseGet(() -> {
+                    Employee employee = employeeRepository.findById(employeeId.intValue())
+                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직원입니다."));
+
+                    CareWorker newWorker = CareWorker.builder()
+                            .employeeId(Long.valueOf(employee.getId()))
+                            .build();
+
+                    return careWorkerRepository.save(newWorker);
+                });
 
         // 2. 자격증 마스터 조회
         Certificate masterCert = entityManager.getReference(Certificate.class, dto.getCertificateId());

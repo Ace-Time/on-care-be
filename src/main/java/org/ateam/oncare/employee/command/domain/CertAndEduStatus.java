@@ -1,4 +1,4 @@
-package org.ateam.oncare.careworker.command.domain;
+package org.ateam.oncare.employee.command.domain;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

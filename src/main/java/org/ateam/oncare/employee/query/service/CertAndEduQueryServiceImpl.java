@@ -1,9 +1,9 @@
-package org.ateam.oncare.careworker.query.service;
+package org.ateam.oncare.employee.query.service;
 
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.careworker.query.mapper.CertAndEduQueryMapper;
 import org.ateam.oncare.employee.query.dto.CertificateViewDTO;
 import org.ateam.oncare.employee.query.dto.EducationDTO;
+import org.ateam.oncare.employee.query.mapper.CertAndEduQueryMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.ateam.oncare.careworker.query.mapper.CertAndEduQueryMapper">
+<mapper namespace="org.ateam.oncare.employee.query.mapper.CertAndEduQueryMapper">
 
     <resultMap id="CertificateViewMap" type="org.ateam.oncare.employee.query.dto.CertificateViewDTO">
         <id property="id" column="cwc_id"/>
@@ -37,7 +37,7 @@
         cwc.license_no,
         cwc.issue_date,
         cwc.expire_date,
-        cwc.status
+        cwc.`status`
         FROM care_worker_certificate cwc
         JOIN certificate m ON cwc.certificate_id = m.id
         JOIN care_worker cw ON cwc.care_worker_id = cw.id
@@ -53,7 +53,7 @@
         e.edu_date,
         e.next_edu_date,
         e.is_overdue,
-        e.status,
+        e.`status`,
         m.certificate_name AS related_license_name
         FROM education e
         JOIN care_worker_certificate cwc ON e.care_worker_certificate_id = cwc.id
@@ -71,14 +71,14 @@
             cwc.license_no,
             cwc.issue_date,
             cwc.expire_date,
-            cwc.status
+            cwc.`status`
         FROM care_worker_certificate cwc
         JOIN certificate m ON cwc.certificate_id = m.id
         JOIN care_worker cw ON cwc.care_worker_id = cw.id
         JOIN employee e ON cw.employee_id = e.id
         <where>
             <if test="statusCode != null">
-                AND cwc.status = #{statusCode}
+                AND cwc.`status` = #{statusCode}
             </if>
         </where>
 

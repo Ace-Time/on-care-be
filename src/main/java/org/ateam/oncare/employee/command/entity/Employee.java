@@ -47,7 +47,7 @@ public class Employee {
     private LocalDate endDate;
 
     @Column(name = "dept_code")
-    private Long deptCode;
+    private Integer deptCode;
 
     @Column(name = "job_code", nullable = false)
     private Long jobCode;

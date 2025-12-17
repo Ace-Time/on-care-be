@@ -1,4 +1,4 @@
-package org.ateam.oncare.careworker.query.service;
+package org.ateam.oncare.employee.query.service;
 
 import org.ateam.oncare.employee.query.dto.CertificateViewDTO;
 import org.ateam.oncare.employee.query.dto.EducationDTO;
