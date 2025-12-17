@@ -10,7 +10,7 @@ public interface EmployeeCommandService {
      * @param dto 등록할 직원 정보
      * @return 등록된 직원의 ID
      */
-    Long registerEmployee(EmployeeRequestDTO dto);
+    Integer registerEmployee(EmployeeRequestDTO dto);
 
     /**
      * 직원 정보 수정
@@ -18,5 +18,5 @@ public interface EmployeeCommandService {
      * @param id  수정할 직원의 ID
      * @param dto 수정할 정보
      */
-    void updateEmployee(Long id, EmployeeRequestDTO dto);
+    void updateEmployee(Integer id, EmployeeRequestDTO dto);
 }

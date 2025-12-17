@@ -16,7 +16,7 @@ public class EmployeeCareer {
     private Long id;
 
     @Column(name = "employee_id", nullable = false)
-    private Long employeeId;
+    private Integer employeeId;
 
     @Column(name = "company_name", nullable = false, length = 100)
     private String companyName;

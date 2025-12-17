@@ -1,8 +1,8 @@
-package org.ateam.oncare.careworker.command.controller;
+package org.ateam.oncare.employee.command.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.careworker.command.dto.AssignedBeneficiaryDTO;
-import org.ateam.oncare.careworker.command.service.AssignedBeneficiaryService;
+import org.ateam.oncare.employee.command.dto.AssignedBeneficiaryDTO;
+import org.ateam.oncare.employee.command.service.AssignedBeneficiaryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -182,7 +182,7 @@
         ORDER BY e.edu_date DESC
     </select>
 
-    <resultMap id="AssignedBeneficiaryMap" type="org.ateam.oncare.employee.query.dto.AssignedBeneficiaryDTO">
+    <resultMap id="AssignedBeneficiaryMap" type="org.ateam.oncare.employee.command.dto.AssignedBeneficiaryDTO">
         <id property="matchingId" column="matching_id"/>
         <result property="beneficiaryId" column="beneficiary_id"/>
         <result property="name" column="beneficiary_name"/>

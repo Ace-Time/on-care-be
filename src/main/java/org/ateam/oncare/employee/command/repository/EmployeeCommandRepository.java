@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface EmployeeCommandRepository extends JpaRepository<Employee, Long> {
+public interface EmployeeCommandRepository extends JpaRepository<Employee, Integer> {
 }

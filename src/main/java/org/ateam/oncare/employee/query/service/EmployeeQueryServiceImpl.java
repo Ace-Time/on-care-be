@@ -43,6 +43,10 @@ public class EmployeeQueryServiceImpl implements EmployeeQueryService {
         }
         return detail;
 
+    }
 
+    @Override
+    public List<org.ateam.oncare.employee.query.dto.VisitScheduleVO> getEmployeeSchedules(Integer employeeId) {
+        return employeeMapper.selectSchedulesByEmployeeId(employeeId);
     }
 }
