@@ -15,3 +15,9 @@ spring:
     properties:
       hibernate:
         '[format_sql]' : true
+
+jwt:
+  access-secret: ${JWT_AT_SECRET}
+  refresh-secret: ${JWT_RT_SECRET}
+  access-token-validity: 3600000
+  refresh-token-validity: 604800000

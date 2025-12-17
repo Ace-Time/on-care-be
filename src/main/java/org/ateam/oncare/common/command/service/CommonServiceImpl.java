@@ -15,4 +15,6 @@ public class CommonServiceImpl implements CommonService {
     public CareLevel getCareLevel(int i) {
         return repository.findById(i).orElseThrow();
     }
+
+
 }
