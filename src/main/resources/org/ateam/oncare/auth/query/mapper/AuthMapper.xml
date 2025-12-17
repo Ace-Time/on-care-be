@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.auth.query.mapper.AuthMapper">
+    <resultMap id="refreshTokenOfEmployeeDTO" type="org.ateam.oncare.auth.query.dto.RefreshTokenOfEmployeeDTO">
+        <id property="id" column="id"/>
+        <result property="tokenHash" column="token_hash"/>
+        <result property="jti" column="jti"/>
+        <result property="issuedAt" column="issued_at"/>
+        <result property="expiresAt" column="expires_at"/>
+        <result property="revoked" column="revoked"/>
+        <result property="revokedAt" column="revoked_at"/>
+        <result property="deviceFp" column="device_fp"/>
+        <result property="ip" column="ip"/>
+        <result property="lastUsedAt" column="last_used_at"/>
+        <result property="employeeId" column="employee_id"/>
+        <result property="email" column="email"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
+        <collection property="authorities" ofType="string">
+            <result column="auth_name"/>
+        </collection>
+    </resultMap>
+
+    <select id ='selectRefreshTokenOfEmployee' resultMap="refreshTokenOfEmployeeDTO">
+        select
+               a.*
+             , b.email
+             , b.name
+             , b.phone
+             , d.name as auth_name
+        from refresh_token as a
+                 join employee as b on a.employee_id = b.id
+                 join authorities_of_employee as c on a.employee_id = c.employee_id
+                 join m_authorities as d on c.authority_code = d.id
+        where a.jti = #{rtId}
+    </select>
+</mapper>

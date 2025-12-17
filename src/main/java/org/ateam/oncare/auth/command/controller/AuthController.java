@@ -4,7 +4,7 @@ import jakarta.servlet.ServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.auth.command.dto.RequestLogin;
-import org.ateam.oncare.auth.command.dto.ResponseLoginDTO;
+import org.ateam.oncare.auth.command.dto.ResponseTokenDTO;
 import org.ateam.oncare.auth.command.dto.ResponseLoginEmployeeDTO;
 import org.ateam.oncare.auth.command.dto.ResponseToken;
 import org.ateam.oncare.auth.command.service.AuthService;
@@ -12,7 +12,6 @@ import org.ateam.oncare.auth.security.CookieUtil;
 import org.ateam.oncare.global.customannotation.annotation.ClientIp;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,12 +27,14 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
-    public ResponseEntity<ResponseLoginDTO> login(@RequestBody RequestLogin loginRequest, @ClientIp String clientIp) {
+    public ResponseEntity<ResponseTokenDTO> login(@RequestBody RequestLogin loginRequest, @ClientIp String clientIp) {
         ResponseToken tokenResponse =  authService.login(loginRequest, clientIp);
 
-        ResponseLoginDTO reponseBody = new ResponseLoginDTO(
+        ResponseTokenDTO reponseBody = new ResponseTokenDTO(
                 tokenResponse.getAccessToken(),
                 tokenResponse.getTokenType());
+
+        log.info("[로그인 인증] employeeId={}",tokenResponse.getEmployeeId());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, tokenResponse.getCookie().toString())
@@ -50,12 +51,24 @@ public class AuthController {
 
 
     @PostMapping("/refresh")
-    public ResponseEntity<ResponseToken> refreshToken(
+    public ResponseEntity<ResponseTokenDTO> refreshToken(
                                 @CookieValue(name = CookieUtil.REFRESH_COOKIE, required = false) String refreshToken,
-                                ServletRequest request) {
+                                ServletRequest request,
+                                @ClientIp String clientIp) {
         log.debug("리프래시 컨트롤러");
         log.debug("리프래시 요청 refreshToken:{}",refreshToken);
-        return ResponseEntity.ok(authService.refreshToken(refreshToken,request));
+
+        ResponseToken responseToken = authService.refreshToken(refreshToken,request,clientIp);
+
+        ResponseTokenDTO reponseBody = new ResponseTokenDTO(
+                responseToken.getAccessToken(),
+                responseToken.getTokenType());
+
+        log.info("[토근 재 발급] employeeId={}, old rt={}",responseToken.getEmployeeId(), refreshToken);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, responseToken.getCookie().toString())
+                .body(reponseBody);
     }
 
     /**
