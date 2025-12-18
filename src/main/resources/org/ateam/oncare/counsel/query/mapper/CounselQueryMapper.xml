@@ -203,6 +203,8 @@
         <result property="summary" column="summary"/>
         <result property="followUp" column="follow_up"/>
         <result property="followUpNecessary" column="follow_up_necessary"/>
+        <result property="churn" column="churn"/>
+        <result property="churnReason" column="churn_reason"/>
         <result property="counselorName" column="counselor_name"/>
         <result property="consultDate" column="consult_date"/>
     </resultMap>
@@ -214,6 +216,8 @@
             ch.summary,
             ch.follow_up,
             ch.follow_up_necessary,
+            ch.churn,
+            ch.churn_reason,
             e.name                  AS counselor_name,
             ch.consult_date
         FROM

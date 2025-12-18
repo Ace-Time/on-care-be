@@ -1,4 +1,4 @@
-package org.ateam.oncare.counsel.query.dto;
+package org.ateam.oncare.counsel.command.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class CounselDetailResponse {
+public class SubscriptionCounselResponse {
     private BigInteger counselHistoryId;
     private String counselCategoryName;
     private String detail;
@@ -23,4 +23,8 @@ public class CounselDetailResponse {
     private String counselorName;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime consultDate;
+    private int reservationChannelId;
+    private BigInteger customerId;
+    private String customerType;
+    private String htmlCode;
 }

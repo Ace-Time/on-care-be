@@ -46,4 +46,10 @@ public class PotentialCustomer {
     @CreatedDate
     @Column(name = "create_at", nullable = false, updatable = false)
     private LocalDateTime createAt;
+
+    @Column(name = "last_counsel_date")
+    private LocalDateTime lastCounselDate;
+
+    @Column(name = "current_stage")
+    private int currentStage;  // 가입 단계 (1~4)
 }

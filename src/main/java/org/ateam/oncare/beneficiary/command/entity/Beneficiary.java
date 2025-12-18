@@ -7,6 +7,7 @@
     import lombok.Setter;
 
     import java.time.LocalDate;
+    import java.time.LocalDateTime;
 
     @Entity
     @Getter
@@ -49,4 +50,7 @@
 
         @Column(name = "risk_id", nullable = false)
         private Integer riskId;
+
+        @Column(name = "last_counsel_date")   // 최근 상담일 추가
+        private LocalDateTime lastCounselDate;
     }

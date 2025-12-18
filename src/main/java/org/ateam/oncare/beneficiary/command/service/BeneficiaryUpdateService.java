@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.beneficiary.command.dto.request.BeneficiaryUpdateRequest;
 import org.ateam.oncare.beneficiary.command.dto.response.BeneficiaryUpdateResponse;
 import org.ateam.oncare.beneficiary.command.mapper.BeneficiaryUpdateMapper;
+import org.ateam.oncare.beneficiary.command.repository.BeneficiaryUpdateRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -14,6 +16,7 @@ import java.util.List;
 public class BeneficiaryUpdateService {
 
     private final BeneficiaryUpdateMapper mapper;
+    private final BeneficiaryUpdateRepository beneficiaryUpdateRepository;   // 최근 상담일 수정 위해 추가
 
     @Transactional
     public BeneficiaryUpdateResponse update(Long beneficiaryId, BeneficiaryUpdateRequest req) {
@@ -74,4 +77,8 @@ public class BeneficiaryUpdateService {
                 .careLevelEndDate(req.getCareLevelEndDate())
                 .build();
     }
+    @Transactional
+    public void updateLastCounselDate(Long beneficiaryId, LocalDateTime consultDate) {
+        beneficiaryUpdateRepository.updateLastCounselDate(beneficiaryId, consultDate);
+    } // 최근 상담일 수정을 위한 메소드
 }
