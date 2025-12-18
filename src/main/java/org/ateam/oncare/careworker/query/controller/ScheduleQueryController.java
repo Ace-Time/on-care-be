@@ -23,24 +23,26 @@ public class ScheduleQueryController {
     private final Long TEST_CAREGIVER_ID = 1L;
 
     // 캘린더 일정 조회 (월간/주간)
-    // 1. 일별 조회 (오늘)
-    // GET /api/schedules?startDate=2025-12-16&endDate=2025-12-16
-    // 2. 주별 조회 (이번 주: 월요일~일요일)
-    // GET /api/schedules?startDate=2025-12-16&endDate=2025-12-22
-    // 3. 월별 조회 (12월 전체)
-    // GET /api/schedules?startDate=2025-12-01&endDate=2025-12-31
+    //  1. 일별 조회 (오늘)
+    //    GET /api/schedules?startDate=2025-12-16&endDate=2025-12-16
+    //  2. 주별 조회 (이번 주: 월요일~일요일)
+    //    GET /api/schedules?startDate=2025-12-16&endDate=2025-12-22
+    //  3. 월별 조회 (12월 전체)
+    //    GET /api/schedules?startDate=2025-12-01&endDate=2025-12-31
     @GetMapping
     public List<CalendarScheduleDto> getSchedules(
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
         return scheduleQueryService.getSchedules(TEST_CAREGIVER_ID, startDate, endDate);
     }
 
-    // 일정 상세 조회
+    //  일정 상세 조회
     // 요청 예시: GET /api/schedules/101
     @GetMapping("/{scheduleId}")
     public ScheduleDetailDto getScheduleDetail(
-            @PathVariable Long scheduleId) {
+            @PathVariable Long scheduleId
+    ) {
         return scheduleQueryService.getScheduleDetail(scheduleId, TEST_CAREGIVER_ID);
     }
 
