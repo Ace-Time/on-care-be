@@ -27,5 +27,6 @@ public class RefreshTokenOfEmployeeDTO {
     private String email;
     private String name;
     private String phone;
+    private String jobName;
     private List<String> authorities;
 }

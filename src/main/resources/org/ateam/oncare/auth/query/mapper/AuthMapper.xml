@@ -17,6 +17,7 @@
         <result property="email" column="email"/>
         <result property="name" column="name"/>
         <result property="phone" column="phone"/>
+        <result property="jobName" column="job_name"/>
         <collection property="authorities" ofType="string">
             <result column="auth_name"/>
         </collection>
@@ -29,10 +30,12 @@
              , b.name
              , b.phone
              , d.name as auth_name
+             , e.name as job_name
         from refresh_token as a
                  join employee as b on a.employee_id = b.id
                  join authorities_of_employee as c on a.employee_id = c.employee_id
                  join m_authorities as d on c.authority_code = d.id
+                 join m_job as e on b.job_code = e.id
         where a.jti = #{rtId}
     </select>
 </mapper>

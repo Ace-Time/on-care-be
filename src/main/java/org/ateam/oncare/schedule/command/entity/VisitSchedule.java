@@ -28,10 +28,10 @@ public class VisitSchedule {
     @Column(name = "visit_status", nullable = false)
     private VisitStatus visitStatus; // Enum 생성 필요
 
-    @Column(name = "rfid_start_time", nullable = false)
+    @Column(name = "rfid_start_time")
     private LocalDateTime rfidStartTime;
 
-    @Column(name = "rfid_end_time", nullable = false)
+    @Column(name = "rfid_end_time")
     private LocalDateTime rfidEndTime;
 
     @Column(name = "is_log_written", nullable = false)
