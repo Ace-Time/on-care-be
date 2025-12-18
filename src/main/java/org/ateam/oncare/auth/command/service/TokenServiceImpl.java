@@ -127,7 +127,8 @@ public class TokenServiceImpl implements TokenService {
                 rtOfEmployee.getEmployeeId(),
                 rtOfEmployee.getEmail(),
                 rtOfEmployee.getName(),
-                rtOfEmployee.getPhone()
+                rtOfEmployee.getPhone(),
+                rtOfEmployee.getJobName()
         );
 
         //새로운 RT, AT 생성

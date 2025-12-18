@@ -16,15 +16,17 @@ public class EmployeeImpl extends User {
     private String email;
     private String name;
     private String phone;
+    private String jobName;
 
     public EmployeeImpl(String username, @Nullable String password, Collection<? extends GrantedAuthority> authorities) {
         super(username, password, authorities);
     }
 
-    public void setDetails(Integer id, String email, String name, String phone) {
+    public void setDetails(Integer id, String email, String name, String phone, String jobName) {
         this.id = id;
         this.email = email;
         this.name = name;
         this.phone = phone;
+        this.jobName = jobName;
     }
 }

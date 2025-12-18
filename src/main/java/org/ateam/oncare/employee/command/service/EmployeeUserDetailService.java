@@ -7,6 +7,7 @@ import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import org.ateam.oncare.employee.command.entity.Employee;
 import org.ateam.oncare.employee.command.entity.QAuthority;
 import org.ateam.oncare.employee.command.entity.QEmployee;
+import org.ateam.oncare.employee.command.entity.QJob;
 import org.ateam.oncare.employee.command.repository.EmployeeRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -29,7 +30,6 @@ public class EmployeeUserDetailService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-
         List<Tuple> results = employeeRepository.findLoginDataByUsername(email);
 
         //첫 번째 Row에서 직원 공통 정보 추출
@@ -52,7 +52,8 @@ public class EmployeeUserDetailService implements UserDetailsService {
                 employee.getId(),
                 employee.getEmail(),
                 employee.getName(),
-                employee.getPhone()
+                employee.getPhone(),
+                results.get(0).get(QJob.job.name)
         );
 
         log.debug("queryDSL 결과(employeeImpl):{}", employeeImpl);
