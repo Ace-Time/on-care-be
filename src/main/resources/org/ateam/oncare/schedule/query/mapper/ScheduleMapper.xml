@@ -161,10 +161,10 @@
         bs.service_type_id AS service_type_id,
         st.name AS service_type_name,
 
-        TIME(bs.start_time) AS start_time,
-        TIME(bs.end_time) AS end_time,
+        bs.start_time AS start_time,
+        bs.end_time   AS end_time,
 
-        TIMESTAMPDIFF(MINUTE, bs.start_time, bs.end_time) AS duration_minutes
+        (TIME_TO_SEC(bs.end_time) - TIME_TO_SEC(bs.start_time)) / 60 AS duration_minutes
         FROM valid_matching vm
         JOIN beneficiary_schedule bs
         ON bs.beneficiary_id = vm.beneficiary_id
@@ -238,10 +238,10 @@
         bs.service_type_id AS service_type_id,
         st.name AS service_type_name,
 
-        TIME(bs.start_time) AS start_time,
-        TIME(bs.end_time) AS end_time,
+        bs.start_time AS start_time,
+        bs.end_time   AS end_time,
 
-        TIMESTAMPDIFF(MINUTE, bs.start_time, bs.end_time) AS duration_minutes
+        (TIME_TO_SEC(bs.end_time) - TIME_TO_SEC(bs.start_time)) / 60 AS duration_minutes
         FROM matching m
         JOIN beneficiary b
         ON b.id = m.beneficiary_id
@@ -275,7 +275,7 @@
             AND bs.service_type_id = #{serviceTypeId}
         </if>
         <if test="startTime != null">
-            AND TIME(bs.start_time) = #{startTime}
+            AND bs.start_time = #{startTime}
         </if>
 
         LIMIT 1
