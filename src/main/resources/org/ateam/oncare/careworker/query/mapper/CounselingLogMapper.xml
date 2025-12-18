@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.careworker.query.mapper.CounselingLogMapper">
+
+    <!-- 방문상담 목록 조회 (요양보호사별) -->
+    <select id="selectCounselingLogList" resultType="org.ateam.oncare.careworker.query.dto.CounselingLogListDto">
+        SELECT
+            cl.counseling_id AS counselingId,
+            cl.counseling_date AS counselingDate,
+            cl.counseling_type AS counselingType,
+            cl.satisfaction AS satisfaction,
+            cl.beneficiary_id AS beneficiaryId,
+            b.name AS beneficiaryName,
+            COALESCE(mcl.level, '등급없음') AS careLevel
+        FROM counseling_logs cl
+                 LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+        WHERE cl.care_worker_id = #{caregiverId}
+        ORDER BY cl.counseling_date DESC, cl.created_at DESC
+    </select>
+
+    <!-- 방문상담 목록 조회 (수급자별) -->
+    <select id="selectCounselingLogListByBeneficiary" resultType="org.ateam.oncare.careworker.query.dto.CounselingLogListDto">
+        SELECT
+            cl.counseling_id AS counselingId,
+            cl.counseling_date AS counselingDate,
+            cl.counseling_type AS counselingType,
+            cl.satisfaction AS satisfaction,
+            cl.beneficiary_id AS beneficiaryId,
+            b.name AS beneficiaryName,
+            COALESCE(mcl.level, '등급없음') AS careLevel
+        FROM counseling_logs cl
+                 LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+        WHERE cl.beneficiary_id = #{beneficiaryId}
+        ORDER BY cl.counseling_date DESC, cl.created_at DESC
+    </select>
+
+    <!-- 방문상담 상세 조회 -->
+    <select id="selectCounselingLogDetail" resultType="org.ateam.oncare.careworker.query.dto.CounselingLogDetailDto">
+        SELECT
+            cl.counseling_id AS counselingId,
+            cl.counseling_date AS counselingDate,
+            cl.counseling_type AS counselingType,
+            cl.satisfaction AS satisfaction,
+            cl.created_at AS createdAt,
+            cl.beneficiary_id AS beneficiaryId,
+            b.name AS beneficiaryName,
+            b.address AS beneficiaryAddress,
+            COALESCE(mcl.level, '등급없음') AS careLevel,
+            cl.visit_purpose AS visitPurpose,
+            cl.attendees AS attendees,
+            cl.discussion_content AS discussionContent,
+            cl.agreement_content AS agreementContent,
+            cl.next_visit_date AS nextVisitDate,
+            cl.counselor_sign_url AS counselorSignUrl,
+            cl.guardian_sign_url AS guardianSignUrl
+        FROM counseling_logs cl
+                 LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+        WHERE cl.counseling_id = #{counselingId}
+    </select>
+
+</mapper>

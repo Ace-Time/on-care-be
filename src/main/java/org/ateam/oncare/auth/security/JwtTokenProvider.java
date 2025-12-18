@@ -32,21 +32,22 @@ public class JwtTokenProvider {
         this.rtKey = Keys.hmacShaKeyFor(jwtConfig.getRtSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(Authentication authentication) {
+    public String generateAccessToken(EmployeeImpl employee) {
 
         // 인증 후 EmployeeUserDetailService에서 return한 EmployeeImpl Get
-        EmployeeImpl userDetails = (EmployeeImpl) authentication.getPrincipal();
+//        EmployeeImpl userDetails = (EmployeeImpl) authentication.getPrincipal();
 
-        List<String> roles = userDetails.getAuthorities().stream()
+        List<String> roles = employee.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
         Date now = new Date();
         Date exp = new Date(now.getTime() + jwtConfig.getAccessTokenValidity());
-        Claims claims = Jwts.claims().setSubject(userDetails.getUsername());
+        Claims claims = Jwts.claims().setSubject(employee.getUsername());
         claims.put("auth", roles);
-        claims.put("username", userDetails.getUsername());
-        claims.put("id", userDetails.getId());
+        claims.put("id", employee.getId());
+        claims.put("username", employee.getName());
+        claims.put("jobname", employee.getJobName());
 //        claims.put("email", userDetails.getEmail());
 
         return Jwts.builder()

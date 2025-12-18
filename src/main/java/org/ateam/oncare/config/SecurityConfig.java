@@ -30,16 +30,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) //CorsConfigurationSource 설정을 찾아 적용(CORS 설정)
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) //세션을 사용하지 않음 JWT인증
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); //security 인증전 filter를 가로채 JWT 인증 절차 진행
+                .cors(Customizer.withDefaults()) //CorsConfigurationSource 설정을 찾아 적용(CORS 설정)
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) //세션을 사용하지 않음 JWT인증
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); //security 인증전 filter를 가로채 JWT 인증 절차 진행
 
         http.authorizeHttpRequests(auth -> auth
-//                .requestMatchers("/**").permitAll() // 개발 기간동안 모든 요청 허용
+                .requestMatchers("/**").permitAll() // 개발 기간동안 모든 요청 허용
 //                .requestMatchers("/health", "/auth/**", "/employee/**").permitAll() // health, 인증 관련 요청만 인증 없이 허용
-                .requestMatchers("/health", "/auth/**").permitAll() // health, 인증 관련 요청만 인증 없이 허용
+                .requestMatchers("/health", "/auth/**", "/api/**").permitAll() // health, 인증, API 요청 허용 (테스트용)
                 .anyRequest().authenticated());
 
         return http.build();
@@ -54,7 +54,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
 
         // 허용할 HTTP 메소드 (GET, POST 등)
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // 허용할 헤더 (Authorization 등) 모든 헤더 허용
         configuration.setAllowedHeaders(Arrays.asList("*"));
