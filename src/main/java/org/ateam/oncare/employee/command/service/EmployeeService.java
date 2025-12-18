@@ -13,4 +13,6 @@ public interface EmployeeService {
     Map<Long, String> getAuthorityMasters();
 
     ResponseAuthorityDTO updateAuthority(RequestAuthorityDTO requestAuthorityDTO);
+
+    void registerEmployee(org.ateam.oncare.employee.command.dto.EmployeeRegisterDto dto);
 }

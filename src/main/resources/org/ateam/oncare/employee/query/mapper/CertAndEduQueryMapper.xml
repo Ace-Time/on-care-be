@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.employee.query.mapper.CertAndEduQueryMapper">
+
+    <resultMap id="CertificateViewMap" type="org.ateam.oncare.employee.query.dto.CertificateViewDTO">
+        <id property="id" column="cwc_id"/>
+
+        <result property="employeeName" column="employee_name"/>
+
+        <result property="certificateName" column="certificate_name"/>
+        <result property="organization" column="organization"/>
+        <result property="licenseNo" column="license_no"/>
+        <result property="issueDate" column="issue_date"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <resultMap id="EducationMap" type="org.ateam.oncare.employee.query.dto.EducationDTO">
+        <id property="id" column="education_id"/>           <result property="eduName" column="edu_name"/>
+        <result property="institution" column="institution"/>
+        <result property="eduDate" column="edu_date"/>
+        <result property="nextEduDate" column="next_edu_date"/>
+        <result property="isOverdue" column="is_overdue"/>
+        <result property="status" column="status"/>
+        <result property="relatedLicenseName" column="related_license_name"/>
+    </resultMap>
+
+
+    <select id="selectCertificatesByEmployeeId" resultMap="CertificateViewMap">
+        SELECT
+        cwc.id AS cwc_id,
+        e.name AS employee_name,  -- ★ [추가] 직원 테이블의 이름 조회
+        m.certificate_name,
+        m.organization,
+        cwc.license_no,
+        cwc.issue_date,
+        cwc.expire_date,
+        cwc.`status`
+        FROM care_worker_certificate cwc
+        JOIN certificate m ON cwc.certificate_id = m.id
+        JOIN care_worker cw ON cwc.care_worker_id = cw.id
+        JOIN employee e ON cw.employee_id = e.id
+        WHERE cw.employee_id = #{employeeId}
+        ORDER BY cwc.issue_date DESC
+    </select>
+
+    <select id="selectEducationsByCertId" resultMap="EducationMap">
+        SELECT
+        e.id               AS education_id,      e.edu_name,
+        e.institution,
+        e.edu_date,
+        e.next_edu_date,
+        e.is_overdue,
+        e.`status`,
+        m.certificate_name AS related_license_name
+        FROM education e
+        JOIN care_worker_certificate cwc ON e.care_worker_certificate_id = cwc.id
+        JOIN certificate m ON cwc.certificate_id = m.id
+        WHERE e.care_worker_certificate_id = #{careWorkerCertId}
+        ORDER BY e.edu_date DESC
+    </select>
+
+    <select id="selectCertificates" resultMap="CertificateViewMap">
+        SELECT
+            cwc.id AS cwc_id,
+            e.name AS employee_name,
+            m.certificate_name,
+            m.organization,
+            cwc.license_no,
+            cwc.issue_date,
+            cwc.expire_date,
+            cwc.`status`
+        FROM care_worker_certificate cwc
+        JOIN certificate m ON cwc.certificate_id = m.id
+        JOIN care_worker cw ON cwc.care_worker_id = cw.id
+        JOIN employee e ON cw.employee_id = e.id
+        <where>
+            <if test="statusCode != null">
+                AND cwc.`status` = #{statusCode}
+            </if>
+        </where>
+
+        ORDER BY cwc.issue_date DESC
+    </select>
+</mapper>

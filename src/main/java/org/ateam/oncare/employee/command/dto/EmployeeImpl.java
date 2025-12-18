@@ -18,7 +18,8 @@ public class EmployeeImpl extends User {
     private String phone;
     private String jobName;
 
-    public EmployeeImpl(String username, @Nullable String password, Collection<? extends GrantedAuthority> authorities) {
+    public EmployeeImpl(String username, @Nullable String password,
+            Collection<? extends GrantedAuthority> authorities) {
         super(username, password, authorities);
     }
 
