@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.careworker.command.mapper.CounselingLogCommandMapper">
+
+    <!-- 방문상담 작성 -->
+    <insert id="insertCounselingLog">
+        INSERT INTO counseling_logs (
+            counseling_date,
+            counseling_type,
+            satisfaction,
+            visit_purpose,
+            attendees,
+            discussion_content,
+            agreement_content,
+            next_visit_date,
+            counselor_sign_url,
+            guardian_sign_url,
+            created_at,
+            care_worker_id,
+            beneficiary_id
+        ) VALUES (
+            #{request.counselingDate},
+            #{request.counselingType},
+            #{request.satisfaction},
+            #{request.visitPurpose},
+            #{request.attendees},
+            #{request.discussionContent},
+            #{request.agreementContent},
+            #{request.nextVisitDate},
+            #{request.counselorSignUrl},
+            #{request.guardianSignUrl},
+            NOW(),
+            #{careWorkerId},
+            #{request.beneficiaryId}
+        )
+    </insert>
+
+    <!-- 방문상담 수정 -->
+    <update id="updateCounselingLog">
+        UPDATE counseling_logs
+        <set>
+            <if test="request.counselingDate != null">counseling_date = #{request.counselingDate},</if>
+            <if test="request.counselingType != null">counseling_type = #{request.counselingType},</if>
+            <if test="request.satisfaction != null">satisfaction = #{request.satisfaction},</if>
+            <if test="request.visitPurpose != null">visit_purpose = #{request.visitPurpose},</if>
+            <if test="request.attendees != null">attendees = #{request.attendees},</if>
+            <if test="request.discussionContent != null">discussion_content = #{request.discussionContent},</if>
+            <if test="request.agreementContent != null">agreement_content = #{request.agreementContent},</if>
+            <if test="request.nextVisitDate != null">next_visit_date = #{request.nextVisitDate},</if>
+            <if test="request.counselorSignUrl != null">counselor_sign_url = #{request.counselorSignUrl},</if>
+            <if test="request.guardianSignUrl != null">guardian_sign_url = #{request.guardianSignUrl},</if>
+        </set>
+        WHERE counseling_id = #{counselingId}
+    </update>
+
+    <!-- 방문상담 삭제 -->
+    <delete id="deleteCounselingLog">
+        DELETE FROM counseling_logs
+        WHERE counseling_id = #{counselingId}
+    </delete>
+
+</mapper>
