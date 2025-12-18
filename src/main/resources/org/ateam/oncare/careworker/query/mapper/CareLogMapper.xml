@@ -29,7 +29,7 @@
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
         WHERE cl.care_worker_id = #{caregiverId}
           AND cl.is_deleted = FALSE
-        ORDER BY cl.service_date DESC, cl.start_time DESC
+        ORDER BY cl.service_date DESC, cl.created_at DESC
     </select>
 
     <!-- 요양일지 목록 조회 (수급자별) -->
@@ -58,7 +58,7 @@
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
         WHERE cl.beneficiary_id = #{beneficiaryId}
           AND cl.is_deleted = FALSE
-        ORDER BY cl.service_date DESC, cl.start_time DESC
+        ORDER BY cl.service_date DESC, cl.created_at DESC
     </select>
 
     <!-- 요양일지 상세 조회 -->

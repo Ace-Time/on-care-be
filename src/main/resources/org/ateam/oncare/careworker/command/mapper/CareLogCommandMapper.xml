@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.careworker.command.mapper.CareLogCommandMapper">
+
+    <!-- 요양일지 작성 -->
+    <insert id="insertCareLog">
+        INSERT INTO care_logs (
+            vs_id, service_date, start_time, end_time, service_type,
+            created_at, updated_at, is_deleted,
+            is_breakfast, is_lunch, is_dinner, is_snack,
+            diaper_count, toilet_count, is_portable_toilet, is_urine, is_stool,
+            stool_normal, stool_diarrhea, stool_constipation,
+            is_face_wash, is_oral_care, is_hair_wash, is_body_wash, is_change_clothes,
+            is_meal_prep, is_bed_care, is_position_change, is_get_up_help,
+            is_indoor_move, is_walk_help,
+            is_emotional_talk, is_communication, is_counseling,
+            is_cognitive_care, is_behavior_care,
+            is_health_good, is_pain, is_edema, is_skin_issue, is_body_etc,
+            is_mood_calm, is_mood_anxious, is_mood_depressed, is_mood_angry, is_mood_etc,
+            is_excretion_mistake, is_sleep_lack, is_nap_excess,
+            special_note, care_worker_id, beneficiary_id
+        ) VALUES (
+            #{request.vsId}, #{request.serviceDate}, #{request.startTime}, #{request.endTime}, #{request.serviceType},
+            NOW(), NOW(), 0,
+            #{request.isBreakfast}, #{request.isLunch}, #{request.isDinner}, #{request.isSnack},
+            #{request.diaperCount}, #{request.toiletCount}, #{request.isPortableToilet}, #{request.isUrine}, #{request.isStool},
+            #{request.stoolNormal}, #{request.stoolDiarrhea}, #{request.stoolConstipation},
+            #{request.isFaceWash}, #{request.isOralCare}, #{request.isHairWash}, #{request.isBodyWash}, #{request.isChangeClothes},
+            #{request.isMealPrep}, #{request.isBedCare}, #{request.isPositionChange}, #{request.isGetUpHelp},
+            #{request.isIndoorMove}, #{request.isWalkHelp},
+            #{request.isEmotionalTalk}, #{request.isCommunication}, #{request.isCounseling},
+            #{request.isCognitiveCare}, #{request.isBehaviorCare},
+            #{request.isHealthGood}, #{request.isPain}, #{request.isEdema}, #{request.isSkinIssue}, #{request.isBodyEtc},
+            #{request.isMoodCalm}, #{request.isMoodAnxious}, #{request.isMoodDepressed}, #{request.isMoodAngry}, #{request.isMoodEtc},
+            #{request.isExcretionMistake}, #{request.isSleepLack}, #{request.isNapExcess},
+            #{request.specialNote}, #{careWorkerId}, #{request.beneficiaryId}
+        )
+    </insert>
+
+    <!-- 요양일지 수정 -->
+    <update id="updateCareLog">
+        UPDATE care_logs
+        <set>
+            updated_at = NOW(),
+            <if test="request.serviceDate != null">service_date = #{request.serviceDate},</if>
+            <if test="request.startTime != null">start_time = #{request.startTime},</if>
+            <if test="request.endTime != null">end_time = #{request.endTime},</if>
+            <if test="request.serviceType != null">service_type = #{request.serviceType},</if>
+            <if test="request.isBreakfast != null">is_breakfast = #{request.isBreakfast},</if>
+            <if test="request.isLunch != null">is_lunch = #{request.isLunch},</if>
+            <if test="request.isDinner != null">is_dinner = #{request.isDinner},</if>
+            <if test="request.isSnack != null">is_snack = #{request.isSnack},</if>
+            <if test="request.diaperCount != null">diaper_count = #{request.diaperCount},</if>
+            <if test="request.toiletCount != null">toilet_count = #{request.toiletCount},</if>
+            <if test="request.isPortableToilet != null">is_portable_toilet = #{request.isPortableToilet},</if>
+            <if test="request.isUrine != null">is_urine = #{request.isUrine},</if>
+            <if test="request.isStool != null">is_stool = #{request.isStool},</if>
+            <if test="request.stoolNormal != null">stool_normal = #{request.stoolNormal},</if>
+            <if test="request.stoolDiarrhea != null">stool_diarrhea = #{request.stoolDiarrhea},</if>
+            <if test="request.stoolConstipation != null">stool_constipation = #{request.stoolConstipation},</if>
+            <if test="request.isFaceWash != null">is_face_wash = #{request.isFaceWash},</if>
+            <if test="request.isOralCare != null">is_oral_care = #{request.isOralCare},</if>
+            <if test="request.isHairWash != null">is_hair_wash = #{request.isHairWash},</if>
+            <if test="request.isBodyWash != null">is_body_wash = #{request.isBodyWash},</if>
+            <if test="request.isChangeClothes != null">is_change_clothes = #{request.isChangeClothes},</if>
+            <if test="request.isMealPrep != null">is_meal_prep = #{request.isMealPrep},</if>
+            <if test="request.isBedCare != null">is_bed_care = #{request.isBedCare},</if>
+            <if test="request.isPositionChange != null">is_position_change = #{request.isPositionChange},</if>
+            <if test="request.isGetUpHelp != null">is_get_up_help = #{request.isGetUpHelp},</if>
+            <if test="request.isIndoorMove != null">is_indoor_move = #{request.isIndoorMove},</if>
+            <if test="request.isWalkHelp != null">is_walk_help = #{request.isWalkHelp},</if>
+            <if test="request.isEmotionalTalk != null">is_emotional_talk = #{request.isEmotionalTalk},</if>
+            <if test="request.isCommunication != null">is_communication = #{request.isCommunication},</if>
+            <if test="request.isCounseling != null">is_counseling = #{request.isCounseling},</if>
+            <if test="request.isCognitiveCare != null">is_cognitive_care = #{request.isCognitiveCare},</if>
+            <if test="request.isBehaviorCare != null">is_behavior_care = #{request.isBehaviorCare},</if>
+            <if test="request.isHealthGood != null">is_health_good = #{request.isHealthGood},</if>
+            <if test="request.isPain != null">is_pain = #{request.isPain},</if>
+            <if test="request.isEdema != null">is_edema = #{request.isEdema},</if>
+            <if test="request.isSkinIssue != null">is_skin_issue = #{request.isSkinIssue},</if>
+            <if test="request.isBodyEtc != null">is_body_etc = #{request.isBodyEtc},</if>
+            <if test="request.isMoodCalm != null">is_mood_calm = #{request.isMoodCalm},</if>
+            <if test="request.isMoodAnxious != null">is_mood_anxious = #{request.isMoodAnxious},</if>
+            <if test="request.isMoodDepressed != null">is_mood_depressed = #{request.isMoodDepressed},</if>
+            <if test="request.isMoodAngry != null">is_mood_angry = #{request.isMoodAngry},</if>
+            <if test="request.isMoodEtc != null">is_mood_etc = #{request.isMoodEtc},</if>
+            <if test="request.isExcretionMistake != null">is_excretion_mistake = #{request.isExcretionMistake},</if>
+            <if test="request.isSleepLack != null">is_sleep_lack = #{request.isSleepLack},</if>
+            <if test="request.isNapExcess != null">is_nap_excess = #{request.isNapExcess},</if>
+            <if test="request.specialNote != null">special_note = #{request.specialNote},</if>
+        </set>
+        WHERE log_id = #{logId}
+          AND is_deleted = 0
+    </update>
+
+    <!-- 요양일지 삭제 (논리삭제) -->
+    <update id="deleteCareLog">
+        UPDATE care_logs
+        SET is_deleted = 1,
+            updated_at = NOW()
+        WHERE log_id = #{logId}
+    </update>
+
+</mapper>

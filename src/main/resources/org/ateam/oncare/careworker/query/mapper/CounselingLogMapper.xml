@@ -27,7 +27,7 @@
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
         WHERE cl.care_worker_id = #{caregiverId}
-        ORDER BY cl.counseling_date DESC
+        ORDER BY cl.counseling_date DESC, cl.created_at DESC
     </select>
 
     <!-- 방문상담 목록 조회 (수급자별) -->
@@ -54,7 +54,7 @@
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
         WHERE cl.beneficiary_id = #{beneficiaryId}
-        ORDER BY cl.counseling_date DESC
+        ORDER BY cl.counseling_date DESC, cl.created_at DESC
     </select>
 
     <!-- 방문상담 상세 조회 -->

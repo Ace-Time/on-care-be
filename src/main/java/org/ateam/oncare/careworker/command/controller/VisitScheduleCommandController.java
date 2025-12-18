@@ -23,7 +23,7 @@ public class VisitScheduleCommandController {
         return ApiResponse.success(null);
     }
 
-    // 2. 방문 일정 서비스 종료 (IN_PROGRESS → COMPLETED)
+    // 2. 방문 일정 서비스 종료 (IN_PROGRESS → DONE)
     @PostMapping("/{vsId}/complete")
     public ApiResponse<Void> completeVisit(
             @PathVariable Long vsId,

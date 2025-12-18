@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.careworker.command.mapper.BasicEvaluationCommandMapper">
+
+    <!-- 기초평가 작성 -->
+    <insert id="insertBasicEvaluation">
+        INSERT INTO basic_evaluations (
+            eval_type,
+            template_id,
+            eval_date,
+            eval_data,
+            created_at,
+            beneficiary_id,
+            care_worker_id
+        ) VALUES (
+            #{request.evalType},
+            #{request.templateId},
+            #{request.evalDate},
+            #{request.evalData},
+            NOW(),
+            #{request.beneficiaryId},
+            #{careWorkerId}
+        )
+    </insert>
+
+    <!-- 기초평가 수정 -->
+    <update id="updateBasicEvaluation">
+        UPDATE basic_evaluations
+        <set>
+            <if test="request.evalDate != null">eval_date = #{request.evalDate},</if>
+            <if test="request.evalData != null">eval_data = #{request.evalData},</if>
+        </set>
+        WHERE eval_id = #{evalId}
+    </update>
+
+    <!-- 기초평가 삭제 -->
+    <delete id="deleteBasicEvaluation">
+        DELETE FROM basic_evaluations
+        WHERE eval_id = #{evalId}
+    </delete>
+
+</mapper>
