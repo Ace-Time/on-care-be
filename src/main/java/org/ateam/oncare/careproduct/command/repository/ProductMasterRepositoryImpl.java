@@ -39,18 +39,13 @@ public class ProductMasterRepositoryImpl implements ProductMasterRepositoryCusto
         !condition.getCategoryName().equals("전체"))
             builder.and(category.name.eq(condition.getCategoryName()));
 
-        //제품명
-        if(StringUtils.hasText(condition.getCodeOrName()))
-            s_builder.or(master.name.containsIgnoreCase(condition.getCodeOrName()));
+        //제품명 및 제품코드
+        if(StringUtils.hasText(condition.getCodeOrName())) {
+            builder.and(master.name.containsIgnoreCase(condition.getCodeOrName())
+                    .or(master.id.containsIgnoreCase(condition.getCodeOrName())));
+        }
 
-        //제품코드
-        if(StringUtils.hasText(condition.getCodeOrName()))
-            s_builder.or(master.id.containsIgnoreCase(condition.getCodeOrName()));
-
-        if(s_builder.hasValue())
-            builder.and(s_builder);
-
-        List<CareProductMaster> entitys =
+        List<CareProductMaster> entities =
                 queryFactory
                         .select(master)
                         .from(master)
@@ -61,14 +56,14 @@ public class ProductMasterRepositoryImpl implements ProductMasterRepositoryCusto
                         .fetch();
 
         boolean hasNext = false;
-        if(entitys.size() > pageSize) {
+        if(entities.size() > pageSize) {
             hasNext = true;
-            entitys.remove(pageSize);   // 뒤에 데이터가 있는지 확인을 위해 1개 더 가지고온 데이터 삭제
+            entities.remove(pageSize);   // 뒤에 데이터가 있는지 확인을 위해 1개 더 가지고온 데이터 삭제
         }
 
         List<ResponseProductMasterDTO> dtos
-                = entitys.stream()
-                .map(m -> productMasterMapper.toProductMasterDTO(m))
+                = entities.stream()
+                .map(productMasterMapper::toProductMasterDTO)
                 .toList();
 
         return new SliceImpl<>(dtos, pageable, hasNext);
