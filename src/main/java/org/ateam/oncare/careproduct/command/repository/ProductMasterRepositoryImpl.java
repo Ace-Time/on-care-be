@@ -4,7 +4,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ateam.oncare.careproduct.command.dto.RequestProductMasterDTO;
+import org.ateam.oncare.careproduct.command.dto.RequestProductMasterForSelectDTO;
 import org.ateam.oncare.careproduct.command.dto.ResponseProductMasterDTO;
 import org.ateam.oncare.careproduct.command.entity.CareProductMaster;
 import org.ateam.oncare.careproduct.command.entity.QCareProductMaster;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -28,7 +27,7 @@ public class ProductMasterRepositoryImpl implements ProductMasterRepositoryCusto
     private final ProductMasterMapper productMasterMapper;
 
     @Override
-    public Slice<ResponseProductMasterDTO> selectProductMaster(RequestProductMasterDTO condition, Pageable pageable) {
+    public Slice<ResponseProductMasterDTO> selectProductMaster(RequestProductMasterForSelectDTO condition, Pageable pageable) {
 
         BooleanBuilder builder = new BooleanBuilder();
         BooleanBuilder s_builder = new BooleanBuilder();

@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @ToString
 @AllArgsConstructor
@@ -15,7 +16,7 @@ public class ResponseProductMasterDTO {
     private String name;
     private BigDecimal amount;
     private BigDecimal rentalAmount;
-    private LocalDate createdAt;
-    private LocalDate updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private String categoryCd;
 }

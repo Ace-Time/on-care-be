@@ -1,15 +1,22 @@
 package org.ateam.oncare.careproduct.command.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter
 @Getter
+@Setter
 public class RequestProductMasterDTO {
-    private String codeOrName; //코드 혹은 명칭으로 조회
-    private String categoryName;
+    private String id;
+    private String name;
+    private BigDecimal amount;
+    private BigDecimal rentalAmount;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String categoryCd;
 }
