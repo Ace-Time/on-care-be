@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class ResponseProductMasterDTO {
     private String id;
     private String name;
+    private String explanation;
     private BigDecimal amount;
     private BigDecimal rentalAmount;
     private LocalDateTime createdAt;

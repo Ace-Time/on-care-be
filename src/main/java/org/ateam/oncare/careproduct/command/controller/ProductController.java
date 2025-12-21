@@ -42,6 +42,18 @@ public class ProductController {
     }
 
 
+    @PatchMapping("/master")
+    public ResponseEntity<Integer> updateProductMaster(@RequestBody RequestProductMasterDTO requestProductMasterDTO) {
+        int count = productMasterService.updateProductMaster(requestProductMasterDTO);
+        return ResponseEntity.ok(count);
+    }
+
+    @PostMapping("/master")
+    public ResponseEntity<Integer> registerProductMaster(@RequestBody RequestProductMasterDTO requestProductMasterDTO) {
+        int count = productMasterService.registerProductMaster(requestProductMasterDTO);
+        return ResponseEntity.ok(count);
+    }
+
     /**
      * 관리용품 탭에 정보로 실 제품의 총재고, 가용, 렌탈 중인 데이터를 포함한 조회
      *
@@ -61,13 +73,6 @@ public class ProductController {
                 .body(response);
     }
 
-
-    @PatchMapping("/master")
-    public ResponseEntity<Integer> updateProductMaster(@RequestBody RequestProductMasterDTO requestProductMasterDTO) {
-        int count = productMasterService.updateProductMaster(requestProductMasterDTO);
-
-        return ResponseEntity.ok(count);
-    }
 
     @GetMapping("/product")
     public ResponseEntity<Slice<ResponseProductDTO>> getProduct(

@@ -2,6 +2,7 @@ package org.ateam.oncare.careproduct.command.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,15 +23,20 @@ public class CareProductMaster {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "explanation")
+    private String explanation;
+
     @Column(name = "amount")
     private BigDecimal amount;
 
     @Column(name = "rental_amount")
     private BigDecimal rentalAmount;
 
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @CreationTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 

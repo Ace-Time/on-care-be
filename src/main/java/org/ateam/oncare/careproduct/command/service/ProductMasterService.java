@@ -14,4 +14,6 @@ public interface ProductMasterService {
     int updateProductMaster(RequestProductMasterDTO requestProductMasterDTO);
 
     Slice<ResponseProductMasterDetailDTO> getProductMasterDetail(RequestProductMasterForSelectDTO condition, Pageable pageable);
+
+    int registerProductMaster(RequestProductMasterDTO requestProductMasterDTO);
 }

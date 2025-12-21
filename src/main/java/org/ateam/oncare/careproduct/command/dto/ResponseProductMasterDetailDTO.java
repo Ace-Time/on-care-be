@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public class ResponseProductMasterDetailDTO {
     private String id;
     private String name;
+    private String explanation;
     private BigDecimal amount;
     private BigDecimal rentalAmount;
     private String categoryCd;

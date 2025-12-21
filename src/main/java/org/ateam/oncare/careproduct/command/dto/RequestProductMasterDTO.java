@@ -14,9 +14,10 @@ import java.time.LocalDateTime;
 public class RequestProductMasterDTO {
     private String id;
     private String name;
+    private String categoryCd;
+    private String explanation;
     private BigDecimal amount;
     private BigDecimal rentalAmount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String categoryCd;
 }

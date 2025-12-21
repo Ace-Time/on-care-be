@@ -59,15 +59,24 @@ public class ProductMasterServiceImpl implements ProductMasterService {
     @Override
     @CacheEvict(value = "masterData", key = "'product_category'")
     public int updateProductMaster(RequestProductMasterDTO requestProductMasterDTO) {
-        log.debug("requestProductMasterDTO:{}", requestProductMasterDTO);
         CareProductMaster productMaster
                 = productMasterRepository.findById(requestProductMasterDTO.getId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 제품을 찾을 수 없습니다."));
+
         productMaster.setName(requestProductMasterDTO.getName());
         productMaster.setAmount(requestProductMasterDTO.getAmount());
         productMaster.setRentalAmount(requestProductMasterDTO.getRentalAmount());
         productMaster.setUpdatedAt(LocalDateTime.now());
+        productMaster.setExplanation(requestProductMasterDTO.getExplanation());
         productMasterRepository.save(productMaster);
+
+        return 1;
+    }
+
+    @Override
+    public int registerProductMaster(RequestProductMasterDTO requestProductMasterDTO) {
+        CareProductMaster entity = productMasterMapper.toProductMasterEntity(requestProductMasterDTO);
+        productMasterRepository.save(entity);
 
         return 1;
     }
@@ -124,6 +133,7 @@ public class ProductMasterServiceImpl implements ProductMasterService {
                     return new ResponseProductMasterDetailDTO(
                             master.getId(),
                             master.getName(),
+                            master.getExplanation(),
                             master.getAmount(),
                             master.getRentalAmount(),
                             master.getCategoryCd(),
@@ -139,4 +149,5 @@ public class ProductMasterServiceImpl implements ProductMasterService {
 
         return new SliceImpl<>(content, pageable ,productMasters.hasNext());
     }
+
 }
