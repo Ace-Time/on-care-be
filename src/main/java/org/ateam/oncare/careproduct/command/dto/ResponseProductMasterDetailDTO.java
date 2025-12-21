@@ -3,20 +3,23 @@ package org.ateam.oncare.careproduct.command.dto;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
-public class ResponseProductMasterDTO {
+public class ResponseProductMasterDetailDTO {
     private String id;
     private String name;
     private BigDecimal amount;
     private BigDecimal rentalAmount;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     private String categoryCd;
+    private int totalProducts;
+    private int availableProducts;
+    private int reatalProducts;
+    private int reservedProducts;
+    private int purchasePrice;
+    private int monthlyRenalFee;
 }

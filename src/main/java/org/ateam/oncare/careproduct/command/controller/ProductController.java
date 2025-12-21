@@ -2,11 +2,9 @@ package org.ateam.oncare.careproduct.command.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ateam.oncare.careproduct.command.dto.RequestProductMasterDTO;
-import org.ateam.oncare.careproduct.command.dto.RequestProductMasterForSelectDTO;
-import org.ateam.oncare.careproduct.command.dto.ResponseMasterCategoryDTO;
-import org.ateam.oncare.careproduct.command.dto.ResponseProductMasterDTO;
+import org.ateam.oncare.careproduct.command.dto.*;
 import org.ateam.oncare.careproduct.command.service.ProductMasterService;
+import org.ateam.oncare.careproduct.command.service.ProductService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
@@ -22,6 +20,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductMasterService productMasterService;
+    private final ProductService productService;
 
     @GetMapping("/master-category")
     public ResponseEntity<List<ResponseMasterCategoryDTO>> getMasterCategory() {
@@ -33,10 +32,30 @@ public class ProductController {
     @GetMapping("/master")
     public ResponseEntity<Slice<ResponseProductMasterDTO>> getProductMaster(
             RequestProductMasterForSelectDTO condition,
-            @PageableDefault(size = 10) Pageable pageable){
+            @PageableDefault(size = 10) Pageable pageable) {
 
         Slice<ResponseProductMasterDTO> response
                 = productMasterService.getProductMaster(condition, pageable);
+
+        return ResponseEntity.ok()
+                .body(response);
+    }
+
+
+    /**
+     * 관리용품 탭에 정보로 실 제품의 총재고, 가용, 렌탈 중인 데이터를 포함한 조회
+     *
+     * @param condition
+     * @param pageable
+     * @return
+     */
+    @GetMapping("/master-detail")
+    public ResponseEntity<Slice<ResponseProductMasterDetailDTO>> getProductMasterDetail(
+            RequestProductMasterForSelectDTO condition,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        Slice<ResponseProductMasterDetailDTO> response
+                = productMasterService.getProductMasterDetail(condition, pageable);
 
         return ResponseEntity.ok()
                 .body(response);
@@ -48,7 +67,18 @@ public class ProductController {
         int count = productMasterService.updateProductMaster(requestProductMasterDTO);
 
         return ResponseEntity.ok(count);
+    }
 
+    @GetMapping("/product")
+    public ResponseEntity<ResponseProductDTO> getProduct(
+            RequestProductForSelectDTO condition,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        Slice<ResponseProductDTO> response =
+                productService.getProduct(condition,pageable );
+
+
+        return null;
     }
 
 

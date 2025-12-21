@@ -17,6 +17,9 @@ public class RentalContract {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "wanted_date")
+    private LocalDate wantedDate;
+
     @Column(name = "start_date")
     private LocalDate startDate;
 
@@ -25,6 +28,9 @@ public class RentalContract {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "term_month")
+    private int termMonth;
 
     @Column(name = "beneficiary_id")
     private Long beneficiaryId;

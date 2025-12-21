@@ -1,9 +1,6 @@
 package org.ateam.oncare.careproduct.command.service;
 
-import org.ateam.oncare.careproduct.command.dto.RequestProductMasterDTO;
-import org.ateam.oncare.careproduct.command.dto.RequestProductMasterForSelectDTO;
-import org.ateam.oncare.careproduct.command.dto.ResponseMasterCategoryDTO;
-import org.ateam.oncare.careproduct.command.dto.ResponseProductMasterDTO;
+import org.ateam.oncare.careproduct.command.dto.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
@@ -15,4 +12,6 @@ public interface ProductMasterService {
     List<ResponseMasterCategoryDTO> getMasterCategory();
 
     int updateProductMaster(RequestProductMasterDTO requestProductMasterDTO);
+
+    Slice<ResponseProductMasterDetailDTO> getProductMasterDetail(RequestProductMasterForSelectDTO condition, Pageable pageable);
 }

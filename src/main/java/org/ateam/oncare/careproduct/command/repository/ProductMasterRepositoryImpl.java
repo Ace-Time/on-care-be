@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.careproduct.command.dto.RequestProductMasterForSelectDTO;
 import org.ateam.oncare.careproduct.command.dto.ResponseProductMasterDTO;
+import org.ateam.oncare.careproduct.command.dto.ResponseProductMasterDetailDTO;
 import org.ateam.oncare.careproduct.command.entity.CareProductMaster;
+import org.ateam.oncare.careproduct.command.entity.QCareProduct;
 import org.ateam.oncare.careproduct.command.entity.QCareProductMaster;
 import org.ateam.oncare.careproduct.command.entity.QProductCategory;
 import org.ateam.oncare.careproduct.mapper.ProductMasterMapper;
@@ -25,21 +27,19 @@ public class ProductMasterRepositoryImpl implements ProductMasterRepositoryCusto
     private final QCareProductMaster master = QCareProductMaster.careProductMaster;
     private final QProductCategory category = QProductCategory.productCategory;
     private final ProductMasterMapper productMasterMapper;
+    private final QCareProduct product = QCareProduct.careProduct;
 
     @Override
     public Slice<ResponseProductMasterDTO> selectProductMaster(RequestProductMasterForSelectDTO condition, Pageable pageable) {
-
         BooleanBuilder builder = new BooleanBuilder();
-        BooleanBuilder s_builder = new BooleanBuilder();
         int pageSize = pageable.getPageSize();
 
         //카테고리 name
-        if(StringUtils.hasText(condition.getCategoryName()) &&
-        !condition.getCategoryName().equals("전체"))
-            builder.and(category.name.eq(condition.getCategoryName()));
+        if (StringUtils.hasText(condition.getCategoryCode()))
+            builder.and(category.id.eq(condition.getCategoryCode()));
 
         //제품명 및 제품코드
-        if(StringUtils.hasText(condition.getCodeOrName())) {
+        if (StringUtils.hasText(condition.getCodeOrName())) {
             builder.and(master.name.containsIgnoreCase(condition.getCodeOrName())
                     .or(master.id.containsIgnoreCase(condition.getCodeOrName())));
         }
@@ -55,7 +55,7 @@ public class ProductMasterRepositoryImpl implements ProductMasterRepositoryCusto
                         .fetch();
 
         boolean hasNext = false;
-        if(entities.size() > pageSize) {
+        if (entities.size() > pageSize) {
             hasNext = true;
             entities.remove(pageSize);   // 뒤에 데이터가 있는지 확인을 위해 1개 더 가지고온 데이터 삭제
         }
@@ -66,5 +66,37 @@ public class ProductMasterRepositoryImpl implements ProductMasterRepositoryCusto
                 .toList();
 
         return new SliceImpl<>(dtos, pageable, hasNext);
+    }
+
+    @Override
+    public Slice<ResponseProductMasterDetailDTO> selectProductMasterDetail(RequestProductMasterForSelectDTO condition, Pageable pageable) {
+        BooleanBuilder builder = new BooleanBuilder();
+        int pageSize = pageable.getPageSize();
+
+        //카테고리 name
+        if (StringUtils.hasText(condition.getCategoryCode()) &&
+                !condition.getCategoryCode().equals("전체"))
+            builder.and(category.name.eq(condition.getCategoryCode()));
+
+        //제품명 및 제품코드
+        if (StringUtils.hasText(condition.getCodeOrName())) {
+            builder.and(master.name.containsIgnoreCase(condition.getCodeOrName())
+                    .or(master.id.containsIgnoreCase(condition.getCodeOrName())));
+        }
+
+//        List<ResponseProductMasterDetailDTO> results =
+//                queryFactory
+//                        .select(
+//                                master,
+//                                JPAExpressions
+//                                        .select()
+//                                        .from(product)
+//                                        .groupBy(product.productCd)
+//                                )
+//                        .from(master)
+//                        .leftJoin(category).on(master.categoryCd.eq(category.id))
+//                        .where(builder)
+//                        .fetch();
+        return null;
     }
 }

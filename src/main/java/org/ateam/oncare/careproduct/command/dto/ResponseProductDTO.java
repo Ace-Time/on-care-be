@@ -4,19 +4,17 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @ToString
-public class ResponseProductMasterDTO {
+public class ResponseProductDTO {
     private String id;
-    private String name;
     private BigDecimal amount;
     private BigDecimal rentalAmount;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private String categoryCd;
+    private BigDecimal cumulativeRevenue;
+    private String productCd;
+    private LocalDate boughtDate;
 }
