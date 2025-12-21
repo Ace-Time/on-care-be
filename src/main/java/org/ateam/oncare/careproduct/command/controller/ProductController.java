@@ -70,15 +70,27 @@ public class ProductController {
     }
 
     @GetMapping("/product")
-    public ResponseEntity<ResponseProductDTO> getProduct(
+    public ResponseEntity<Slice<ResponseProductDTO>> getProduct(
             RequestProductForSelectDTO condition,
             @PageableDefault(size = 10) Pageable pageable) {
 
         Slice<ResponseProductDTO> response =
                 productService.getProduct(condition,pageable );
+        return ResponseEntity.ok()
+                .body(response);
+    }
 
+    @GetMapping("/product-history")
+    public ResponseEntity<Slice<ResponseProductHistroyDTO>> getProductHistory(
+            RequestProductHistoryDTO condition,
+            @PageableDefault(size = 10) Pageable pageable) {
 
-        return null;
+        Slice<ResponseProductHistroyDTO> response =
+                productService.getProductHistory(condition,pageable);
+
+        return ResponseEntity.ok()
+                .body(response);
+
     }
 
 
