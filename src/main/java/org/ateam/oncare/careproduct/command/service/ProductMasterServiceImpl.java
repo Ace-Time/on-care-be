@@ -100,7 +100,7 @@ public class ProductMasterServiceImpl implements ProductMasterService {
 
         // 2. 집계 데이터 조회(수량 정보)
         List<AggregationOfProductDTO> aggregationOfProductDTOS
-                = productRepository.selectAggregationOfProduct(masterCodes, pageable);
+                = productRepository.selectAggregationOfProduct(masterCodes);
 
         // 3. 출고 예정 데이터 조회(용품 계약만 한 상태)
         Map<String, Long> expectedToShip = rentalService.getExpectedToShip();

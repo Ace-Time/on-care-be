@@ -5,7 +5,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.careproduct.command.dto.RequestProductHistoryDTO;
-import org.ateam.oncare.careproduct.command.dto.ResponseProductHistroyDTO;
+import org.ateam.oncare.careproduct.command.dto.ResponseProductHistoryDTO;
 import org.ateam.oncare.careproduct.command.entity.ProductHistory;
 import org.ateam.oncare.careproduct.command.entity.QProductHistory;
 import org.ateam.oncare.careproduct.mapper.ProductHistoryMapper;
@@ -24,7 +24,7 @@ public class ProductHistoryRepositoryImpl implements ProductHistoryRepositoryCus
     private final ProductHistoryMapper productHistoryMapper;
 
     @Override
-    public Slice<ResponseProductHistroyDTO> getProductHistories(RequestProductHistoryDTO condition, Pageable pageable) {
+    public Slice<ResponseProductHistoryDTO> getProductHistories(RequestProductHistoryDTO condition, Pageable pageable) {
 
         BooleanBuilder builder = new BooleanBuilder();
         int pageSize = pageable.getPageSize();
@@ -51,7 +51,7 @@ public class ProductHistoryRepositoryImpl implements ProductHistoryRepositoryCus
 
         productHistories.forEach(m -> log.debug(m.toString()));
 
-        List<ResponseProductHistroyDTO> responseDTOs =
+        List<ResponseProductHistoryDTO> responseDTOs =
                 productHistories.stream()
                         .map(productHistoryMapper::toHistoryDTO)
                         .toList();

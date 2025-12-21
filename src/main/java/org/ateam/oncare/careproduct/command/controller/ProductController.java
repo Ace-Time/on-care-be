@@ -8,6 +8,7 @@ import org.ateam.oncare.careproduct.command.service.ProductService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,7 +52,7 @@ public class ProductController {
     @PostMapping("/master")
     public ResponseEntity<Integer> registerProductMaster(@RequestBody RequestProductMasterDTO requestProductMasterDTO) {
         int count = productMasterService.registerProductMaster(requestProductMasterDTO);
-        return ResponseEntity.ok(count);
+        return ResponseEntity.status(HttpStatus.CREATED).body(count);
     }
 
     /**
@@ -86,11 +87,11 @@ public class ProductController {
     }
 
     @GetMapping("/product-history")
-    public ResponseEntity<Slice<ResponseProductHistroyDTO>> getProductHistory(
+    public ResponseEntity<Slice<ResponseProductHistoryDTO>> getProductHistory(
             RequestProductHistoryDTO condition,
             @PageableDefault(size = 10) Pageable pageable) {
 
-        Slice<ResponseProductHistroyDTO> response =
+        Slice<ResponseProductHistoryDTO> response =
                 productService.getProductHistory(condition,pageable);
 
         return ResponseEntity.ok()

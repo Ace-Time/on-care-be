@@ -3,7 +3,6 @@ package org.ateam.oncare.careproduct.command.dto;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @ToString
 @AllArgsConstructor
@@ -19,7 +18,7 @@ public class ResponseProductMasterDetailDTO {
     private String categoryCd;
     private int totalProducts;
     private int availableProducts;
-    private int reatalProducts;
+    private int rentalProducts;
     private int reservedProducts;
     private int purchasePrice;
     private int monthlyRenalFee;

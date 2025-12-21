@@ -25,7 +25,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     private final QCareProduct product = QCareProduct.careProduct;
 
     @Override
-    public List<AggregationOfProductDTO> selectAggregationOfProduct(List<String> masterCodes, Pageable pageable) {
+    public List<AggregationOfProductDTO> selectAggregationOfProduct(List<String> masterCodes) {
         List<AggregationOfProductDTO> aggregation =
                 queryFactory
                         .select(
@@ -56,7 +56,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         if (condition.getProductStatus() > 0)
             builder.and(product.productStatus.eq(condition.getProductStatus()));
 
-        builder.and(product.productCd.eq(product.productCd));
+        builder.and(product.productCd.eq(condition.getProductCode()));
 
         List<CareProduct> products = queryFactory
                 .select(product)

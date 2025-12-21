@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ResponseProductHistroyDTO {
+public class ResponseProductHistoryDTO {
     private long id;
     private String productId;
     private String productName;
@@ -23,5 +23,5 @@ public class ResponseProductHistroyDTO {
     private String employeeName;
     private long beneficiaryId;
     private String beneficiaryName;
-    private LocalDateTime createAt;
+    private LocalDateTime createdAt;
 }

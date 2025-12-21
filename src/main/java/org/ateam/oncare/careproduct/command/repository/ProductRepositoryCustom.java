@@ -10,7 +10,7 @@ import org.springframework.data.domain.Slice;
 import java.util.List;
 
 public interface ProductRepositoryCustom {
-    List<AggregationOfProductDTO> selectAggregationOfProduct(List<String> masterCodes, Pageable pageable);
+    List<AggregationOfProductDTO> selectAggregationOfProduct(List<String> masterCodes);
 
     Slice<ResponseProductDTO> getProduct(RequestProductForSelectDTO condition, Pageable pageable);
 }

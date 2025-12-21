@@ -50,7 +50,7 @@ public class ProductHistory {
     @Column(name = "beneficiary_name")
     private String beneficiaryName;
 
-    @Column(name = "create_at")
-    private LocalDateTime createAt;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
 }
