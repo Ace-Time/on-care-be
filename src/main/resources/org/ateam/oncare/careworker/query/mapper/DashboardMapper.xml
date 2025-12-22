@@ -9,20 +9,20 @@
             (SELECT COUNT(*)
              FROM visit_schedule
              WHERE care_worker_id = #{caregiverId}
-               AND DATE(start_dt) = CURRENT_DATE) AS scheduleCount,
+               AND DATE(start_dt) = CURRENT_DATE) AS todayScheduleCount,
 
             /* 담당 수급자 수 (중복 제거) */
             (SELECT COUNT(DISTINCT beneficiary_id)
              FROM visit_schedule
              WHERE care_worker_id = #{caregiverId}
-               AND visit_status IN ('SCHEDULED', 'IN_PROGRESS', 'DONE')) AS recipientCount,
+               AND visit_status IN ('SCHEDULED', 'IN_PROGRESS', 'DONE')) AS beneficiaryCount,
 
             /* 이번 주 누적 근무시간 (분 단위 합계 / 60) */
             (SELECT COALESCE(ROUND(SUM(TIMESTAMPDIFF(MINUTE, start_dt, end_dt)) / 60.0, 1), 0)
              FROM visit_schedule
              WHERE care_worker_id = #{caregiverId}
                AND YEARWEEK(start_dt, 1) = YEARWEEK(CURRENT_DATE, 1)
-               AND visit_status = 'DONE') AS workHours
+               AND visit_status = 'DONE') AS weeklyWorkHours
     </select>
 
     <select id="selectUrgentNotifications" resultType="org.ateam.oncare.careworker.query.dto.UrgentNotificationDto">
@@ -35,7 +35,7 @@
         FROM notification_log nl
                  JOIN notification_template nt ON nl.template_id = nt.template_id
                  JOIN care_worker cw ON nl.receiver_id = cw.employee_id
-        WHERE cw.id = #{caregiverId}
+        WHERE cw.employee_id = #{caregiverId}
           AND nl.receiver_type = 'EMPLOYEE'
           AND nl.status IN ('SENT', 'FAILED')
         ORDER BY nl.sent_at DESC

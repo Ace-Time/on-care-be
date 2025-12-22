@@ -1,12 +1,11 @@
 package org.ateam.oncare.careworker.query.controller;
 
+import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.ateam.oncare.careworker.query.dto.*;
 import org.ateam.oncare.careworker.query.service.DashboardQueryService;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -16,35 +15,47 @@ import java.util.List;
 public class DashboardQueryController {
 
     private final DashboardQueryService dashboardQueryService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    // ⚠️ 테스트용: 로그인한 유저 대신 ID를 1로 고정합니다.
-    private final Long TEST_CAREGIVER_ID = 1L;
+    // JWT 토큰에서 사용자 ID 추출
+    private Long getEmployeeIdFromToken(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            Claims claims = jwtTokenProvider.getClaimsFromAT(token);
+            return claims.get("id", Long.class);
+        }
+        return 1L; // fallback
+    }
 
-    // 1. 요양보호사 정보 요약 (토큰 X)
+    // 1. 요양보호사 정보 요약
     @GetMapping("/summary")
-    public ApiResponse<DashboardSummaryDto> getSummary() {
-        DashboardSummaryDto data = dashboardQueryService.getSummary(TEST_CAREGIVER_ID);
+    public ApiResponse<DashboardSummaryDto> getSummary(@RequestHeader("Authorization") String authHeader) {
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        DashboardSummaryDto data = dashboardQueryService.getSummary(employeeId);
         return ApiResponse.success(data);
     }
 
-    // 2. 긴급 알림 (토큰 X)
+    // 2. 긴급 알림
     @GetMapping("/notifications/urgent")
-    public ApiResponse<List<UrgentNotificationDto>> getUrgentNotifications() {
-        List<UrgentNotificationDto> data = dashboardQueryService.getUrgentNotifications(TEST_CAREGIVER_ID);
+    public ApiResponse<List<UrgentNotificationDto>> getUrgentNotifications(@RequestHeader("Authorization") String authHeader) {
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        List<UrgentNotificationDto> data = dashboardQueryService.getUrgentNotifications(employeeId);
         return ApiResponse.success(data);
     }
 
-    // 3. 오늘의 일정 (토큰 X)
+    // 3. 오늘의 일정
     @GetMapping("/schedules/today")
-    public ApiResponse<List<HomeScheduleDto>> getTodaySchedules() {
-        List<HomeScheduleDto> data = dashboardQueryService.getTodaySchedules(TEST_CAREGIVER_ID);
+    public ApiResponse<List<HomeScheduleDto>> getTodaySchedules(@RequestHeader("Authorization") String authHeader) {
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        List<HomeScheduleDto> data = dashboardQueryService.getTodaySchedules(employeeId);
         return ApiResponse.success(data);
     }
 
-    // 4. 할 일 목록 (토큰 X)
+    // 4. 할 일 목록
     @GetMapping("/todos")
-    public ApiResponse<List<HomeTodoDto>> getTodos() {
-        List<HomeTodoDto> data = dashboardQueryService.getTodos(TEST_CAREGIVER_ID);
+    public ApiResponse<List<HomeTodoDto>> getTodos(@RequestHeader("Authorization") String authHeader) {
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        List<HomeTodoDto> data = dashboardQueryService.getTodos(employeeId);
         return ApiResponse.success(data);
     }
 

@@ -15,14 +15,13 @@ public class CognitiveEvaluationCommandController {
     private final BasicEvaluationCommandService basicEvaluationCommandService;
     private static final String EVAL_TYPE = "COGNITIVE";
 
-    // 테스트용
-    private final Long TEST_CAREGIVER_ID = 1L;
-
     // 1. 인지기능 평가 작성
     @PostMapping
-    public ApiResponse<Void> createCognitiveEvaluation(@RequestBody CreateBasicEvaluationRequest request) {
+    public ApiResponse<Void> createCognitiveEvaluation(
+            @RequestHeader("Care-Worker-Id") Long careWorkerId,
+            @RequestBody CreateBasicEvaluationRequest request) {
         request.setEvalType(EVAL_TYPE);
-        basicEvaluationCommandService.createBasicEvaluation(TEST_CAREGIVER_ID, request);
+        basicEvaluationCommandService.createBasicEvaluation(careWorkerId, request);
         return ApiResponse.success(null);
     }
 
