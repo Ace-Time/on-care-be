@@ -26,11 +26,17 @@ public class RentalContract {
     @Column(name = "end_date")
     private LocalDate endDate;
 
+    @Column(name = "expected_date")
+    private LocalDate expectedDate;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "term_month")
     private int termMonth;
+
+    @Column(name = "cumulative_revenue")
+    private int cumulativeRevenue;
 
     @Column(name = "beneficiary_id")
     private Long beneficiaryId;
