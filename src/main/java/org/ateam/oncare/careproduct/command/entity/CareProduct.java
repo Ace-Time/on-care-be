@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CareProduct {
-
     @Id
     @Column(name = "id")
     private String id;
@@ -22,6 +21,9 @@ public class CareProduct {
 
     @Column(name = "rental_amount")
     private BigDecimal rentalAmount;
+
+    @Column(name = "cumulative_revenue")
+    private BigDecimal cumulativeRevenue;
 
     @Column(name = "update_date")
     private LocalDateTime updateDate;
