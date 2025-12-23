@@ -15,11 +15,14 @@
         <result property="name"          column="beneficiary_name"/>
 
         <result property="careLevel"     column="care_level"/>
-        <!-- ✅ 산정된 문자열 저/중/고위험 -->
         <result property="riskLevel"     column="risk_level"/>
 
-        <result property="managerName"   column="manager_name"/>
-        <result property="serviceType"   column="service_type"/>
+        <!-- ✅ 수급자당 요양보호사 1명 => Long 유지 가능 -->
+        <result property="careWorkerId"  column="care_worker_id"/>
+        <result property="managerName"   column="care_worker_name"/>
+
+        <!-- ✅ 서비스유형은 여러 개 가능 => 문자열로 묶어서 -->
+        <result property="serviceType"   column="service_types"/>
 
         <result property="status"        column="service_status"/>
     </resultMap>
@@ -41,10 +44,41 @@
         ) rsum ON rsum.beneficiary_id = b.id
     </sql>
 
-    <!-- 현재 장기요양등급 + 담당자 + 서비스타입 -->
+    <!-- ✅ DONE 기준: (1) 요양보호사 1명(대표: 최신 DONE) + (2) 서비스유형 여러개 집계 -->
+    <sql id="DoneAggJoin">
+
+        <!-- (1) 최신 DONE 1건의 요양보호사 -->
+        LEFT JOIN visit_schedule vs_done
+        ON vs_done.vs_id = (
+        SELECT vs2.vs_id
+        FROM visit_schedule vs2
+        WHERE vs2.beneficiary_id = b.id
+<!--        AND vs2.visit_status = 'DONE'-->
+        ORDER BY vs2.start_dt DESC
+        LIMIT 1
+        )
+
+        LEFT JOIN care_worker cw
+        ON cw.id = vs_done.care_worker_id
+
+        LEFT JOIN employee ce
+        ON ce.id = cw.employee_id
+
+        <!-- (2) DONE 방문에서 서비스유형은 여러개 가능 => 집계해서 1행으로 -->
+        LEFT JOIN (
+        SELECT
+        vs.beneficiary_id,
+        GROUP_CONCAT(DISTINCT mst.name ORDER BY mst.name SEPARATOR ', ') AS service_types
+        FROM visit_schedule vs
+        JOIN m_service_type mst ON mst.id = vs.service_type_id
+        GROUP BY vs.beneficiary_id
+        ) st ON st.beneficiary_id = b.id
+
+    </sql>
+
+    <!-- 현재 장기요양등급 + 위험 + (DONE 기준) 요양보호사/서비스유형 -->
     <sql id="BaseJoin">
 
-        <!-- 현재 장기요양등급 -->
         LEFT JOIN beneficiary_care_level bcl
         ON bcl.beneficiary_id = b.id
         AND bcl.id = (
@@ -60,35 +94,13 @@
         LEFT JOIN m_care_level mcl
         ON mcl.id = bc.m_care_level_id
 
-        <!-- ✅ 위험등급(b.risk_id) 조인은 제거! (위험요소 합산으로 산정할 거라서) -->
         <include refid="RiskSumJoin"/>
-
-        <!-- 담당 요양보호사 -->
-        LEFT JOIN matching mt
-        ON mt.beneficiary_id = b.id
-        AND mt.status = 'Y'
-
-        LEFT JOIN care_worker cw
-        ON cw.id = mt.care_worker_id
-
-        LEFT JOIN employee e
-        ON e.id = cw.employee_id
-
-        <!-- 서비스 타입 (첫 일정 기준) -->
-        LEFT JOIN m_service_type mst
-        ON mst.id = (
-        SELECT bs.service_type_id
-        FROM beneficiary_schedule bs
-        WHERE bs.beneficiary_id = b.id
-        ORDER BY bs.start_time ASC
-        LIMIT 1
-        )
+        <include refid="DoneAggJoin"/>
     </sql>
 
     <!-- 필터링&검색 -->
     <sql id="BaseWhere">
         <where>
-            <!-- ✅ 서비스 상태 (ACTIVE/INACTIVE → 1/0 매핑) -->
             <if test="status != null and status != ''">
                 AND b.status =
                 <choose>
@@ -98,7 +110,6 @@
                 </choose>
             </if>
 
-            <!-- ✅ 위험등급 필터도 "산정된 등급"으로 처리 (riskLevelId: 1/2/3) -->
             <if test="riskLevelId != null">
                 AND
                 <choose>
@@ -118,12 +129,10 @@
                 </choose>
             </if>
 
-            <!-- 장기요양등급 (현재) -->
             <if test="careLevelId != null">
                 AND mcl.id = #{careLevelId}
             </if>
 
-            <!-- 검색 -->
             <if test="keyword != null and keyword != ''">
                 AND (
                 b.name    LIKE CONCAT('%', #{keyword}, '%')
@@ -142,7 +151,6 @@
                 b.name
             </when>
 
-            <!-- ✅ 산정된 위험등급 기준 정렬: (저=1, 중=2, 고=3) -->
             <when test="sort == 'RISK'">
                 CASE
                 WHEN IFNULL(rsum.risk_total, 0) &lt; 10 THEN 1
@@ -171,7 +179,6 @@
          QUERIES
          ===================================================== -->
 
-    <!-- 수급자 전체 조회 -->
     <select id="selectBeneficiaries"
             parameterType="org.ateam.oncare.beneficiary.query.dto.request.BeneficiarySearchRequest"
             resultMap="BeneficiaryListMap">
@@ -182,15 +189,16 @@
 
         mcl.level AS care_level,
 
-        <!-- ✅ risk_total로 저/중/고위험 "문자" 만들어서 내려줌 -->
         CASE
         WHEN IFNULL(rsum.risk_total, 0) &lt; 10 THEN '저위험'
         WHEN IFNULL(rsum.risk_total, 0) &lt; 15 THEN '중위험'
         ELSE '고위험'
         END AS risk_level,
 
-        e.name   AS manager_name,
-        mst.name AS service_type,
+        cw.id      AS care_worker_id,
+        ce.name    AS care_worker_name,
+
+        st.service_types AS service_types,
 
         CASE
         WHEN b.status = 1 THEN '서비스 중'
@@ -206,8 +214,6 @@
         OFFSET #{offset}
     </select>
 
-
-    <!-- 전체 건수 -->
     <select id="countBeneficiaries"
             parameterType="org.ateam.oncare.beneficiary.query.dto.request.BeneficiarySearchRequest"
             resultType="long">

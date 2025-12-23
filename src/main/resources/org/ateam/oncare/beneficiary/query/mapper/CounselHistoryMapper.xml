@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.CounselHistoryMapper">
+
+        <!-- 문의이력 탭: 수급자별 목록 -->
+        <!-- ✅ @Param("beneficiaryId") 쓰고 있으니 parameterType 제거 -->
+        <select id="selectCounselHistoryList"
+                resultType="org.ateam.oncare.beneficiary.query.dto.response.CounselHistoryListResponse$Item">
+
+                SELECT
+                ch.id                                   AS counselHistoryId,
+                ch.detail                               AS detail,
+                DATE_FORMAT(ch.consult_date, '%Y-%m-%d') AS consultDate,
+                ch.summary                              AS summary,
+                ch.beneficiary_id                       AS beneficiaryId,
+                cc.name                                 AS categoryName
+                FROM counsel_history ch
+                JOIN m_counsel_category cc ON cc.id = ch.counsel_category_id
+                WHERE ch.beneficiary_id = #{beneficiaryId}
+                ORDER BY ch.consult_date DESC, ch.id DESC
+
+        </select>
+
+
+        <!-- 문의이력 상세(모달) -->
+        <!-- ✅ 파라미터 2개(@Param)라 parameterType 쓰면 안 됨 -> 제거 -->
+        <select id="selectCounselHistoryDetail"
+                resultType="org.ateam.oncare.beneficiary.query.dto.response.CounselHistoryDetailResponse">
+
+                SELECT
+                ch.id                                   AS counselHistoryId,
+                DATE_FORMAT(ch.consult_date, '%Y-%m-%d') AS consultDate,
+
+                ch.detail                               AS detail,
+                COALESCE(ch.follow_up, '후속조치 없음') AS followUp,
+                ch.summary                              AS summary,
+
+                ch.beneficiary_id                       AS beneficiaryId,
+                b.name                                  AS beneficiaryName,
+
+                cc.name                                 AS categoryName,
+
+                e.id                                    AS counselorId,
+                e.name                                  AS counselorName
+
+                FROM counsel_history ch
+                JOIN m_counsel_category cc ON cc.id = ch.counsel_category_id
+                LEFT JOIN beneficiary b    ON b.id = ch.beneficiary_id
+
+                <!-- 상담사(영업상담) 조인 -->
+                JOIN employee e            ON e.id = ch.counselor_id
+                JOIN m_job j               ON j.id = e.job_code
+
+                WHERE ch.id = #{counselHistoryId}
+                AND ch.beneficiary_id = #{beneficiaryId}
+                AND j.id = 4   <!-- 4: 영업상담 -->
+
+        </select>
+
+</mapper>

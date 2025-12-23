@@ -21,8 +21,12 @@
         <result property="careLevelEndDate" column="care_level_end_date"/>
         <result property="riskLevel" column="risk_level"/>
 
-        <result property="managerName" column="manager_name"/>
-        <result property="serviceType" column="service_type"/>
+        <!-- ✅ 수급자당 요양보호사 1명 => Long 유지 -->
+        <result property="careWorkerId" column="care_worker_id"/>
+        <result property="managerName" column="care_worker_name"/>
+
+        <!-- ✅ 서비스유형은 여러개 가능 => 문자열로 묶어서 -->
+        <result property="serviceType" column="service_types"/>
 
         <result property="guardianName" column="guardian_name"/>
         <result property="guardianRelation" column="guardian_relation"/>
@@ -47,197 +51,202 @@
     <select id="selectBeneficiaryDetail"
             parameterType="long"
             resultMap="BeneficiaryDetailMap">
-
+        <![CDATA[
         SELECT
-        b.id AS beneficiary_id,
-        b.name,
-        b.gender,
-        DATE_FORMAT(b.birthdate, '%Y-%m-%d') AS birthdate,
-        b.phone,
-        b.address,
+            b.id AS beneficiary_id,
+            b.name,
+            b.gender,
+            DATE_FORMAT(b.birthdate, '%Y-%m-%d') AS birthdate,
+            b.phone,
+            b.address,
 
-        CASE WHEN b.status = 1 THEN '서비스 중' ELSE '서비스 해지' END AS status,
+            CASE WHEN b.status = 1 THEN '서비스 중' ELSE '서비스 해지' END AS status,
 
-        mcl.level AS care_level,
-        bcl.end_date AS care_level_end_date,
+            mcl.level AS care_level,
+            DATE_FORMAT(bcl.end_date, '%Y-%m-%d') AS care_level_end_date,
 
-        CASE
-        WHEN IFNULL(rsum.risk_total, 0) &lt; 10 THEN '저위험'
-        WHEN IFNULL(rsum.risk_total, 0) &lt; 15 THEN '중위험'
-        ELSE '고위험'
-        END AS risk_level,
+            CASE
+                WHEN IFNULL(rsum.risk_total, 0) < 10 THEN '저위험'
+                WHEN IFNULL(rsum.risk_total, 0) < 15 THEN '중위험'
+                ELSE '고위험'
+            END AS risk_level,
 
-        e.name AS manager_name,
-        mst.name AS service_type,
+            /* ✅ 요양보호사: 최신 1건 기준 (어차피 동일 1명이라는 전제) */
+            cw.id   AS care_worker_id,
+            ce.name AS care_worker_name,
 
-        g.name AS guardian_name,
-        g.relation AS guardian_relation,
-        g.phone AS guardian_phone,
+            /* ✅ 서비스유형: 여러개 집계 */
+            st.service_types AS service_types,
 
-        mcl.monthly_limit,
+            g.name AS guardian_name,
+            g.relation AS guardian_relation,
+            g.phone AS guardian_phone,
 
-        /* ✅ 사용액 = (서비스: cost_of_beneficiary 이번달) + (렌탈: 이번달 기준 유지/계약중) */
-        (
-        IFNULL((
-        SELECT cob.monthly_amount
-        FROM cost_of_beneficiary cob
-        WHERE cob.beneficiary_id = b.id
-        AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')    <!-- 서비스 현재월기준 -->
-        ), 0)
-        +
-        IFNULL((
-        SELECT SUM(cp.rental_amount)
-        FROM rental_contract rc
-        JOIN contract_status cs
-        ON cs.id = rc.contract_status_cd
-        JOIN rental_product rp
-        ON rp.rental_contract_cd = rc.id
-        JOIN care_product cp
-        ON cp.id = rp.product_id
-        WHERE rc.beneficiary_id = b.id
-        AND cs.name IN ('유지', '계약중')
-        AND rc.start_date &lt;= LAST_DAY(CURDATE())
-        AND (
-        rc.end_date IS NULL
-        OR rc.end_date &gt;= DATE_FORMAT(CURDATE(), '%Y-%m-01')   <!-- 렌탈 현재월기준 -->
-        )
-        ), 0)
-        ) AS used_amount,
+            mcl.monthly_limit,
 
-        /* ✅ 잔액 */
-        (
-        mcl.monthly_limit
-        -
-        (
-        IFNULL((
-        SELECT cob.monthly_amount
-        FROM cost_of_beneficiary cob
-        WHERE cob.beneficiary_id = b.id
-        AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
-        ), 0)
-        +
-        IFNULL((
-        SELECT SUM(cp.rental_amount)
-        FROM rental_contract rc
-        JOIN contract_status cs
-        ON cs.id = rc.contract_status_cd
-        JOIN rental_product rp
-        ON rp.rental_contract_cd = rc.id
-        JOIN care_product cp
-        ON cp.id = rp.product_id
-        WHERE rc.beneficiary_id = b.id
-        AND cs.name IN ('유지', '계약중')
-        AND rc.start_date &lt;= LAST_DAY(CURDATE())
-        AND (
-        rc.end_date IS NULL
-        OR rc.end_date &gt;= DATE_FORMAT(CURDATE(), '%Y-%m-01')
-        )
-        ), 0)
-        )
-        ) AS remaining_amount,
+            /* ✅ 사용액 = (서비스 이번달(오늘 기준 진행중으로 산정됨) 누계) + (렌탈 오늘 기준 진행중 합계) */
+            /* 서비스 누계는 방문일정에서 퇴근 태그 시간 등록되면 cost_of_beneficiary에 등록됨(요양보호사가 진행) */
+            (
+                IFNULL((
+                    SELECT cob.monthly_amount
+                    FROM cost_of_beneficiary cob
+                    WHERE cob.beneficiary_id = b.id
+                      AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
+                ), 0)
+                +
+                IFNULL((
+                    SELECT SUM(cp.rental_amount)
+                    FROM rental_contract rc
+                    JOIN rental_product rp ON rp.rental_contract_cd = rc.id
+                    JOIN care_product cp ON cp.id = rp.product_id
+                    WHERE rc.beneficiary_id = b.id
+                      /* ✅ 오늘 기준 진행중(또는 오늘까지) */
+                      AND rc.start_date <= CURDATE()
+                      AND (
+                            rc.end_date IS NULL
+                            OR rc.end_date >= CURDATE()
+                      )
+                ), 0)
+            ) AS used_amount,
 
-        /* ✅ 사용률 */
-        ROUND(
-        (
-        (
-        IFNULL((
-        SELECT cob.monthly_amount
-        FROM cost_of_beneficiary cob
-        WHERE cob.beneficiary_id = b.id
-        AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
-        ), 0)
-        +
-        IFNULL((
-        SELECT SUM(cp.rental_amount)
-        FROM rental_contract rc
-        JOIN contract_status cs
-        ON cs.id = rc.contract_status_cd
-        JOIN rental_product rp
-        ON rp.rental_contract_cd = rc.id
-        JOIN care_product cp
-        ON cp.id = rp.product_id
-        WHERE rc.beneficiary_id = b.id
-        AND cs.name IN ('유지', '계약중')
-        AND rc.start_date &lt;= LAST_DAY(CURDATE())
-        AND (
-        rc.end_date IS NULL
-        OR rc.end_date &gt;= DATE_FORMAT(CURDATE(), '%Y-%m-01')
-        )
-        ), 0)
-        )
-        / NULLIF(mcl.monthly_limit, 0)
-        ) * 100
-        , 1) AS used_rate
+            /* ✅ 잔액 */
+            (
+                mcl.monthly_limit
+                -
+                (
+                    IFNULL((
+                        SELECT cob.monthly_amount
+                        FROM cost_of_beneficiary cob
+                        WHERE cob.beneficiary_id = b.id
+                          AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
+                    ), 0)
+                    +
+                    IFNULL((
+                        SELECT SUM(cp.rental_amount)
+                        FROM rental_contract rc
+                        JOIN rental_product rp ON rp.rental_contract_cd = rc.id
+                        JOIN care_product cp ON cp.id = rp.product_id
+                        WHERE rc.beneficiary_id = b.id
+                          /* ✅ 오늘 기준 진행중(또는 오늘까지) */
+                          AND rc.start_date <= CURDATE()
+                          AND (
+                                rc.end_date IS NULL
+                                OR rc.end_date >= CURDATE()
+                          )
+                    ), 0)
+                )
+            ) AS remaining_amount,
+
+            /* ✅ 사용률 */
+            ROUND(
+                (
+                    (
+                        IFNULL((
+                            SELECT cob.monthly_amount
+                            FROM cost_of_beneficiary cob
+                            WHERE cob.beneficiary_id = b.id
+                              AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
+                        ), 0)
+                        +
+                        IFNULL((
+                            SELECT SUM(cp.rental_amount)
+                            FROM rental_contract rc
+                            JOIN rental_product rp ON rp.rental_contract_cd = rc.id
+                            JOIN care_product cp ON cp.id = rp.product_id
+                            WHERE rc.beneficiary_id = b.id
+                              /* ✅ 오늘 기준 진행중(또는 오늘까지) */
+                              AND rc.start_date <= CURDATE()
+                              AND (
+                                    rc.end_date IS NULL
+                                    OR rc.end_date >= CURDATE()
+                              )
+                        ), 0)
+                    )
+                    / NULLIF(mcl.monthly_limit, 0)
+                ) * 100
+            , 1) AS used_rate
 
         FROM beneficiary b
 
         LEFT JOIN beneficiary_care_level bcl
-        ON bcl.beneficiary_id = b.id
+            ON bcl.beneficiary_id = b.id
 
         LEFT JOIN beneficiary_count bc
-        ON bc.beneficiary_care_level_id = bcl.id
+            ON bc.beneficiary_care_level_id = bcl.id
 
         LEFT JOIN m_care_level mcl
-        ON mcl.id = bc.m_care_level_id
+            ON mcl.id = bc.m_care_level_id
 
         LEFT JOIN (
-        SELECT
-        rom.beneficiary_id,
-        SUM(rf.score) AS risk_total
-        FROM riskOfMember rom
-        JOIN m_risk_factor rf ON rf.id = rom.risk_id
-        GROUP BY rom.beneficiary_id
+            SELECT
+                rom.beneficiary_id,
+                SUM(rf.score) AS risk_total
+            FROM riskOfMember rom
+            JOIN m_risk_factor rf ON rf.id = rom.risk_id
+            GROUP BY rom.beneficiary_id
         ) rsum
-        ON rsum.beneficiary_id = b.id
+            ON rsum.beneficiary_id = b.id
 
-        LEFT JOIN matching mt
-        ON mt.beneficiary_id = b.id
-        AND mt.status = 'Y'
+        /* ✅ 최신 방문 1건 */
+        LEFT JOIN visit_schedule vs_done
+            ON vs_done.vs_id = (
+                SELECT vs2.vs_id
+                FROM visit_schedule vs2
+                WHERE vs2.beneficiary_id = b.id
+                ORDER BY vs2.start_dt DESC
+                LIMIT 1
+            )
 
         LEFT JOIN care_worker cw
-        ON cw.id = mt.care_worker_id
+            ON cw.id = vs_done.care_worker_id
 
-        LEFT JOIN employee e
-        ON e.id = cw.employee_id
+        LEFT JOIN employee ce
+            ON ce.id = cw.employee_id
+
+        /* ✅ 서비스유형 집계 */
+        LEFT JOIN (
+            SELECT
+                vs.beneficiary_id,
+                GROUP_CONCAT(DISTINCT mst.name ORDER BY mst.name SEPARATOR ', ') AS service_types
+            FROM visit_schedule vs
+            JOIN m_service_type mst ON mst.id = vs.service_type_id
+            GROUP BY vs.beneficiary_id
+        ) st ON st.beneficiary_id = b.id
 
         LEFT JOIN guardian g
-        ON g.beneficiary_id = b.id
-        AND g.is_primary = 'Y'
-
-        LEFT JOIN m_service_type mst
-        ON mst.id = (
-        SELECT bs.service_type_id
-        FROM beneficiary_schedule bs
-        WHERE bs.beneficiary_id = b.id
-        ORDER BY bs.start_time ASC
-        LIMIT 1
-        )
+            ON g.beneficiary_id = b.id
+           AND g.is_primary = 'Y'
 
         WHERE b.id = #{beneficiaryId}
         LIMIT 1
+        ]]>
     </select>
 
     <select id="selectBeneficiaryTags"
             parameterType="long"
             resultType="string">
+        <![CDATA[
         SELECT pt.tag
         FROM tag_of_beneficiary tob
         JOIN personal_tag pt ON pt.id = tob.tag_id
         WHERE tob.beneficiary_id = #{beneficiaryId}
         ORDER BY pt.id
+        ]]>
     </select>
 
     <select id="selectBeneficiaryRiskFactors"
             parameterType="long"
             resultType="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse$RiskFactorItem">
+        <![CDATA[
         SELECT
-        rf.id,
-        rf.name,
-        rf.score
+            rf.id,
+            rf.name,
+            rf.score
         FROM riskOfMember rom
         JOIN m_risk_factor rf ON rf.id = rom.risk_id
         WHERE rom.beneficiary_id = #{beneficiaryId}
         ORDER BY rf.id
+        ]]>
     </select>
 
 </mapper>

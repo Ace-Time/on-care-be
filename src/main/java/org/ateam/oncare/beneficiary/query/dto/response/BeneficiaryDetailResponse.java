@@ -17,15 +17,16 @@ public class BeneficiaryDetailResponse {
     private String birthdate;   // yyyy-MM-dd
     private String phone;
     private String address;
-    private String status;      // ACTIVE / INACTIVE
+    private String status;      // 서비스 중 / 서비스 해지
 
     // 등급 / 위험
     private String careLevel;        // 2등급
     private String careLevelEndDate; // 2025-12-10
     private String riskLevel;        // 저위험 / 중위험 / 고위험
 
-    // 담당자
-    private String managerName;
+    // ✅ 요양보호사
+    private Long careWorkerId;  // care_worker.id
+    private String managerName; // (= 요양보호사 이름: employee.name)
     private String serviceType;
 
     // 보호자
@@ -39,10 +40,7 @@ public class BeneficiaryDetailResponse {
     private Integer remainingAmount;
     private Double usedRate;       // %
 
-    // ✅ 수급자 태그 (personal_tag.tag)
     private List<String> tags;
-
-    // ✅ 위험요소 (m_risk_factor)
     private List<RiskFactorItem> riskFactors;
 
     @Getter @Setter
@@ -51,6 +49,4 @@ public class BeneficiaryDetailResponse {
         private String name;
         private Integer score;
     }
-
-
 }
