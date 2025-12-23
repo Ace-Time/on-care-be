@@ -2,7 +2,7 @@ package org.ateam.oncare.employee.command.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.employee.command.dto.EmployeeRequestDTO;
-import org.ateam.oncare.employee.command.service.EmployeeCommandService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class EmployeeCommandController {
 
-    private final EmployeeCommandService employeeCommandService;
+    private final org.ateam.oncare.employee.command.service.EmployeeService employeeCommandService;
 
     /**
      * 직원 등록
