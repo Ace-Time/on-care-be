@@ -5,10 +5,6 @@ import org.ateam.oncare.beneficiary.query.dto.response.RentalUsageResponse;
 import org.ateam.oncare.beneficiary.query.service.BeneficiaryRentalUsageService;
 import org.springframework.web.bind.annotation.*;
 
-import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.beneficiary.query.dto.response.RentalUsageResponse;
-import org.ateam.oncare.beneficiary.query.service.BeneficiaryRentalUsageService;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor

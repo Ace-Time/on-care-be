@@ -5,6 +5,12 @@
 
 <mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BeneficiaryDetailMapper">
 
+    <!--
+      ✅ 수급자 상세 조회 ResultMap
+      - tags, riskFactors 는 "추가 조회(select)"로 컬렉션 매핑
+      - serviceType 은 여러개 가능해서 GROUP_CONCAT 문자열로 받음
+      - careWorkerId 는 수급자당 1명 전제라 Long 1개로 받음
+    -->
     <resultMap id="BeneficiaryDetailMap"
                type="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse">
 
@@ -37,21 +43,75 @@
         <result property="remainingAmount" column="remaining_amount"/>
         <result property="usedRate" column="used_rate"/>
 
+        <!-- ✅ 태그 목록: 수급자 id로 별도 조회 -->
         <collection property="tags"
                     ofType="string"
                     select="selectBeneficiaryTags"
                     column="beneficiary_id"/>
 
+        <!-- ✅ 위험요소 목록: 수급자 id로 별도 조회 -->
         <collection property="riskFactors"
                     ofType="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse$RiskFactorItem"
                     select="selectBeneficiaryRiskFactors"
                     column="beneficiary_id"/>
     </resultMap>
 
+    <!--
+      ✅ 수급자 상세조회
+      - 중복되던 used_amount/remaining_amount/used_rate 계산을 CTE로 1회 계산 후 재사용
+      - MySQL 8+ 필요 (WITH CTE 지원)
+      - used_amount = (이번달 서비스사용액) + (오늘 기준 진행중 렌탈 월금액 합계)
+    -->
     <select id="selectBeneficiaryDetail"
             parameterType="long"
             resultMap="BeneficiaryDetailMap">
         <![CDATA[
+        /* =========================================================
+           1) svc : 이번달 서비스 사용액 (cost_of_beneficiary 월 1건)
+              - cob.month = 'YYYY-MM'
+           ========================================================= */
+        WITH
+        svc AS (
+            SELECT
+                cob.beneficiary_id,
+                cob.monthly_amount AS svc_amount
+            FROM cost_of_beneficiary cob
+            WHERE cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
+        ),
+
+        /* =========================================================
+           2) rent : 오늘 기준 "진행중" 렌탈 월금액 합계
+              - start_date <= 오늘
+              - end_date가 NULL(무기한) 이거나 end_date >= 오늘(오늘 포함)
+           ========================================================= */
+        rent AS (
+            SELECT
+                rc.beneficiary_id,
+                SUM(cp.rental_amount) AS rent_amount
+            FROM rental_contract rc
+            JOIN rental_product rp ON rp.rental_contract_cd = rc.id
+            JOIN care_product cp ON cp.id = rp.product_id
+            WHERE rc.start_date <= CURDATE()
+              AND (rc.end_date IS NULL OR rc.end_date >= CURDATE())
+            GROUP BY rc.beneficiary_id
+        ),
+
+        /* =========================================================
+           3) used : used_amount를 딱 1번만 계산해서 재사용
+              used_amount = IFNULL(svc_amount,0) + IFNULL(rent_amount,0)
+           ========================================================= */
+        used AS (
+            SELECT
+                b.id AS beneficiary_id,
+                IFNULL(svc.svc_amount, 0) + IFNULL(rent.rent_amount, 0) AS used_amount
+            FROM beneficiary b
+            LEFT JOIN svc  ON svc.beneficiary_id  = b.id
+            LEFT JOIN rent ON rent.beneficiary_id = b.id
+        )
+
+        /* =========================================================
+           4) 메인 SELECT : 상세 데이터 + used_amount 재사용
+           ========================================================= */
         SELECT
             b.id AS beneficiary_id,
             b.name,
@@ -60,114 +120,47 @@
             b.phone,
             b.address,
 
+            /* ✅ 수급자 상태 라벨 */
             CASE WHEN b.status = 1 THEN '서비스 중' ELSE '서비스 해지' END AS status,
 
+            /* ✅ 장기요양등급(레벨) & 만료일 */
             mcl.level AS care_level,
             DATE_FORMAT(bcl.end_date, '%Y-%m-%d') AS care_level_end_date,
 
+            /* ✅ 위험도 = 위험요소 점수 합(risk_total) 기준 */
             CASE
                 WHEN IFNULL(rsum.risk_total, 0) < 10 THEN '저위험'
                 WHEN IFNULL(rsum.risk_total, 0) < 15 THEN '중위험'
                 ELSE '고위험'
             END AS risk_level,
 
-            /* ✅ 요양보호사: 최신 1건 기준 (어차피 동일 1명이라는 전제) */
+            /* ✅ 요양보호사: 최신 방문 1건 기준 */
             cw.id   AS care_worker_id,
             ce.name AS care_worker_name,
 
-            /* ✅ 서비스유형: 여러개 집계 */
+            /* ✅ 서비스유형: 수급자별 방문일정의 service_type_id를 집계해서 문자열로 */
             st.service_types AS service_types,
 
+            /* ✅ 주보호자(대표 1명) */
             g.name AS guardian_name,
             g.relation AS guardian_relation,
             g.phone AS guardian_phone,
 
+            /* ✅ 월 한도 */
             mcl.monthly_limit,
 
-            /* ✅ 사용액 = (서비스 이번달(오늘 기준 진행중으로 산정됨) 누계) + (렌탈 오늘 기준 진행중 합계) */
-            /* 서비스 누계는 방문일정에서 퇴근 태그 시간 등록되면 cost_of_beneficiary에 등록됨(요양보호사가 진행) */
-            (
-                IFNULL((
-                    SELECT cob.monthly_amount
-                    FROM cost_of_beneficiary cob
-                    WHERE cob.beneficiary_id = b.id
-                      AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
-                ), 0)
-                +
-                IFNULL((
-                    SELECT SUM(cp.rental_amount)
-                    FROM rental_contract rc
-                    JOIN rental_product rp ON rp.rental_contract_cd = rc.id
-                    JOIN care_product cp ON cp.id = rp.product_id
-                    WHERE rc.beneficiary_id = b.id
-                      /* ✅ 오늘 기준 진행중(또는 오늘까지) */
-                      AND rc.start_date <= CURDATE()
-                      AND (
-                            rc.end_date IS NULL
-                            OR rc.end_date >= CURDATE()
-                      )
-                ), 0)
-            ) AS used_amount,
+            /* ✅ CTE에서 계산한 사용액을 그대로 사용 */
+            u.used_amount AS used_amount,
 
-            /* ✅ 잔액 */
-            (
-                mcl.monthly_limit
-                -
-                (
-                    IFNULL((
-                        SELECT cob.monthly_amount
-                        FROM cost_of_beneficiary cob
-                        WHERE cob.beneficiary_id = b.id
-                          AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
-                    ), 0)
-                    +
-                    IFNULL((
-                        SELECT SUM(cp.rental_amount)
-                        FROM rental_contract rc
-                        JOIN rental_product rp ON rp.rental_contract_cd = rc.id
-                        JOIN care_product cp ON cp.id = rp.product_id
-                        WHERE rc.beneficiary_id = b.id
-                          /* ✅ 오늘 기준 진행중(또는 오늘까지) */
-                          AND rc.start_date <= CURDATE()
-                          AND (
-                                rc.end_date IS NULL
-                                OR rc.end_date >= CURDATE()
-                          )
-                    ), 0)
-                )
-            ) AS remaining_amount,
+            /* ✅ 잔액 = 월한도 - 사용액 */
+            (mcl.monthly_limit - u.used_amount) AS remaining_amount,
 
-            /* ✅ 사용률 */
-            ROUND(
-                (
-                    (
-                        IFNULL((
-                            SELECT cob.monthly_amount
-                            FROM cost_of_beneficiary cob
-                            WHERE cob.beneficiary_id = b.id
-                              AND cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
-                        ), 0)
-                        +
-                        IFNULL((
-                            SELECT SUM(cp.rental_amount)
-                            FROM rental_contract rc
-                            JOIN rental_product rp ON rp.rental_contract_cd = rc.id
-                            JOIN care_product cp ON cp.id = rp.product_id
-                            WHERE rc.beneficiary_id = b.id
-                              /* ✅ 오늘 기준 진행중(또는 오늘까지) */
-                              AND rc.start_date <= CURDATE()
-                              AND (
-                                    rc.end_date IS NULL
-                                    OR rc.end_date >= CURDATE()
-                              )
-                        ), 0)
-                    )
-                    / NULLIF(mcl.monthly_limit, 0)
-                ) * 100
-            , 1) AS used_rate
+            /* ✅ 사용률(%) = (사용액 / 월한도) * 100, 소수점 1자리 */
+            ROUND((u.used_amount / NULLIF(mcl.monthly_limit, 0)) * 100, 1) AS used_rate
 
         FROM beneficiary b
 
+        /* ✅ 등급 관련 조인 */
         LEFT JOIN beneficiary_care_level bcl
             ON bcl.beneficiary_id = b.id
 
@@ -177,6 +170,7 @@
         LEFT JOIN m_care_level mcl
             ON mcl.id = bc.m_care_level_id
 
+        /* ✅ 위험요소 합산 (수급자별 risk_total) */
         LEFT JOIN (
             SELECT
                 rom.beneficiary_id,
@@ -187,7 +181,11 @@
         ) rsum
             ON rsum.beneficiary_id = b.id
 
-        /* ✅ 최신 방문 1건 */
+        /* ✅ used_amount 계산 결과 조인(CTE) */
+        LEFT JOIN used u
+            ON u.beneficiary_id = b.id
+
+        /* ✅ 최신 방문 1건: start_dt 최신의 vs_id를 찾아 조인 */
         LEFT JOIN visit_schedule vs_done
             ON vs_done.vs_id = (
                 SELECT vs2.vs_id
@@ -197,13 +195,14 @@
                 LIMIT 1
             )
 
+        /* ✅ 최신 방문에 매핑된 요양보호사 */
         LEFT JOIN care_worker cw
             ON cw.id = vs_done.care_worker_id
 
         LEFT JOIN employee ce
             ON ce.id = cw.employee_id
 
-        /* ✅ 서비스유형 집계 */
+        /* ✅ 서비스유형 집계: 수급자별 방문 일정의 서비스유형명 GROUP_CONCAT */
         LEFT JOIN (
             SELECT
                 vs.beneficiary_id,
@@ -211,17 +210,24 @@
             FROM visit_schedule vs
             JOIN m_service_type mst ON mst.id = vs.service_type_id
             GROUP BY vs.beneficiary_id
-        ) st ON st.beneficiary_id = b.id
+        ) st
+            ON st.beneficiary_id = b.id
 
+        /* ✅ 대표 보호자 1명 */
         LEFT JOIN guardian g
             ON g.beneficiary_id = b.id
            AND g.is_primary = 'Y'
 
+        /* ✅ 특정 수급자 1명 조회 */
         WHERE b.id = #{beneficiaryId}
         LIMIT 1
         ]]>
     </select>
 
+    <!--
+      ✅ 수급자 태그 목록 조회
+      - 개인태그(personal_tag)와 연결테이블(tag_of_beneficiary) 조인
+    -->
     <select id="selectBeneficiaryTags"
             parameterType="long"
             resultType="string">
@@ -234,6 +240,10 @@
         ]]>
     </select>
 
+    <!--
+      ✅ 수급자 위험요소 목록 조회
+      - riskOfMember(연결) + m_risk_factor(마스터) 조인
+    -->
     <select id="selectBeneficiaryRiskFactors"
             parameterType="long"
             resultType="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse$RiskFactorItem">
