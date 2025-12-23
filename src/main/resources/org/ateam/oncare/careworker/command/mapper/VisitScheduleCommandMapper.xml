@@ -21,4 +21,47 @@
           AND visit_status = 'IN_PROGRESS'
     </update>
 
+    <!-- 방문 요양 일정 작성 -->
+    <insert id="insertVisitSchedule">
+        INSERT INTO visit_schedule (
+            care_worker_id,
+            beneficiary_id,
+            service_type_id,
+            start_dt,
+            end_dt,
+            visit_status,
+            note,
+            is_log_written
+        ) VALUES (
+            #{careWorkerId},
+            #{request.beneficiaryId},
+            #{request.serviceTypeId},
+            #{request.startDt},
+            #{request.endDt},
+            COALESCE(#{request.visitStatus}, 'SCHEDULED'),
+            #{request.note},
+            FALSE
+        )
+    </insert>
+
+    <!-- 방문 요양 일정 수정 -->
+    <update id="updateVisitSchedule">
+        UPDATE visit_schedule
+        <set>
+            <if test="request.beneficiaryId != null">beneficiary_id = #{request.beneficiaryId},</if>
+            <if test="request.serviceTypeId != null">service_type_id = #{request.serviceTypeId},</if>
+            <if test="request.startDt != null">start_dt = #{request.startDt},</if>
+            <if test="request.endDt != null">end_dt = #{request.endDt},</if>
+            <if test="request.visitStatus != null">visit_status = #{request.visitStatus},</if>
+            <if test="request.note != null">note = #{request.note},</if>
+        </set>
+        WHERE vs_id = #{vsId}
+    </update>
+
+    <!-- 방문 요양 일정 삭제 -->
+    <delete id="deleteVisitSchedule">
+        DELETE FROM visit_schedule
+        WHERE vs_id = #{vsId}
+    </delete>
+
 </mapper>

@@ -1,12 +1,16 @@
 package org.ateam.oncare.careworker.command.service;
 
 import org.ateam.oncare.careworker.command.dto.CompleteVisitRequest;
+import org.ateam.oncare.careworker.command.dto.CreateVisitScheduleRequest;
 import org.ateam.oncare.careworker.command.dto.StartVisitRequest;
+import org.ateam.oncare.careworker.command.dto.UpdateVisitScheduleRequest;
 import org.ateam.oncare.careworker.command.mapper.VisitScheduleCommandMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VisitScheduleCommandService {
@@ -35,5 +39,41 @@ public class VisitScheduleCommandService {
         if (updated == 0) {
             throw new IllegalArgumentException("해당 일정을 찾을 수 없거나 이미 완료되었습니다.");
         }
+    }
+
+    @Transactional
+    public void createVisitSchedule(Long careWorkerId, CreateVisitScheduleRequest request) {
+        log.info("방문 요양 일정 작성 시작 - careWorkerId: {}, beneficiaryId: {}", careWorkerId, request.getBeneficiaryId());
+        int inserted = visitScheduleCommandMapper.insertVisitSchedule(careWorkerId, request);
+
+        if (inserted == 0) {
+            throw new IllegalStateException("방문 요양 일정 작성에 실패했습니다.");
+        }
+
+        log.info("방문 요양 일정 작성 완료");
+    }
+
+    @Transactional
+    public void updateVisitSchedule(Long vsId, UpdateVisitScheduleRequest request) {
+        log.info("방문 요양 일정 수정 시작 - vsId: {}", vsId);
+        int updated = visitScheduleCommandMapper.updateVisitSchedule(vsId, request);
+
+        if (updated == 0) {
+            throw new IllegalArgumentException("해당 방문 요양 일정을 찾을 수 없습니다. vsId: " + vsId);
+        }
+
+        log.info("방문 요양 일정 수정 완료 - vsId: {}", vsId);
+    }
+
+    @Transactional
+    public void deleteVisitSchedule(Long vsId) {
+        log.info("방문 요양 일정 삭제 시작 - vsId: {}", vsId);
+        int deleted = visitScheduleCommandMapper.deleteVisitSchedule(vsId);
+
+        if (deleted == 0) {
+            throw new IllegalArgumentException("해당 방문 요양 일정을 찾을 수 없습니다. vsId: " + vsId);
+        }
+
+        log.info("방문 요양 일정 삭제 완료 - vsId: {}", vsId);
     }
 }
