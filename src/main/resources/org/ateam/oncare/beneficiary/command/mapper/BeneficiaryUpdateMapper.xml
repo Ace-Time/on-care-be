@@ -78,11 +78,27 @@
         WHERE b.id = #{beneficiaryId}
     </update>
 
-    <!-- 5) care level 종료일 수정 -->
-    <update id="updateCareLevelEndDate">
+    <!-- ✅ 5) care level 정보 수정(만료일/인정번호/장기요양등급) -->
+    <update id="updateCareLevelInfo">
+        <!-- (1) beneficiary_care_level: end_date / number 업데이트 -->
         UPDATE beneficiary_care_level
-        SET end_date = #{endDate}
+        <set>
+            <if test="req.careLevelEndDate != null and req.careLevelEndDate != ''">
+                end_date = #{req.careLevelEndDate},
+            </if>
+            <if test="req.careLevelNumber != null">
+                number = #{req.careLevelNumber},
+            </if>
+        </set>
         WHERE beneficiary_id = #{beneficiaryId}
+    </update>
+
+    <!-- ✅ 5-1) 장기요양등급 변경: beneficiary_count.m_care_level_id 업데이트 -->
+    <update id="updateCareLevelGrade">
+        UPDATE beneficiary_count bc
+        JOIN beneficiary_care_level bcl ON bcl.id = bc.beneficiary_care_level_id
+        SET bc.m_care_level_id = #{careLevelId}
+        WHERE bcl.beneficiary_id = #{beneficiaryId}
     </update>
 
 </mapper>

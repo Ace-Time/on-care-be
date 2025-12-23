@@ -25,9 +25,13 @@ public interface BeneficiaryUpdateMapper {
     int insertRiskFactors(@Param("beneficiaryId") Long beneficiaryId,
                           @Param("riskIds") List<Integer> riskIds);
 
-    // ✅ 추가: 위험요소 기반 risk_id 갱신
     int updateRiskLevelByFactors(@Param("beneficiaryId") Long beneficiaryId);
 
-    int updateCareLevelEndDate(@Param("beneficiaryId") Long beneficiaryId,
-                               @Param("endDate") String endDate);
+    // ✅ 변경: 기존 endDate만 → endDate + number 같이
+    int updateCareLevelInfo(@Param("beneficiaryId") Long beneficiaryId,
+                            @Param("req") BeneficiaryUpdateRequest req);
+
+    // ✅ 추가: 장기요양등급(조인테이블) 업데이트
+    int updateCareLevelGrade(@Param("beneficiaryId") Long beneficiaryId,
+                             @Param("careLevelId") Integer careLevelId);
 }
