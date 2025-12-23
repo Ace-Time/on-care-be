@@ -27,49 +27,52 @@ public class TodoCommandService {
     }
 
     @Transactional
-    public void completeTodo(Long todoId) {
-        log.info("할 일 완료 처리 시작 - todoId: {}", todoId);
-        int updated = todoCommandMapper.updateTodoComplete(todoId);
+    public void completeTodo(Long employeeId, Long todoId) {
+        log.info("할 일 완료 처리 시작 - employeeId: {}, todoId: {}", employeeId, todoId);
+        int updated = todoCommandMapper.updateTodoComplete(employeeId, todoId);
         log.info("업데이트된 행 수: {}", updated);
 
         if (updated == 0) {
-            throw new IllegalArgumentException("해당 할 일을 찾을 수 없습니다. todoId: " + todoId);
+            throw new IllegalArgumentException("해당 할 일을 찾을 수 없거나 권한이 없습니다. todoId: " + todoId);
         }
 
         log.info("할 일 완료 처리 완료 - todoId: {}", todoId);
     }
 
     @Transactional
-    public void uncompleteTodo(Long todoId) {
-        log.info("할 일 완료 취소 시작 - todoId: {}", todoId);
-        int updated = todoCommandMapper.updateTodoUncomplete(todoId);
+    public void uncompleteTodo(Long employeeId, Long todoId) {
+        log.info("할 일 완료 취소 시작 - employeeId: {}, todoId: {}", employeeId, todoId);
+        int updated = todoCommandMapper.updateTodoUncomplete(employeeId, todoId);
         log.info("업데이트된 행 수: {}", updated);
 
         if (updated == 0) {
-            throw new IllegalArgumentException("해당 할 일을 찾을 수 없습니다. todoId: " + todoId);
+            throw new IllegalArgumentException("해당 할 일을 찾을 수 없거나 권한이 없습니다. todoId: " + todoId);
         }
 
         log.info("할 일 완료 취소 완료 - todoId: {}", todoId);
     }
 
     @Transactional
-    public void updateTodo(Long todoId, UpdateTodoRequest request) {
-        log.info("할 일 수정 시작 - todoId: {}", todoId);
-        int updated = todoCommandMapper.updateTodo(todoId, request);
+    public void updateTodo(Long employeeId, Long todoId, UpdateTodoRequest request) {
+        log.info("할 일 수정 시작 - employeeId: {}, todoId: {}", employeeId, todoId);
+        int updated = todoCommandMapper.updateTodo(employeeId, todoId, request);
 
         if (updated == 0) {
-            throw new IllegalArgumentException("해당 할 일을 찾을 수 없습니다. todoId: " + todoId);
+            throw new IllegalArgumentException("해당 할 일을 찾을 수 없거나 권한이 없습니다. todoId: " + todoId);
         }
 
         log.info("할 일 수정 완료 - todoId: {}", todoId);
     }
 
     @Transactional
-    public void deleteTodo(Long todoId) {
-        int deleted = todoCommandMapper.deleteTodo(todoId);
+    public void deleteTodo(Long employeeId, Long todoId) {
+        log.info("할 일 삭제 시작 - employeeId: {}, todoId: {}", employeeId, todoId);
+        int deleted = todoCommandMapper.deleteTodo(employeeId, todoId);
 
         if (deleted == 0) {
-            throw new IllegalArgumentException("해당 할 일을 찾을 수 없습니다.");
+            throw new IllegalArgumentException("해당 할 일을 찾을 수 없거나 권한이 없습니다.");
         }
+
+        log.info("할 일 삭제 완료 - todoId: {}", todoId);
     }
 }

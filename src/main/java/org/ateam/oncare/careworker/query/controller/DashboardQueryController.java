@@ -79,4 +79,12 @@ public class DashboardQueryController {
         CareLogDetailDto data = dashboardQueryService.getCareLogBySchedule(vsId);
         return ApiResponse.success(data);
     }
+
+    // 8. 내 수급자 목록 조회
+    @GetMapping("/my-beneficiaries")
+    public ApiResponse<List<MyBeneficiaryDto>> getMyBeneficiaries(@RequestHeader("Authorization") String authHeader) {
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        List<MyBeneficiaryDto> data = dashboardQueryService.getMyBeneficiaries(employeeId);
+        return ApiResponse.success(data);
+    }
 }

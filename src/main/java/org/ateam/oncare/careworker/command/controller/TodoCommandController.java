@@ -40,30 +40,41 @@ public class TodoCommandController {
     // 2. 할 일 수정
     @PatchMapping("/{todoId}")
     public ApiResponse<Void> updateTodo(
+            @RequestHeader("Authorization") String authHeader,
             @PathVariable Long todoId,
             @RequestBody UpdateTodoRequest request) {
-        todoCommandService.updateTodo(todoId, request);
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        todoCommandService.updateTodo(employeeId, todoId, request);
         return ApiResponse.success(null);
     }
 
     // 3. 할 일 완료 체크
     @PatchMapping("/{todoId}/complete")
-    public ApiResponse<Void> completeTodo(@PathVariable Long todoId) {
-        todoCommandService.completeTodo(todoId);
+    public ApiResponse<Void> completeTodo(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long todoId) {
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        todoCommandService.completeTodo(employeeId, todoId);
         return ApiResponse.success(null);
     }
 
     // 4. 할 일 완료 취소
     @PatchMapping("/{todoId}/uncomplete")
-    public ApiResponse<Void> uncompleteTodo(@PathVariable Long todoId) {
-        todoCommandService.uncompleteTodo(todoId);
+    public ApiResponse<Void> uncompleteTodo(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long todoId) {
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        todoCommandService.uncompleteTodo(employeeId, todoId);
         return ApiResponse.success(null);
     }
 
     // 5. 할 일 삭제
     @DeleteMapping("/{todoId}")
-    public ApiResponse<Void> deleteTodo(@PathVariable Long todoId) {
-        todoCommandService.deleteTodo(todoId);
+    public ApiResponse<Void> deleteTodo(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long todoId) {
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        todoCommandService.deleteTodo(employeeId, todoId);
         return ApiResponse.success(null);
     }
 }

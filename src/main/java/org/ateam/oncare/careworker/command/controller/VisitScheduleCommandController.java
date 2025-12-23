@@ -29,21 +29,17 @@ public class VisitScheduleCommandController {
         return 1L; // fallback
     }
 
-    // 1. 방문 일정 서비스 시작 (SCHEDULED → IN_PROGRESS)
+    // 1. 방문 일정 서비스 시작 (SCHEDULED → IN_PROGRESS) - 현재 시간 자동 기록
     @PostMapping("/{vsId}/start")
-    public ApiResponse<Void> startVisit(
-            @PathVariable Long vsId,
-            @RequestBody StartVisitRequest request) {
-        visitScheduleCommandService.startVisit(vsId, request);
+    public ApiResponse<Void> startVisit(@PathVariable Long vsId) {
+        visitScheduleCommandService.startVisit(vsId);
         return ApiResponse.success(null);
     }
 
-    // 2. 방문 일정 서비스 종료 (IN_PROGRESS → DONE)
+    // 2. 방문 일정 서비스 종료 (IN_PROGRESS → DONE) - 현재 시간 자동 기록
     @PostMapping("/{vsId}/complete")
-    public ApiResponse<Void> completeVisit(
-            @PathVariable Long vsId,
-            @RequestBody CompleteVisitRequest request) {
-        visitScheduleCommandService.completeVisit(vsId, request);
+    public ApiResponse<Void> completeVisit(@PathVariable Long vsId) {
+        visitScheduleCommandService.completeVisit(vsId);
         return ApiResponse.success(null);
     }
 
