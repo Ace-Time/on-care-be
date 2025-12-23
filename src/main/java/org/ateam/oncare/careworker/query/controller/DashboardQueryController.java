@@ -35,13 +35,13 @@ public class DashboardQueryController {
         return ApiResponse.success(data);
     }
 
-    // 2. 긴급 알림
-    @GetMapping("/notifications/urgent")
-    public ApiResponse<List<UrgentNotificationDto>> getUrgentNotifications(@RequestHeader("Authorization") String authHeader) {
-        Long employeeId = getEmployeeIdFromToken(authHeader);
-        List<UrgentNotificationDto> data = dashboardQueryService.getUrgentNotifications(employeeId);
-        return ApiResponse.success(data);
-    }
+    // 2. 긴급 알림 (제거됨)
+//    @GetMapping("/notifications/urgent")
+//    public ApiResponse<List<UrgentNotificationDto>> getUrgentNotifications(@RequestHeader("Authorization") String authHeader) {
+//        Long employeeId = getEmployeeIdFromToken(authHeader);
+//        List<UrgentNotificationDto> data = dashboardQueryService.getUrgentNotifications(employeeId);
+//        return ApiResponse.success(data);
+//    }
 
     // 3. 오늘의 일정
     @GetMapping("/schedules/today")
