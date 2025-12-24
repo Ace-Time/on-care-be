@@ -30,4 +30,11 @@ public class BeneficiaryUpdateRequest {
 
     // (옵션) 등급 종료일 수정
     private String careLevelEndDate; // "yyyy-MM-dd"
+
+    // ✅ 추가: 인정번호 (beneficiary_care_level.number)
+    private Long careLevelNumber;
+
+    // ✅ 추가: 장기요양등급 (beneficiary_count.m_care_level_id)
+    // 프론트에서 선택한 m_care_level.id를 넘기면 됨 (1~6)
+    private Integer careLevelId;
 }

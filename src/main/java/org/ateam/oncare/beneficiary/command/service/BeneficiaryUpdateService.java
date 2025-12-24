@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.beneficiary.command.dto.request.BeneficiaryUpdateRequest;
 import org.ateam.oncare.beneficiary.command.dto.response.BeneficiaryUpdateResponse;
 import org.ateam.oncare.beneficiary.command.mapper.BeneficiaryUpdateMapper;
+import org.ateam.oncare.beneficiary.command.repository.BeneficiaryUpdateRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -14,6 +16,7 @@ import java.util.List;
 public class BeneficiaryUpdateService {
 
     private final BeneficiaryUpdateMapper mapper;
+    private final BeneficiaryUpdateRepository beneficiaryUpdateRepository;   // 최근 상담일 수정 위해 추가
 
     @Transactional
     public BeneficiaryUpdateResponse update(Long beneficiaryId, BeneficiaryUpdateRequest req) {
@@ -51,9 +54,18 @@ public class BeneficiaryUpdateService {
         // 4-1) 위험요소 기반 beneficiary.risk_id 갱신
         mapper.updateRiskLevelByFactors(beneficiaryId);
 
-        // 5) (옵션) care level 종료일 수정
-        if (req.getCareLevelEndDate() != null && !req.getCareLevelEndDate().isBlank()) {
-            mapper.updateCareLevelEndDate(beneficiaryId, req.getCareLevelEndDate());
+        // ✅ 5) (옵션) care level (만료일/인정번호) 수정
+        boolean hasCareLevelInfo =
+                (req.getCareLevelEndDate() != null && !req.getCareLevelEndDate().isBlank())
+                        || (req.getCareLevelNumber() != null);
+
+        if (hasCareLevelInfo) {
+            mapper.updateCareLevelInfo(beneficiaryId, req);
+        }
+
+        // ✅ 5-1) (옵션) 장기요양등급 수정 (beneficiary_count.m_care_level_id)
+        if (req.getCareLevelId() != null) {
+            mapper.updateCareLevelGrade(beneficiaryId, req.getCareLevelId());
         }
 
         // ✅ 응답: 요청값 그대로 + message
@@ -72,6 +84,13 @@ public class BeneficiaryUpdateService {
                 .tagIds(req.getTagIds())
                 .riskFactorIds(req.getRiskFactorIds())
                 .careLevelEndDate(req.getCareLevelEndDate())
+                .careLevelNumber(req.getCareLevelNumber())
+                .careLevelId(req.getCareLevelId())
                 .build();
     }
+
+    @Transactional
+    public void updateLastCounselDate(Long beneficiaryId, LocalDateTime consultDate) {
+        beneficiaryUpdateRepository.updateLastCounselDate(beneficiaryId, consultDate);
+    } // 최근 상담일 수정을 위한 메소드
 }

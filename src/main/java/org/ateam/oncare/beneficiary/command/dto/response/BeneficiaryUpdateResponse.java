@@ -27,5 +27,10 @@ public class BeneficiaryUpdateResponse {
     private List<Long> tagIds;
     private List<Integer> riskFactorIds;
 
+    // ✅ 기존
     private String careLevelEndDate;
+
+    // ✅ 추가
+    private Long careLevelNumber;  // 인정번호
+    private Integer careLevelId;   // 장기요양등급 id (m_care_level.id)
 }

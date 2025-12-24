@@ -12,10 +12,15 @@ public class BeneficiaryListItemResponse {
     private String name;
 
     private String careLevel;   // 2등급
-    private String riskLevel;   // 고위험
+    private String riskLevel;   // 저위험/중위험/고위험
 
-    private String managerName;
+    // ✅ 요양보호사 (care_worker PK)
+    private Long careWorkerId;  // care_worker.id
+
+    // ✅ 화면에 뿌릴 요양보호사 이름 (employee.name)
+    private String managerName; // (= 요양보호사 이름)
+
     private String serviceType;
 
-    private String status;      // ACTIVE / INACTIVE
+    private String status;      // 서비스 중 / 서비스 해지
 }
