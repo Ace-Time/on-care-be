@@ -1,5 +1,6 @@
 package org.ateam.oncare.config.exception;
 
+import org.ateam.oncare.config.customexception.InsufficientStockException;
 import org.ateam.oncare.config.customexception.NotFoundProductMasterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,5 +60,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("제품의 마스터 정보를 찾지 못 했습니다.");
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<String> BAD_REQUEST(NoResourceFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(e.getMessage());
     }
 }

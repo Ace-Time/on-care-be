@@ -1,5 +1,7 @@
 server:
   port: ${PORT}
+  error:
+    include-stacktrace: never # e.getMessage 호출시 stacTrace 안찍히게 설정
 
 spring:
   datasource:

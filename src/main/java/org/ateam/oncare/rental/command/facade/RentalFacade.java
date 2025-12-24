@@ -4,14 +4,26 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.careproduct.command.dto.ProductAmountForRentalDTO;
+import org.ateam.oncare.careproduct.command.dto.RequestProductMasterForSelectDTO;
+import org.ateam.oncare.careproduct.command.dto.ResponseProductMasterDetailDTO;
 import org.ateam.oncare.careproduct.command.service.ProductMasterService;
 import org.ateam.oncare.careproduct.command.service.ProductService;
+import org.ateam.oncare.config.customexception.InsufficientStockException;
 import org.ateam.oncare.config.customexception.NotFoundProductMasterException;
+import org.ateam.oncare.global.enums.StockType;
+import org.ateam.oncare.global.eventType.ProductStockEvent;
 import org.ateam.oncare.rental.command.dto.RentalContractForCalculationDTO;
 import org.ateam.oncare.rental.command.dto.RentalProductForCalculationDTO;
+import org.ateam.oncare.rental.command.dto.RequestRentalContractDTO;
+import org.ateam.oncare.rental.command.dto.ResponseRentalContractDTO;
+import org.ateam.oncare.rental.command.entity.RentalContract;
 import org.ateam.oncare.rental.command.entity.RentalProduct;
 import org.ateam.oncare.rental.command.service.RentalService;
 import org.ateam.oncare.rental.query.service.RentalQueryService;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -31,6 +43,7 @@ public class RentalFacade {
     private final RentalQueryService rentalQueryService;
     private final ProductService productService;
     private final TransactionTemplate transactionTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher; // 변경 사항을 알리기 위함.
 
 
     public int calcRentalAmount(LocalDate calcDate) {
@@ -115,7 +128,7 @@ public class RentalFacade {
         List<RentalProductForCalculationDTO> calcProductRentalFeeList = new ArrayList<>();
 
         targetRentalContracts.forEach(x -> {
-            List<RentalProductForCalculationDTO> dtos = rentalProductMap.get((long)x.getId());
+            List<RentalProductForCalculationDTO> dtos = rentalProductMap.get((long) x.getId());
 
             if (dtos != null) {
                 if (dtos.size() == 1) {
@@ -167,4 +180,51 @@ public class RentalFacade {
         log.debug("calcProductRentalFeeList:{}", calcProductRentalFeeList);
         return calcProductRentalFeeList;
     }
+
+    @Transactional
+    public ResponseRentalContractDTO registRentalContract(RequestRentalContractDTO request) {
+        // 가용재고 확인을 위해 데이터 조회
+        boolean isPossable = this.getAvailableRentalProducts(
+                RequestProductMasterForSelectDTO.builder()
+                        .codeOrName(request.getProductCd())
+                        .build()
+                , PageRequest.of(0, 10)
+        );
+
+        //가용 재고가 부족하면 계약 불가하도록 에러 메시지 출력
+        if(!isPossable)
+            throw new InsufficientStockException(
+                    String.format("%s 제품은 가용 재고 부족으로 계약을 할 수없습니다.",request.getProductCd()));
+        
+        ResponseRentalContractDTO responseDTO = rentalService.registRentalContract(request);
+
+        applicationEventPublisher.publishEvent(
+                ProductStockEvent.builder()
+                        .status(StockType.OUTBOUND)
+                        .expectedDate(responseDTO.getWantedDate())
+                        .productCode(responseDTO.getProductCd())
+                        .isConfirmed("N")
+                        .build());
+        return responseDTO;
+    }
+
+    public boolean getAvailableRentalProducts(RequestProductMasterForSelectDTO condition, Pageable pageable) {
+        Slice<ResponseProductMasterDetailDTO> responeSlice = productMasterService.getProductMasterDetail(condition, pageable);
+        List<ResponseProductMasterDetailDTO> responseProductMasterDetailDTOList = responeSlice.getContent();
+
+        log.debug("responseProductMasterDetailDTOList:{}", responseProductMasterDetailDTOList);
+
+        ResponseProductMasterDetailDTO responseDTO = responseProductMasterDetailDTOList.size() > 0 ?
+                responseProductMasterDetailDTOList.get(0) :
+                null ;
+        boolean isPossable = false;
+        if(responseDTO != null && responseDTO.getAvailableProducts() > 0)
+            isPossable = true;
+
+        log.debug("responseDTO:{}", responseDTO);
+
+        return isPossable;
+    }
+
+
 }

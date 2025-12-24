@@ -6,6 +6,7 @@ import org.ateam.oncare.employee.command.entity.Employee;
 import org.ateam.oncare.employee.command.entity.EmployeeCareer;
 import org.ateam.oncare.employee.command.repository.EmployeeCareerCommandRepository;
 import org.ateam.oncare.employee.command.repository.EmployeeCommandRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ public class EmployeeCommandServiceImpl implements EmployeeCommandService {
 
     private final EmployeeCommandRepository employeeCommandRepository;
     private final EmployeeCareerCommandRepository employeeCareerCommandRepository;
+    private final ApplicationEventPublisher applicationEventPublisher; // 변경 사항을 알리기 위함.
 
     @Override
     public Integer registerEmployee(EmployeeRequestDTO dto) {

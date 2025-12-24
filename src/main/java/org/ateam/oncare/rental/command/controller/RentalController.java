@@ -4,9 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.careproduct.command.dto.RequestProductHistoryDTO;
 import org.ateam.oncare.careproduct.command.service.ProductMasterService;
-import org.ateam.oncare.rental.command.dto.RequestContractDTO;
-import org.ateam.oncare.rental.command.dto.ResponseContractRentalDTO;
-import org.ateam.oncare.rental.command.dto.ResponseContractStatusType;
+import org.ateam.oncare.rental.command.dto.*;
 import org.ateam.oncare.rental.command.enums.ContractStatusType;
 import org.ateam.oncare.rental.command.facade.RentalFacade;
 import org.ateam.oncare.rental.command.service.RentalService;
@@ -43,9 +41,26 @@ public class RentalController {
         return ResponseEntity.ok(respose);
     }
 
-    @GetMapping("/contract-type")
+    @GetMapping("/rental-product")
+    public ResponseEntity<List<ResponseRentalProductDTO>> getProductRental(
+            Long contractCode
+    ){
+        List<ResponseRentalProductDTO> responseDTO = rentalService.getProductRental(contractCode);
+
+        return ResponseEntity.ok()
+                .body(responseDTO);
+    }
+
+
+    @GetMapping("/contract/type")
     public ResponseEntity<List<ResponseContractStatusType>> getContractType() {
         List<ResponseContractStatusType> response = rentalService.getContractStatusType();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/rental-product/status")
+    public ResponseEntity<List<ResponseRetnalProductStatusType>> getRentalProductStatus() {
+        List<ResponseRetnalProductStatusType> response = rentalService.getRentalProductStatus();
         return ResponseEntity.ok(response);
     }
 
@@ -54,5 +69,13 @@ public class RentalController {
         int count = rentalFacade.calcRentalAmount(calcDate);
         log.debug("calculationRentalAmount:{}",calcDate);
         return ResponseEntity.ok(1);
+    }
+
+    @PostMapping("/contract")
+    public ResponseEntity<ResponseRentalContractDTO> registRentalContract(@RequestBody RequestRentalContractDTO request) {
+        ResponseRentalContractDTO responseDTO = rentalFacade.registRentalContract(request);
+
+        return ResponseEntity.ok()
+                .body(responseDTO);
     }
 }

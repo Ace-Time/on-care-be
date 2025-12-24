@@ -23,4 +23,10 @@ public interface RentalService {
     void calcRentalAmount(List<RentalContractForCalculationDTO> targetRentalContracts);
 
     Map<Long,List<RentalProductForCalculationDTO>> selectRentalProduct(List<Long> contratIdList);
+
+    List<ResponseRentalProductDTO> getProductRental(Long contractCode);
+
+    List<ResponseRetnalProductStatusType> getRentalProductStatus();
+
+    ResponseRentalContractDTO registRentalContract(RequestRentalContractDTO request);
 }
