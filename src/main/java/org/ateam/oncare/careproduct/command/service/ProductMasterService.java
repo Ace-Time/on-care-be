@@ -16,4 +16,6 @@ public interface ProductMasterService {
     Slice<ResponseProductMasterDetailDTO> getProductMasterDetail(RequestProductMasterForSelectDTO condition, Pageable pageable);
 
     int registerProductMaster(RequestProductMasterDTO requestProductMasterDTO);
+
+    List<ProductAmountForRentalDTO> getProductAmountForRental(List<String> productCodes);
 }

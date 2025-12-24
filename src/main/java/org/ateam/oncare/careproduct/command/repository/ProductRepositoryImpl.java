@@ -10,11 +10,16 @@ import org.ateam.oncare.careproduct.command.dto.*;
 import org.ateam.oncare.careproduct.command.entity.CareProduct;
 import org.ateam.oncare.careproduct.command.entity.QCareProduct;
 import org.ateam.oncare.careproduct.mapper.ProductMapper;
+import org.ateam.oncare.rental.command.dto.RentalContractForCalculationDTO;
+import org.ateam.oncare.rental.command.dto.RentalProductForCalculationDTO;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -23,6 +28,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     private final JPAQueryFactory queryFactory;
     private final ProductMapper productMapper;
     private final QCareProduct product = QCareProduct.careProduct;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public List<AggregationOfProductDTO> selectAggregationOfProduct(List<String> masterCodes) {
@@ -77,5 +83,19 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 .toList();
 
         return new SliceImpl<>(dtos, pageable, hasNext);
+    }
+
+    @Override
+    public void calculationRentalFee(List<RentalProductForCalculationDTO> calcProductRentalFeeList) {
+        String sql = "update care_product " +
+                "set cumulative_revenue = ifnull(cumulative_revenue, 0) + ? " +
+                "where id = ? ";
+
+        jdbcTemplate.batchUpdate(sql, calcProductRentalFeeList, 1000,
+                (PreparedStatement ps, RentalProductForCalculationDTO dto)->{
+                    ps.setBigDecimal(1, BigDecimal.valueOf(dto.getCalcAmount()));
+                    ps.setString(2, dto.getProductCode());
+                });
+
     }
 }

@@ -18,6 +18,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +81,24 @@ public class ProductMasterServiceImpl implements ProductMasterService {
         productMasterRepository.save(entity);
 
         return 1;
+    }
+
+    @Override
+    public List<ProductAmountForRentalDTO> getProductAmountForRental(List<String> productCodes) {
+
+        List<CareProductMaster> careProductMasters = productMasterRepository.findAllById(productCodes);
+
+        log.debug(" careProductMasters={}",careProductMasters);
+        List<ProductAmountForRentalDTO> productAmountForRentalDTOS
+                = careProductMasters.stream()
+                .map(e ->new ProductAmountForRentalDTO(
+                    e.getId(),
+                    e.getRentalAmount().intValue(),
+                    e.getRentalAmount().divide(BigDecimal.valueOf(30),0, BigDecimal.ROUND_HALF_UP) //일률적으로 30일로 나눠서 하루치 렌탈료 구함
+                            .setScale(-1 , RoundingMode.FLOOR).intValue() //1원 단위 절삭
+                ))
+                .toList();
+        return productAmountForRentalDTOS;
     }
 
     /**

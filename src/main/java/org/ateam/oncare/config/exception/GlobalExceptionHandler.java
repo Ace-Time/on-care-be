@@ -1,5 +1,6 @@
 package org.ateam.oncare.config.exception;
 
+import org.ateam.oncare.config.customexception.NotFoundProductMasterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -51,5 +52,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body("잘못된 주소입니다.");
+    }
+
+    @ExceptionHandler(NotFoundProductMasterException.class)
+    public ResponseEntity<String> handle500(NoResourceFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("제품의 마스터 정보를 찾지 못 했습니다.");
     }
 }
