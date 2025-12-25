@@ -3,17 +3,15 @@ package org.ateam.oncare.rental.command.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ateam.oncare.careproduct.command.dto.RequestProductMasterForSelectDTO;
-import org.ateam.oncare.careproduct.command.dto.ResponseProductMasterDTO;
-import org.ateam.oncare.careproduct.command.dto.ResponseProductMasterDetailDTO;
+import org.ateam.oncare.config.customexception.InvalidRentalDateException;
 import org.ateam.oncare.global.enums.StockType;
 import org.ateam.oncare.global.eventType.ProductStockEvent;
 import org.ateam.oncare.rental.command.dto.*;
 import org.ateam.oncare.rental.command.entity.ContractStatus;
 import org.ateam.oncare.rental.command.entity.RentalContract;
 import org.ateam.oncare.rental.command.entity.RentalProduct;
-import org.ateam.oncare.rental.command.facade.RentalFacade;
 import org.ateam.oncare.rental.command.mapper.RentalContractMapstruct;
+import org.ateam.oncare.rental.command.mapper.RentalProductMapStruct;
 import org.ateam.oncare.rental.command.repository.ContractStatusRepoistory;
 import org.ateam.oncare.rental.command.repository.RentalContractRepository;
 import org.ateam.oncare.rental.command.repository.RentalProductRepository;
@@ -21,11 +19,11 @@ import org.ateam.oncare.rental.command.repository.RentalProductStatusRepository;
 import org.ateam.oncare.rental.query.service.RentalQueryService;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +37,8 @@ public class RentalServiceImpl implements RentalService {
     private final RentalQueryService rentalQueryService;
     private final RentalProductStatusRepository rentalProductStatusRepository;
     private final RentalContractMapstruct rentalContractMapstruct;
-    private final ApplicationEventPublisher applicationEventPublisher; // 변경 사항을 알리기 위함.
+    private final ApplicationEventPublisher eventPublisher; // 변경 사항을 알리기 위함.
+    private final RentalProductMapStruct rentalProductMapStruct;
 
     @Override
     public Map<String, Long> getExpectedToShip() {
@@ -121,4 +120,73 @@ public class RentalServiceImpl implements RentalService {
 
         return responseDTO;
     }
+
+    @Override
+    @Transactional
+    public ResponseRentalContractDTO updateContract(RequestRentalContractDTO request) {
+        if(request.getWantedDate() != null && request.getWantedDate().isBefore(LocalDate.now()))
+            throw new InvalidRentalDateException("현재 보다 과거로 렌탈 시작 날짜 변경 불가");
+        if(request.getExpectedDate() != null && request.getExpectedDate().isBefore(LocalDate.now()))
+            throw new InvalidRentalDateException("현재 보다 과거로 렌탈 종료 날짜 변경 불가");
+
+        RentalContract entity = contractRepository.findById(request.getId().intValue()).get();
+        rentalContractMapstruct.updateFromDTO(request, entity);
+
+        // 렌탈 계약 종료 처리 후 철회 하는 경우, 용품 입고 리스트에서 제거
+        if(request.getContractStatusCd() != null && request.getContractStatusCd() == 2){
+
+            RentalProduct rentalProduct = rentalProductRepository
+                    .findByRentalContractCdAndRentalStatusId(request.getId(),2);
+
+            if(rentalProduct == null)
+                return null;
+
+            // 철회시 종료일자 초기화
+            entity.setEndDate(null);
+            
+            // 회수 접수 상태 -> 유지 상태로 변경
+            rentalProduct.setRentalStatusId(1L);
+            rentalProductRepository.save(rentalProduct);
+
+            // 3. 입고 예정 리스트에 등록
+            ProductStockEvent stockEvent = ProductStockEvent.builder()
+                    .status(StockType.Canceled)
+                    .productId(rentalProduct.getProductId())
+                    .build();
+
+            eventPublisher.publishEvent(stockEvent);
+        }
+
+        RentalContract responseEntity = contractRepository.save(entity);
+        ResponseRentalContractDTO responseDTO = rentalContractMapstruct.toConractDTO(responseEntity);
+
+        return responseDTO;
+    }
+
+    @Override
+    @Transactional
+    public ResponseRentalContractDTO terminateContract(RequestRentalContractDTO request) {
+
+        RentalContract entity = contractRepository.findById(request.getId().intValue()).get();
+        rentalContractMapstruct.updateFromDTO(request, entity);
+        RentalContract responseEntity = contractRepository.save(entity);
+        ResponseRentalContractDTO responseDTO = rentalContractMapstruct.toConractDTO(responseEntity);
+        return responseDTO;
+    }
+
+    @Override
+    public ResponseRentalProductDTO terminateProduct(Long rnetalProductId) {
+
+        RentalProduct rentalProduct = rentalProductRepository.findByRentalContractCd(rnetalProductId);
+
+        // 유지 상태 상태 -> 회수 접수로 변경
+        rentalProduct.setRentalStatusId(2L);
+        RentalProduct responseEntity = rentalProductRepository.save(rentalProduct);
+
+        ResponseRentalProductDTO response = rentalProductMapStruct.toProductDTO(responseEntity);
+
+        return response;
+    }
+
+
 }

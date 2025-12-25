@@ -2,6 +2,7 @@ package org.ateam.oncare.rental.command.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.ateam.oncare.careproduct.command.dto.RequestProductHistoryDTO;
 import org.ateam.oncare.careproduct.command.service.ProductMasterService;
 import org.ateam.oncare.rental.command.dto.*;
@@ -78,4 +79,22 @@ public class RentalController {
         return ResponseEntity.ok()
                 .body(responseDTO);
     }
+
+    @PatchMapping("/contract")
+    public ResponseEntity<ResponseRentalContractDTO> updateContract(@RequestBody RequestRentalContractDTO request) {
+        ResponseRentalContractDTO responseDTO = rentalService.updateContract(request);
+
+        return ResponseEntity.ok()
+                .body(responseDTO);
+    }
+
+    @PatchMapping("/contract/termination")
+    public ResponseEntity<ResponseRentalContractDTO> terminateContract(@RequestBody RequestRentalContractDTO request) {
+        ResponseRentalContractDTO responseDTO = rentalFacade.terminateContract(request);
+
+        return ResponseEntity.ok()
+                .body(responseDTO);
+    }
+
+
 }

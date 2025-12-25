@@ -29,4 +29,10 @@ public interface RentalService {
     List<ResponseRetnalProductStatusType> getRentalProductStatus();
 
     ResponseRentalContractDTO registRentalContract(RequestRentalContractDTO request);
+
+    ResponseRentalContractDTO updateContract(RequestRentalContractDTO request);
+
+    ResponseRentalContractDTO terminateContract(RequestRentalContractDTO request);
+
+    ResponseRentalProductDTO terminateProduct(Long id);
 }

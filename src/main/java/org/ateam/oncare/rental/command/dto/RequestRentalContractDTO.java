@@ -13,9 +13,13 @@ import java.time.LocalDateTime;
 @ToString
 @Builder
 public class RequestRentalContractDTO {
+    private Long id;
     private LocalDate wantedDate;
-    private int termMonth;
+    private Integer termMonth;
     private Long beneficiaryId;
     private Long empId;
     private String productCd;
+    private LocalDate expectedDate;
+    private LocalDate endDate;
+    private Long contractStatusCd;
 }

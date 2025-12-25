@@ -55,22 +55,44 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void expectStock(ProductStockEvent productStockEvent) {
-        if (productStockEvent.getStatus() == StockType.OUTBOUND) {
-            List<CareProduct> entity = productRepository.findByProductCdAndProductStatus(
-                    productStockEvent.getProductCode(),
-                    1);
-
-            if(entity.size() == 0)
-                return;
-
-            ProductTask productTask = productTaskMapStruct.toEntity(productStockEvent);
-            productTask.setProductId(entity.get(0).getId());
-
-            productTaskRepository.saveAndFlush(productTask);
-            log.debug("productTask: {}", productTask);
-            log.debug("예정 출고 entity : {}", entity);
-        }
+        if (productStockEvent.getStatus() == StockType.OUTBOUND)
+            outBound(productStockEvent);
+        else if (productStockEvent.getStatus() == StockType.INBOUND)
+            inBound(productStockEvent);
+        else if(productStockEvent.getStatus() == StockType.Canceled)
+            canceled(productStockEvent);
     }
 
+    private void canceled(ProductStockEvent productStockEvent) {
+        ProductTask productTask = productTaskRepository.selectByProductId(productStockEvent.getProductId());
+        productTaskRepository.delete(productTask);
+    }
+
+    private void outBound(ProductStockEvent productStockEvent) {
+        List<CareProduct> entity = productRepository.findByProductCdAndProductStatus(
+                productStockEvent.getProductCode(),
+                1);
+
+        if(entity.size() == 0)
+            return;
+
+        ProductTask productTask = productTaskMapStruct.toEntity(productStockEvent);
+        productTask.setProductId(entity.get(0).getId());
+
+        productTaskRepository.saveAndFlush(productTask);
+        log.debug("productTask: {}", productTask);
+        log.debug("예정 출고 entity : {}", entity);
+    }
+
+    private void inBound(ProductStockEvent productStockEvent) {
+        CareProduct entity = productRepository.findById(productStockEvent.getProductId()).get();
+
+        ProductTask productTask = productTaskMapStruct.toEntity(productStockEvent);
+        productTask.setProductId(entity.getId());
+
+        productTaskRepository.saveAndFlush(productTask);
+        log.debug("productTask: {}", productTask);
+        log.debug("예정 출고 entity : {}", entity);
+    }
 
 }

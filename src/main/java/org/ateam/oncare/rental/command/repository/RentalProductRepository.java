@@ -10,4 +10,8 @@ import java.util.List;
 @Repository
 public interface RentalProductRepository extends JpaRepository<RentalProduct, Integer>,RentalProductRepositoryCustom {
     List<RentalProduct> findAllByRentalContractCd(Long contractCode);
+
+    RentalProduct findByRentalContractCdAndRentalStatusId(Long id, int i);
+
+    RentalProduct findByRentalContractCd(Long rnetalProductId);
 }

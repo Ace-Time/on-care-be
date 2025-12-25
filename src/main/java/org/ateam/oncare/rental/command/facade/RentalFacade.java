@@ -12,10 +12,7 @@ import org.ateam.oncare.config.customexception.InsufficientStockException;
 import org.ateam.oncare.config.customexception.NotFoundProductMasterException;
 import org.ateam.oncare.global.enums.StockType;
 import org.ateam.oncare.global.eventType.ProductStockEvent;
-import org.ateam.oncare.rental.command.dto.RentalContractForCalculationDTO;
-import org.ateam.oncare.rental.command.dto.RentalProductForCalculationDTO;
-import org.ateam.oncare.rental.command.dto.RequestRentalContractDTO;
-import org.ateam.oncare.rental.command.dto.ResponseRentalContractDTO;
+import org.ateam.oncare.rental.command.dto.*;
 import org.ateam.oncare.rental.command.entity.RentalContract;
 import org.ateam.oncare.rental.command.entity.RentalProduct;
 import org.ateam.oncare.rental.command.service.RentalService;
@@ -44,7 +41,7 @@ public class RentalFacade {
     private final ProductService productService;
     private final TransactionTemplate transactionTemplate;
     private final ApplicationEventPublisher applicationEventPublisher; // 변경 사항을 알리기 위함.
-
+    private final ApplicationEventPublisher eventPublisher;
 
     public int calcRentalAmount(LocalDate calcDate) {
         //정산 할 렌탈 계약 목록 조회
@@ -192,10 +189,10 @@ public class RentalFacade {
         );
 
         //가용 재고가 부족하면 계약 불가하도록 에러 메시지 출력
-        if(!isPossable)
+        if (!isPossable)
             throw new InsufficientStockException(
-                    String.format("%s 제품은 가용 재고 부족으로 계약을 할 수없습니다.",request.getProductCd()));
-        
+                    String.format("%s 제품은 가용 재고 부족으로 계약을 할 수없습니다.", request.getProductCd()));
+
         ResponseRentalContractDTO responseDTO = rentalService.registRentalContract(request);
 
         applicationEventPublisher.publishEvent(
@@ -216,9 +213,9 @@ public class RentalFacade {
 
         ResponseProductMasterDetailDTO responseDTO = responseProductMasterDetailDTOList.size() > 0 ?
                 responseProductMasterDetailDTOList.get(0) :
-                null ;
+                null;
         boolean isPossable = false;
-        if(responseDTO != null && responseDTO.getAvailableProducts() > 0)
+        if (responseDTO != null && responseDTO.getAvailableProducts() > 0)
             isPossable = true;
 
         log.debug("responseDTO:{}", responseDTO);
@@ -226,5 +223,26 @@ public class RentalFacade {
         return isPossable;
     }
 
+    @Transactional
+    public ResponseRentalContractDTO terminateContract(RequestRentalContractDTO request) {
+        if(request.getEndDate() == null)
+            throw new IllegalStateException("계약 종료일을 지정 하지 않음");
 
+        // 1. 렌탈 계약 상태 변경(계약 종료)
+        ResponseRentalContractDTO contractDTO = rentalService.terminateContract(request);
+
+        // 2. 렌탈 상품 상태 변경
+        ResponseRentalProductDTO rentalProdutDTO = rentalService.terminateProduct(contractDTO.getId());
+
+        // 3. 입고 예정 리스트에 등록
+        ProductStockEvent stockEvent = ProductStockEvent.builder()
+                .productId(rentalProdutDTO.getProductId())
+                .isConfirmed("N")
+                .status(StockType.INBOUND)
+                .expectedDate(contractDTO.getEndDate())
+                .build();
+        eventPublisher.publishEvent(stockEvent);
+
+        return contractDTO;
+    }
 }
