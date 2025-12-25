@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.FormAccessMapper">
+
+    <select id="selectAllowedFormFileInfo"
+            resultType="org.ateam.oncare.beneficiary.query.dto.FormFileInfo">
+        SELECT
+        af.id AS formId,
+        af.size AS fileSize,
+        af.original_file_name AS originalFileName,
+        af.mime_type AS mimeType,
+        af.file_path AS filePath
+        FROM application_form af
+        WHERE af.id = #{formId}
+        AND (
+        <!-- ✅ 1~5 기본 노출 -->
+        af.form_category_id IN (1,2,3,4,5)
+
+        <!-- ✅ (9) 치매 risk 있을 때만 -->
+        OR (
+        af.form_category_id = 9
+        AND EXISTS (
+        SELECT 1
+        FROM riskOfMember rom
+        JOIN m_risk_factor rf ON rf.id = rom.risk_id
+        WHERE rom.beneficiary_id = #{beneficiaryId}
+        AND rf.name = '치매'
+        )
+        )
+
+        <!-- ✅ (6) 방문요양 제공기록지 -->
+        OR (
+        af.form_category_id = 6
+        AND EXISTS (
+        SELECT 1
+        FROM visit_schedule vs
+        WHERE vs.beneficiary_id = #{beneficiaryId}
+        AND vs.service_type_id = 1
+        AND vs.visit_status = 'DONE'
+        )
+        )
+
+        <!-- ✅ (7) 방문목욕 제공기록지 -->
+        OR (
+        af.form_category_id = 7
+        AND EXISTS (
+        SELECT 1
+        FROM visit_schedule vs
+        WHERE vs.beneficiary_id = #{beneficiaryId}
+        AND vs.service_type_id = 2
+        AND vs.visit_status = 'DONE'
+        )
+        )
+
+        <!-- ✅ (8) 방문간호 제공기록지 -->
+        OR (
+        af.form_category_id = 8
+        AND EXISTS (
+        SELECT 1
+        FROM visit_schedule vs
+        WHERE vs.beneficiary_id = #{beneficiaryId}
+        AND vs.service_type_id = 3
+        AND vs.visit_status = 'DONE'
+        )
+        )
+        )
+    </select>
+
+</mapper>

@@ -69,6 +69,28 @@ public class GlobalExceptionHandler {
         log.error(e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+    /**
+     * 5. [비즈니스 규칙 위반] 상태상 허용되지 않는 요청
+     * 예: 일정 겹침, 진행/완료 일정 수정/삭제 시도 등
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleIllegalState(IllegalStateException e) {
+        // 비즈니스 로직에서 의도적으로 막은 경우이므로 error 로그는 남기지 않음
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT) // 409
+                .body(e.getMessage());       // 서비스에서 던진 메시지를 그대로 전달
+    }
+
+    /**
+     * 6. [잘못된 요청] 파라미터 누락, 값 오류 등
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+        // 클라이언트 요청 문제이므로 warn 수준 로그
+        log.warn("잘못된 요청: {}", e.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST) // 400
                 .body(e.getMessage());
     }
 }

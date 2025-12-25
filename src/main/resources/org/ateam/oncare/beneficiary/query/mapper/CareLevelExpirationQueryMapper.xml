@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.CareLevelExpirationQueryMapper">
+
+    <!-- 1) 만료 예정 전체조회(섹션 필터 optional) -->
+    <select id="selectExpirationList"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.CareLevelExpirationListResponse$Item">
+
+        SELECT
+        b.id AS beneficiaryId,
+        b.name AS beneficiaryName,
+
+        DATE_FORMAT(bcl.end_date, '%Y-%m-%d') AS endDate,
+        CONCAT('D-', DATEDIFF(bcl.end_date, CURDATE())) AS ddayLabel,
+
+        ecl.id AS expirationId,
+        ecl.expired_section AS expiredSection,
+        ecl.outbound_status AS outboundStatus,
+        ecl.extends_status AS extendsStatus,
+
+        cw.id AS careWorkerId,
+        e.name AS careWorkerName,
+
+        IFNULL(ne.noticeCount, 0) AS noticeCount,
+        DATE_FORMAT(ne.lastNoticeDate, '%Y-%m-%d %H:%i:%s') AS lastNoticeDate,
+
+        CASE
+        WHEN ecl.outbound_status = 'Y'
+        THEN CONCAT('완료(', IFNULL(ne.noticeCount,0), '회)')
+        ELSE '미완료'
+        END AS noticeLabel
+
+        FROM expiration_of_care_level ecl
+        JOIN beneficiary b
+        ON b.id = ecl.beneficiary_id
+        JOIN beneficiary_care_level bcl
+        ON bcl.beneficiary_id = b.id
+
+        /* ✅ DONE 방문 중 가장 최근 1건을 대표 방문으로 선택 */
+        LEFT JOIN visit_schedule vs_done
+        ON vs_done.vs_id = (
+        SELECT vs2.vs_id
+        FROM visit_schedule vs2
+        WHERE vs2.beneficiary_id = b.id
+<!--        AND vs2.visit_status = 'DONE'-->
+        ORDER BY vs2.start_dt DESC
+        LIMIT 1
+        )
+
+        LEFT JOIN care_worker cw
+        ON cw.id = vs_done.care_worker_id
+
+        <!-- ✅ care_worker에는 name이 없으므로 employee에서 이름 조회 -->
+        LEFT JOIN employee e
+        ON e.id = cw.employee_id
+
+        LEFT JOIN (
+        SELECT
+        expiration_id,
+        COUNT(*) AS noticeCount,
+        MAX(notice_date) AS lastNoticeDate
+        FROM notice_expiration
+        GROUP BY expiration_id
+        ) ne ON ne.expiration_id = ecl.id
+
+        <!-- extends_status
+          Y : 연장 예정 (만료 알림 목록 포함)
+          N : 연장 안 함 (만료 알림 목록 제외) -->
+        WHERE 1=1
+        AND ecl.expired_section IN (1,2,3)
+        AND (ecl.extends_status IS NULL OR ecl.extends_status = 'Y')
+
+        <if test="section != null">
+            AND ecl.expired_section = #{section}
+        </if>
+
+        ORDER BY bcl.end_date ASC, b.id ASC
+    </select>
+
+
+    <!-- 2) 상세 기본정보(담당요양사 + 보호자(대표)) -->
+    <select id="selectExpirationDetail"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.CareLevelExpirationDetailResponse">
+
+        SELECT
+        ecl.id AS expirationId,
+
+        b.id AS beneficiaryId,
+        b.name AS beneficiaryName,
+
+        DATE_FORMAT(bcl.end_date, '%Y-%m-%d') AS endDate,
+        CONCAT('D-', DATEDIFF(bcl.end_date, CURDATE())) AS ddayLabel,
+
+        ecl.expired_section AS expiredSection,
+        ecl.extends_status AS extendsStatus,
+        ecl.outbound_status AS outboundStatus,
+
+        cw.id AS careWorkerId,
+        e.name AS careWorkerName,
+
+        g.name AS guardianName,
+        g.phone AS guardianPhone,
+        g.relation AS guardianRelation,
+
+        /* ✅ 장기요양등급 */
+        mcl.id AS careLevelId,
+        mcl.level AS careLevel
+
+        FROM expiration_of_care_level ecl
+        JOIN beneficiary b
+        ON b.id = ecl.beneficiary_id
+
+
+        /* ✅ 여기서 bcl을 가져오고 있으니 bcl.id로 등급 조인 가능 */
+        JOIN beneficiary_care_level bcl
+        ON bcl.beneficiary_id = b.id
+
+        /* ✅ DONE 방문 중 가장 최근 1건을 대표 방문으로 선택 */
+        LEFT JOIN visit_schedule vs_done
+        ON vs_done.vs_id = (
+        SELECT vs2.vs_id
+        FROM visit_schedule vs2
+        WHERE vs2.beneficiary_id = b.id
+<!--        AND vs2.visit_status = 'DONE'-->
+        ORDER BY vs2.start_dt DESC
+        LIMIT 1
+        )
+
+        LEFT JOIN care_worker cw
+        ON cw.id = vs_done.care_worker_id
+
+        <!-- ✅ care_worker에는 name이 없으므로 employee에서 이름 조회 -->
+        LEFT JOIN employee e
+        ON e.id = cw.employee_id
+
+        LEFT JOIN guardian g
+        ON g.beneficiary_id = b.id
+        AND g.is_primary = 'Y'
+
+        /* ✅ 등급 조인 추가 */
+        LEFT JOIN beneficiary_count bc
+        ON bc.beneficiary_care_level_id = bcl.id
+
+        LEFT JOIN m_care_level mcl
+        ON mcl.id = bc.m_care_level_id
+
+        <!-- extends_status
+          Y : 연장 예정 (만료 알림 목록 포함)
+          N : 연장 안 함 (만료 알림 목록 제외) -->
+        WHERE ecl.id = #{expirationId}
+        AND ecl.expired_section IN (1,2,3)
+        AND (ecl.extends_status IS NULL OR ecl.extends_status = 'Y')
+        LIMIT 1
+    </select>
+
+
+    <!-- 3) 안내 이력 목록 -->
+    <select id="selectNoticeList"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.NoticeExpirationListResponse$Item">
+
+        SELECT
+        id AS noticeId,
+        DATE_FORMAT(notice_date, '%Y-%m-%d %H:%i:%s') AS noticeDate,
+        memo AS memo,
+        emp_id AS empId
+        FROM notice_expiration
+        WHERE expiration_id = #{expirationId}
+        ORDER BY notice_date DESC, id DESC
+    </select>
+
+</mapper>

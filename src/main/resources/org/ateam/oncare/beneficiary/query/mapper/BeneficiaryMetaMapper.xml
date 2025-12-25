@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BeneficiaryMetaMapper">
+
+    <!-- =========================================================
+         ✅ 태그 옵션
+         - personal_tag(id, tag)
+         - 프론트는 { id, label } 형태를 기대
+       ========================================================= -->
+    <select id="selectTagOptions"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.MetaOptionResponse">
+        <![CDATA[
+        SELECT
+            pt.id  AS id,
+            pt.tag AS label
+        FROM personal_tag pt
+        ORDER BY pt.id
+        ]]>
+    </select>
+
+    <!-- =========================================================
+         ✅ 위험요소 옵션
+         - m_risk_factor(id, name, score)
+         - score는 옵션 표시에는 필요 없지만(현재는),
+           추후 관리용으로 쓰고 싶으면 DTO 확장하면 됨
+       ========================================================= -->
+    <select id="selectRiskFactorOptions"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.MetaOptionResponse">
+        <![CDATA[
+        SELECT
+            rf.id   AS id,
+            rf.name AS label
+        FROM m_risk_factor rf
+        ORDER BY rf.id
+        ]]>
+    </select>
+
+    <!-- =========================================================
+         ✅ 장기요양등급 옵션
+         - m_care_level(id, level, validity, monthly_limit)
+       ========================================================= -->
+    <select id="selectCareLevelOptions"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.CareLevelOptionResponse">
+        <![CDATA[
+        SELECT
+            mcl.id           AS id,
+            mcl.level        AS label,
+            mcl.validity     AS validity,
+            mcl.monthly_limit AS monthlyLimit
+        FROM m_care_level mcl
+        ORDER BY mcl.id
+        ]]>
+    </select>
+
+</mapper>
