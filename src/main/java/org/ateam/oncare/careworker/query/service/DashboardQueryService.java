@@ -58,4 +58,8 @@ public class DashboardQueryService {
     public CareLogDetailDto getCareLogBySchedule(Long vsId) {
         return dashboardMapper.selectCareLogBySchedule(vsId);
     }
+
+    public List<MyBeneficiaryDto> getMyBeneficiaries(Long employeeId) {
+        return dashboardMapper.selectMyBeneficiaries(employeeId);
+    }
 }

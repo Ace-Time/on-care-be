@@ -16,13 +16,11 @@ public class CareLogQueryController {
 
     private final CareLogQueryService careLogQueryService;
 
-    // 테스트용: 로그인한 유저 대신 ID를 1로 고정합니다.
-    private final Long TEST_CAREGIVER_ID = 1L;
-
     // 1. 요양일지 목록 조회 (요양보호사별)
     @GetMapping
-    public ApiResponse<List<CareLogListDto>> getCareLogList() {
-        List<CareLogListDto> data = careLogQueryService.getCareLogList(TEST_CAREGIVER_ID);
+    public ApiResponse<List<CareLogListDto>> getCareLogList(
+            @RequestHeader("Care-Worker-Id") Long careWorkerId) {
+        List<CareLogListDto> data = careLogQueryService.getCareLogList(careWorkerId);
         return ApiResponse.success(data);
     }
 
