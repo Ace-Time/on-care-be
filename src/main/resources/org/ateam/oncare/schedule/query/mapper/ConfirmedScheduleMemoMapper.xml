@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.schedule.query.mapper.ConfirmedScheduleMemoMapper">
+
+    <select id="selectMemoByVsId"
+            parameterType="int"
+            resultType="org.ateam.oncare.schedule.query.dto.ConfirmedScheduleMemoDto">
+        SELECT
+            vs.vs_id AS vsId,
+            vs.note  AS note
+        FROM visit_schedule vs
+        WHERE vs.vs_id = #{vsId}
+    </select>
+
+</mapper>

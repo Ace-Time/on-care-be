@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration debug="true">
+<configuration debug="false">
     <!-- 로그 파일이 저장될 경로를 지정 -->
     <property name="LOG_PATH" value="./logs"/>
     <!-- 공통 패턴 -->

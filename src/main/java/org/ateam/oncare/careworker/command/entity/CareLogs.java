@@ -109,8 +109,8 @@ public class CareLogs {
     @Column(name = "special_note")
     private String specialNote;
 
-    @Column(name = "employee_id", nullable = false)
-    private Integer employeeId;
+    @Column(name = "care_worker_id", nullable = false)
+    private Integer careworkerId;
 
     @Column(name = "beneficiary_id", nullable = false)
     private Long beneficiaryId;

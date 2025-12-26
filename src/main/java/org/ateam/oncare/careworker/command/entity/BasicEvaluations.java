@@ -51,8 +51,8 @@ public class BasicEvaluations {
     @Column(name = "beneficiary_id", nullable = false)
     private Long beneficiaryId;
 
-    @Column(name = "employee_id", nullable = false)
-    private Long employeeId;
+    @Column(name = "care_worker_id", nullable = false)
+    private Long careworkerId;
 
     // 내부 Enum 정의
     public enum EvaluationType {

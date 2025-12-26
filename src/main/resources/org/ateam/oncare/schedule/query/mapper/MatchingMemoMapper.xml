@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+                "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.schedule.query.mapper.MatchingMemoMapper">
+
+<resultMap id="MatchingMemoMap" type="org.ateam.oncare.schedule.query.dto.MatchingMemoDto">
+    <result property="matchingMemoId" column="matching_memo_id"/>
+    <result property="matchingId" column="matching_id"/>
+    <result property="content" column="content"/>
+    <result property="memoDate" column="memo_date"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+</resultMap>
+
+    <select id="selectMemo" resultMap="MatchingMemoMap">
+        SELECT
+            matching_memo_id,
+            matching_id,
+            content,
+            memo_date,
+            created_at,
+            updated_at
+        FROM matching_memo
+        WHERE matching_id = #{matchingId}
+          AND memo_date   = #{memoDate}
+            LIMIT 1
+    </select>
+
+</mapper>

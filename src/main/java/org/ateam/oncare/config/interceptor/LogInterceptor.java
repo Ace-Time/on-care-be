@@ -20,8 +20,6 @@ public class LogInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String clientIp = request.getRemoteAddr();
 
-        // 요청 시작 시간 저장 요청 처리시간 측정을 위함
-        request.setAttribute("startTime", System.currentTimeMillis());
 
         // 1. 고유 ID 생성 (UUID 앞 8자리만 써도 충분히 식별 가능)
         String traceId = UUID.randomUUID().toString().substring(0, 8);

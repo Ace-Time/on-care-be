@@ -40,6 +40,6 @@ public class TodoForCareWorker {
     @Column(name = "beneficiary_id", nullable = false)
     private Long beneficiaryId;
 
-    @Column(name = "employee_id", nullable = false)
-    private Long employeeId;
+    @Column(name = "care_worker_id", nullable = false)
+    private Long careworkerId;
 }

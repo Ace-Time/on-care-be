@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.careworker.query.mapper.DashboardMapper">
+
+    <select id="selectDashboardSummary" resultType="org.ateam.oncare.careworker.query.dto.DashboardSummaryDto">
+        SELECT
+            /* 오늘 일정 개수 */
+            (SELECT COUNT(*)
+             FROM visit_schedule vs
+                      JOIN care_worker cw ON vs.care_worker_id = cw.id
+             WHERE cw.employee_id = #{caregiverId}
+               AND DATE(vs.start_dt) = CURRENT_DATE) AS todayScheduleCount,
+
+            /* 담당 수급자 수 (중복 제거) */
+            (SELECT COUNT(DISTINCT vs.beneficiary_id)
+             FROM visit_schedule vs
+                      JOIN care_worker cw ON vs.care_worker_id = cw.id
+             WHERE cw.employee_id = #{caregiverId}
+               AND vs.visit_status IN ('SCHEDULED', 'IN_PROGRESS', 'DONE')) AS beneficiaryCount,
+
+            /* 이번 달 누적 근무시간 (분 단위 합계 / 60) - 완료된 일정만 */
+            (SELECT COALESCE(ROUND(SUM(TIMESTAMPDIFF(MINUTE, vs.start_dt, vs.end_dt)) / 60.0, 1), 0)
+             FROM visit_schedule vs
+                      JOIN care_worker cw ON vs.care_worker_id = cw.id
+             WHERE cw.employee_id = #{caregiverId}
+               AND YEAR(vs.start_dt) = YEAR(CURRENT_DATE)
+               AND MONTH(vs.start_dt) = MONTH(CURRENT_DATE)
+               AND vs.visit_status = 'DONE') AS monthlyWorkHours
+    </select>
+
+    <select id="selectUrgentNotifications" resultType="org.ateam.oncare.careworker.query.dto.UrgentNotificationDto">
+        SELECT
+            nl.alarm_id AS id,
+            nt.title,
+            nt.content AS message,
+            nl.sent_at AS dueDate,
+            TRUE AS isUrgent
+        FROM notification_log nl
+                 JOIN notification_template nt ON nl.template_id = nt.template_id
+                 JOIN care_worker cw ON nl.receiver_id = cw.employee_id
+        WHERE cw.employee_id = #{caregiverId}
+          AND nl.receiver_type = 'EMPLOYEE'
+          AND nl.status IN ('SENT', 'FAILED')
+        ORDER BY nl.sent_at DESC
+            LIMIT 10
+    </select>
+
+    <select id="selectTodaySchedules" resultType="org.ateam.oncare.careworker.query.dto.HomeScheduleDto">
+        SELECT
+            vs.vs_id AS scheduleId,
+            b.id AS beneficiaryId,
+            b.name AS recipientName,
+            COALESCE(mcl.level, '등급없음') AS grade,
+            CONCAT(TIME_FORMAT(vs.start_dt, '%H:%i'), ' - ', TIME_FORMAT(vs.end_dt, '%H:%i')) AS visitTime,
+            b.address AS address,
+            vs.visit_status AS status,
+            vs.rfid_start_time AS actualStartTime,
+            vs.rfid_end_time AS actualEndTime
+        FROM visit_schedule vs
+                 JOIN care_worker cw ON vs.care_worker_id = cw.id
+                 JOIN beneficiary b ON vs.beneficiary_id = b.id
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id, start_date, end_date
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+        WHERE cw.employee_id = #{caregiverId}
+          AND DATE(vs.start_dt) = CURRENT_DATE
+        ORDER BY vs.start_dt ASC
+    </select>
+
+    <!-- 오늘의 할일 조회 -->
+    <select id="selectTodos" resultType="org.ateam.oncare.careworker.query.dto.HomeTodoDto">
+        SELECT
+            t.id AS todoId,
+            t.todo AS content,
+            t.clear_st AS isCompleted
+        FROM todo_for_care_worker t
+                 JOIN care_worker cw ON t.care_worker_id = cw.id
+        WHERE cw.employee_id = #{caregiverId}
+          AND DATE(t.todo_date) = CURRENT_DATE
+        ORDER BY t.clear_st ASC, t.create_at DESC
+    </select>
+
+    <!-- 수급자 상세 정보 조회 -->
+    <select id="selectBeneficiaryDetail" resultType="org.ateam.oncare.careworker.query.dto.BeneficiaryDetailDto">
+        SELECT
+            b.id AS beneficiaryId,
+            b.name,
+            b.gender,
+            b.birthdate,
+            TIMESTAMPDIFF(YEAR, b.birthdate, CURRENT_DATE) AS age,
+            b.address,
+            b.phone,
+            mcl.level AS careLevel,
+            bcl.start_date AS careLevelStartDate,
+            bcl.end_date AS careLevelEndDate,
+            bcl.number AS careLevelNumber
+        FROM beneficiary b
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id, start_date, end_date, number
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+        WHERE b.id = #{beneficiaryId}
+    </select>
+
+    <!-- 수급자 보호자 목록 -->
+    <select id="selectGuardians" resultType="org.ateam.oncare.careworker.query.dto.BeneficiaryDetailDto$GuardianDto">
+        SELECT
+            name,
+            phone,
+            relation,
+            CASE WHEN is_primary = 'Y' THEN TRUE ELSE FALSE END AS isPrimary
+        FROM guardian
+        WHERE beneficiary_id = #{beneficiaryId}
+        ORDER BY CASE WHEN is_primary = 'Y' THEN 0 ELSE 1 END, name
+    </select>
+
+    <!-- 수급자 위험요소 목록 -->
+    <select id="selectRiskFactors" resultType="string">
+        SELECT mrf.name
+        FROM riskOfMember rom
+                 JOIN m_risk_factor mrf ON rom.risk_id = mrf.id
+        WHERE rom.beneficiary_id = #{beneficiaryId}
+        ORDER BY mrf.name
+    </select>
+
+    <!-- 수급자 태그 목록 -->
+    <select id="selectTags" resultType="string">
+        SELECT pt.tag
+        FROM tag_of_beneficiary tob
+                 JOIN personal_tag pt ON tob.tag_id = pt.id
+        WHERE tob.beneficiary_id = #{beneficiaryId}
+        ORDER BY pt.tag
+    </select>
+
+    <!-- 수급자 특이사항 목록 -->
+    <select id="selectSignificants" resultType="string">
+        SELECT ms.name
+        FROM beneficiary_significant bs
+                 JOIN m_significant ms ON bs.significant_id = ms.id
+        WHERE bs.beneficiary_id = #{beneficiaryId}
+        ORDER BY ms.name
+    </select>
+
+    <!-- 할 일 상세 정보 조회 -->
+    <select id="selectTodoDetail" resultType="org.ateam.oncare.careworker.query.dto.TodoDetailDto">
+        SELECT
+            t.id AS todoId,
+            t.todo AS content,
+            t.type,
+            t.clear_st AS isCompleted,
+            t.beneficiary_id AS beneficiaryId,
+            b.name AS beneficiaryName,
+            b.address AS beneficiaryAddress,
+            b.phone AS beneficiaryPhone,
+            COALESCE(mcl.level, '등급없음') AS careLevel
+        FROM todo_for_care_worker t
+                 LEFT JOIN beneficiary b ON t.beneficiary_id = b.id
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+        WHERE t.id = #{todoId}
+    </select>
+
+    <!-- 특정 일정의 요양일지 조회 -->
+    <select id="selectCareLogBySchedule" resultType="org.ateam.oncare.careworker.query.dto.CareLogDetailDto">
+        SELECT
+            cl.log_id AS logId,
+            cl.vs_id AS vsId,
+            cl.service_date AS serviceDate,
+            cl.start_time AS startTime,
+            cl.end_time AS endTime,
+            cl.service_type AS serviceType,
+            cl.created_at AS createdAt,
+            cl.updated_at AS updatedAt,
+            cl.beneficiary_id AS beneficiaryId,
+            b.name AS beneficiaryName,
+            b.address AS beneficiaryAddress,
+            COALESCE(mcl.level, '등급없음') AS careLevel,
+            cl.is_breakfast AS isBreakfast,
+            cl.is_lunch AS isLunch,
+            cl.is_dinner AS isDinner,
+            cl.is_snack AS isSnack,
+            cl.diaper_count AS diaperCount,
+            cl.toilet_count AS toiletCount,
+            cl.is_portable_toilet AS isPortableToilet,
+            cl.is_urine AS isUrine,
+            cl.is_stool AS isStool,
+            cl.stool_normal AS stoolNormal,
+            cl.stool_diarrhea AS stoolDiarrhea,
+            cl.stool_constipation AS stoolConstipation,
+            cl.is_excretion_mistake AS isExcretionMistake,
+            cl.is_face_wash AS isFaceWash,
+            cl.is_oral_care AS isOralCare,
+            cl.is_hair_wash AS isHairWash,
+            cl.is_body_wash AS isBodyWash,
+            cl.is_change_clothes AS isChangeClothes,
+            cl.is_meal_prep AS isMealPrep,
+            cl.is_bed_care AS isBedCare,
+            cl.is_position_change AS isPositionChange,
+            cl.is_get_up_help AS isGetUpHelp,
+            cl.is_indoor_move AS isIndoorMove,
+            cl.is_walk_help AS isWalkHelp,
+            cl.is_emotional_talk AS isEmotionalTalk,
+            cl.is_communication AS isCommunication,
+            cl.is_counseling AS isCounseling,
+            cl.is_cognitive_care AS isCognitiveCare,
+            cl.is_behavior_care AS isBehaviorCare,
+            cl.is_health_good AS isHealthGood,
+            cl.is_pain AS isPain,
+            cl.is_edema AS isEdema,
+            cl.is_skin_issue AS isSkinIssue,
+            cl.is_body_etc AS isBodyEtc,
+            cl.is_mood_calm AS isMoodCalm,
+            cl.is_mood_anxious AS isMoodAnxious,
+            cl.is_mood_depressed AS isMoodDepressed,
+            cl.is_mood_angry AS isMoodAngry,
+            cl.is_mood_etc AS isMoodEtc,
+            cl.is_sleep_lack AS isSleepLack,
+            cl.is_nap_excess AS isNapExcess,
+            cl.special_note AS specialNote
+        FROM care_logs cl
+                 LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+        WHERE cl.vs_id = #{vsId}
+          AND cl.is_deleted = FALSE
+    </select>
+
+    <!-- 내 수급자 목록 조회 -->
+    <select id="selectMyBeneficiaries" resultType="org.ateam.oncare.careworker.query.dto.MyBeneficiaryDto">
+        SELECT DISTINCT
+            b.id AS beneficiaryId,
+            b.name,
+            b.gender,
+            b.birthdate,
+            TIMESTAMPDIFF(YEAR, b.birthdate, CURRENT_DATE) AS age,
+            b.address,
+            b.phone,
+            COALESCE(mcl.level, '등급없음') AS careLevel
+        FROM visit_schedule vs
+                 JOIN care_worker cw ON vs.care_worker_id = cw.id
+                 JOIN beneficiary b ON vs.beneficiary_id = b.id
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+        WHERE cw.employee_id = #{employeeId}
+          AND vs.visit_status IN ('SCHEDULED', 'IN_PROGRESS', 'DONE')
+        ORDER BY b.name
+    </select>
+
+</mapper>

@@ -22,9 +22,14 @@ public class EmployeeQueryController {
      * GET /api/employees?keyword=김미영&jobCode=1
      */
     @GetMapping
-    public ResponseEntity<List<EmployeeListDTO>> getEmployeeList(EmployeeSearchCondition condition) {
-        List<EmployeeListDTO> list = employeeQueryService.getEmployeeList(condition);
-        return ResponseEntity.ok(list);
+    public ResponseEntity<?> getEmployeeList(EmployeeSearchCondition condition) {
+        try {
+            List<EmployeeListDTO> list = employeeQueryService.getEmployeeList(condition);
+            return ResponseEntity.ok(list);
+        } catch (Exception e) {
+            e.printStackTrace(); // 서버 로그에도 남김
+            return ResponseEntity.status(500).body("Error: " + e.getMessage() + "\n" + e.toString());
+        }
     }
 
     /**

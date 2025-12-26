@@ -1,0 +1,55 @@
+name: Code Review
+
+# GitHub 저장소 읽기 및 PR 쓰기 권한을 설정
+permissions:
+  contents: read
+  pull-requests: write
+
+# PR 이벤트 관련해서 워크플로우 실행
+on:
+  pull_request:
+    types: [opened]
+    #opend : pr이 새로 생성 될 때
+    #synchronize : 새로운 커밋이 push되 머지 될때
+#    types: [opened, reopened, synchronize]
+
+# 워크플로우 실행 작업 정의
+jobs:
+  pr-request:
+    runs-on: ubuntu-latest
+    # 실행 시간 제한 설정 (무한 루프 방지, 비용 절감)
+    timeout-minutes: 15
+
+    steps: # name 한개한개가 task
+      - name: ChatGPT codeReviewer
+        uses: anc95/ChatGPT-CodeReview@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # 코드리뷰 제외 할 파일 등록
+          ignore_patterns: "/glob/**,**/dist/**,**/*.lock,**/*.txt,**/*.md,.github/**,**/.github/**,**/*.xml,**/*.properties"
+          # optional
+          MODEL: gpt-4o # https://platform.openai.com/docs/models
+          OPENAI_API_ENDPOINT: https://api.openai.com/v1
+          LANGUAGE: Korean
+          # [중요] 422 에러 방지를 위한 프롬프트 강화
+          PROMPT: |
+            당신은 Google/Meta/Stripe 수준의 시니어 엔지니어입니다. 이 PR을 엄격하게 리뷰해주세요.
+            
+            [리뷰 규칙]
+            1. 피드백은 우선순위를 명시하세요:
+               - 🚨 P0: 버그, 보안 취약점, 치명적인 설계 오류 (반드시 수정)
+               - ⚠️ P1: 성능 이슈, 유지보수성 문제, 주요 컨벤션 위반 (수정 권장)
+               - 💡 P2: 더 나은 방법 제안, 가독성 향상 (선택 사항)
+            2. 문제 지적보다는 "해결책"과 "구체적인 코드 예시"를 제시하세요.
+            3. "왜" 변경해야 하는지 기술적 근거를 설명하세요.
+            4. 칭찬할 점은 칭찬하고, 부드러운 어조와 이모지를 사용하세요.
+            5. Bullet point로 정리하세요. 
+            6. 필요 시 파일명은 “섹션 제목”으로만 사용하세요.
+            
+            [치명적인 제약 사항 - 반드시 지킬 것]
+            1. 파일별, 라인별, 인라인 코멘트를 절대 작성하지 마세요
+            2. 특정 파일명 + 줄번호를 지칭하지 마세요 
+            3. GitHub 인라인 리뷰를 전제로 한 표현을 사용하지 마세요 
+            4. PR 전체에 대한 종합 리뷰 코멘트 1개만 작성하세요
+
