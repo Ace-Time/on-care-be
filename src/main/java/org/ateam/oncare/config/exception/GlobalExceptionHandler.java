@@ -69,6 +69,9 @@ public class GlobalExceptionHandler {
         log.error(e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(e.getMessage());
+    }
+
     /**
      * 5. [비즈니스 규칙 위반] 상태상 허용되지 않는 요청
      * 예: 일정 겹침, 진행/완료 일정 수정/삭제 시도 등
