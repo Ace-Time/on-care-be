@@ -1,5 +1,6 @@
 package org.ateam.oncare.config.exception;
 
+import org.ateam.oncare.config.customexception.ExistsAlreadyProductMasterException;
 import org.ateam.oncare.config.customexception.InsufficientStockException;
 import org.ateam.oncare.config.customexception.InvalidRentalDateException;
 import org.ateam.oncare.config.customexception.NotFoundProductMasterException;
@@ -64,7 +65,8 @@ public class GlobalExceptionHandler {
                 .body("제품의 마스터 정보를 찾지 못 했습니다.");
     }
 
-    @ExceptionHandler({InsufficientStockException.class, InvalidRentalDateException.class})
+    @ExceptionHandler({InsufficientStockException.class, InvalidRentalDateException.class
+    , ExistsAlreadyProductMasterException.class})
     public ResponseEntity<String> BAD_REQUEST(Exception e) {
         log.error(e.getMessage());
         return ResponseEntity

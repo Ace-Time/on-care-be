@@ -10,6 +10,7 @@ import org.ateam.oncare.careproduct.command.repository.ProductMasterRepository;
 import org.ateam.oncare.careproduct.command.repository.ProductRepository;
 import org.ateam.oncare.careproduct.mapper.ProductCategoryMapper;
 import org.ateam.oncare.careproduct.mapper.ProductMasterMapper;
+import org.ateam.oncare.config.customexception.ExistsAlreadyProductMasterException;
 import org.ateam.oncare.rental.command.service.RentalService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -78,6 +79,12 @@ public class ProductMasterServiceImpl implements ProductMasterService {
 
     @Override
     public int registerProductMaster(RequestProductMasterDTO requestProductMasterDTO) {
+
+        productMasterRepository.findById(requestProductMasterDTO.getId()).ifPresent(
+                 entity -> {
+                     throw new ExistsAlreadyProductMasterException(String.format("%s,이미 존재하는 아이템 입니다.", requestProductMasterDTO.getId()));
+                 });
+
         CareProductMaster entity = productMasterMapper.toProductMasterEntity(requestProductMasterDTO);
         productMasterRepository.save(entity);
 
