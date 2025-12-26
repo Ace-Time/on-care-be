@@ -17,9 +17,10 @@ public class RentalUsageResponse {
         private Long rentalContractId;      // 계약 ID
         private String productAssetId;      // care_product.id (예: EM001-001)
         private String productName;         // m_care_product.name (예: 휠체어)
-        private String contractLabel;       // "계약중" / "계약완료"
-        private String contractStatusName;  // 원본(contract_status.name) - 디버깅/관리용
-        private String rentalStatusName;    // rental_product_status.name (유지/회수접수/회수완료)
+
+        // 계약대기 / 접수 / 유지 / 계약중 / 종료 / 해지 / 만료
+        private String contractStatusName;
+
 
         private String startDate;           // yyyy-MM-dd
         private String endDate;             // yyyy-MM-dd (nullable)

@@ -12,7 +12,7 @@
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_PATH}/${DATE_DIR_PATTERN}/performance_warn/${DATE_FILE_PATTERN}-per_warn.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
+<!--            <maxHistory>30</maxHistory>-->
             <totalSizeCap>3GB</totalSizeCap>
         </rollingPolicy>
 

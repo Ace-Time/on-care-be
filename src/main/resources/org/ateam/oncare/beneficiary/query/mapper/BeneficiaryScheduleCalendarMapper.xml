@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BeneficiaryScheduleCalendarMapper">
+
+    <!-- ✅ 고정일정(visit_schedule)만: 월 범위(startDt~endDt) -->
+    <!-- >= → &gt;= , < → &lt; -->
+    <select id="selectFixedVisitsInRange"
+            resultType="org.ateam.oncare.beneficiary.query.mapper.CalendarFixedVisitRow">
+
+        SELECT
+        vs.vs_id AS visitScheduleId,
+
+        DATE_FORMAT(vs.start_dt, '%Y-%m-%d %H:%i:%s') AS startDt,
+        DATE_FORMAT(vs.end_dt,   '%Y-%m-%d %H:%i:%s') AS endDt,
+
+        vs.visit_status AS visitStatus,
+        vs.note AS note,
+
+        mst.id AS serviceTypeId,
+        mst.name AS serviceTypeName,
+
+        cw.id AS careWorkerId,
+        e.name AS careWorkerName
+
+        FROM visit_schedule vs
+        LEFT JOIN m_service_type mst ON mst.id = vs.service_type_id
+        LEFT JOIN care_worker cw ON cw.id = vs.care_worker_id
+        LEFT JOIN employee e ON e.id = cw.employee_id
+
+        WHERE vs.beneficiary_id = #{beneficiaryId}
+        AND vs.start_dt &gt;= #{startDt}
+        AND vs.start_dt &lt;  #{endDt}
+
+        ORDER BY vs.start_dt ASC, vs.vs_id ASC
+    </select>
+
+</mapper>

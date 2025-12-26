@@ -65,8 +65,6 @@ public class AuthServiceImpl implements AuthService {
         ResponseToken responseToken =
                 tokenService.verifyByRefreshToken(refreshToken,request, clientIp);
 
-
-
         return responseToken;
     }
 
@@ -109,6 +107,4 @@ public class AuthServiceImpl implements AuthService {
             log.debug("updateAuthorityEvent: eventType=AUTHORITY 실행");
         }
     }
-
-
 }
