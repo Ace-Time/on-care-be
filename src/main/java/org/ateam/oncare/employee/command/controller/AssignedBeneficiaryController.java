@@ -23,7 +23,6 @@ public class AssignedBeneficiaryController {
             @PathVariable Long careWorkerId) {
 
         return ResponseEntity.ok(
-                assignedBeneficiaryService.getAssignedBeneficiaries(careWorkerId)
-        );
+                assignedBeneficiaryService.getAssignedBeneficiaries(careWorkerId));
     }
 }

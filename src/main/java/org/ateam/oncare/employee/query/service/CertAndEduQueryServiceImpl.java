@@ -31,4 +31,14 @@ public class CertAndEduQueryServiceImpl implements CertAndEduQueryService {
     public List<CertificateViewDTO> getCertificates(Integer statusCode) {
         return certAndEduQueryMapper.selectCertificates(statusCode);
     }
+
+    @Override
+    public List<CertificateViewDTO> getCertificatesByMasterId(Long masterId) {
+        return certAndEduQueryMapper.selectCertificatesByMasterId(masterId);
+    }
+
+    @Override
+    public List<org.ateam.oncare.employee.query.dto.CertificateMasterDTO> getAllCertificates() {
+        return certAndEduQueryMapper.selectAllCertificates();
+    }
 }

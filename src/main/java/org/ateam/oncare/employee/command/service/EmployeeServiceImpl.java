@@ -131,26 +131,6 @@ public class EmployeeServiceImpl implements EmployeeService {
             employeeCareerCommandRepository.saveAll(careerEntities);
         }
 
-        // ============================================================
-        // 4. [수정됨] 직업 코드 1, 2, 3 (센터장, 팀장 등)에게 알림 발송
-        // ============================================================
-        Long templateId = 3L; // 직원 등록 알림 템플릿 번호
-
-        try {
-            // 1. 직업 코드로 알림 발송 (센터장, 팀장 등)
-             List<Long> targetJobCodes = Arrays.asList(5L);
-             for (Long jobCode : targetJobCodes) {
-             notificationCommandService.sendByJobCode(jobCode, templateId);
-             }
-
-            // 2. 특정 직원 ID 리스트로 알림 발송 (예: 관리자 ID 직접 지정)
-//            List<Long> specificReceiverIds = Arrays.asList(1L, 2L); // 1번, 2번 직원에게 발송
-//            notificationCommandService.send(specificReceiverIds, templateId);
-
-        } catch (Exception e) {
-            System.err.println("알림 발송 실패: " + e.getMessage());
-        }
-
         return empId;
     }
 
@@ -162,21 +142,34 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 직원이 없습니다. id=" + id));
 
         // 2. 정보 업데이트 (Setter로 덮어쓰기 -> Dirty Checking)
-        employee.setName(dto.getName());
+        if (dto.getName() != null)
+            employee.setName(dto.getName());
         // pw는 유지
-        employee.setBirth(dto.getBirth());
-        employee.setGender(dto.getGender());
-        employee.setAddress(dto.getAddress());
-        employee.setEmail(dto.getEmail());
-        employee.setPhone(dto.getPhone());
-        employee.setEmergencyNumber(dto.getEmergencyNumber());
-        employee.setHireDate(dto.getHireDate());
-        employee.setEndDate(dto.getEndDate());
+        if (dto.getBirth() != null)
+            employee.setBirth(dto.getBirth());
+        if (dto.getGender() != null)
+            employee.setGender(dto.getGender());
+        if (dto.getAddress() != null)
+            employee.setAddress(dto.getAddress());
+        if (dto.getEmail() != null)
+            employee.setEmail(dto.getEmail());
+        if (dto.getPhone() != null)
+            employee.setPhone(dto.getPhone());
+        if (dto.getEmergencyNumber() != null)
+            employee.setEmergencyNumber(dto.getEmergencyNumber());
+        if (dto.getHireDate() != null)
+            employee.setHireDate(dto.getHireDate());
+        if (dto.getEndDate() != null)
+            employee.setEndDate(dto.getEndDate());
 
-        employee.setDeptCode(dto.getDeptCode());
-        employee.setJobCode(dto.getJobCode());
-        employee.setManagerId(dto.getManagerId());
-        employee.setStatusId(dto.getStatusId());
+        if (dto.getDeptCode() != null)
+            employee.setDeptCode(dto.getDeptCode());
+        if (dto.getJobCode() != null)
+            employee.setJobCode(dto.getJobCode());
+        if (dto.getManagerId() != null)
+            employee.setManagerId(dto.getManagerId());
+        if (dto.getStatusId() != null)
+            employee.setStatusId(dto.getStatusId());
 
         // 3. 경력(Career) 업데이트 전략: "전체 삭제 후 재등록"
         employeeCareerCommandRepository.deleteAllByEmployeeId(id);

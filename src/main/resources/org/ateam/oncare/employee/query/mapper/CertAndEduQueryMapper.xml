@@ -6,7 +6,7 @@
 
     <resultMap id="CertificateViewMap" type="org.ateam.oncare.employee.query.dto.CertificateViewDTO">
         <id property="id" column="cwc_id"/>
-
+        <result property="employeeId" column="employee_id"/>
         <result property="employeeName" column="employee_name"/>
 
         <result property="certificateName" column="certificate_name"/>
@@ -27,10 +27,28 @@
         <result property="relatedLicenseName" column="related_license_name"/>
     </resultMap>
 
+    <resultMap id="CertificateMasterMap" type="org.ateam.oncare.employee.query.dto.CertificateMasterDTO">
+        <id property="id" column="id"/>
+        <result property="certificateName" column="certificate_name"/>
+        <result property="organization" column="organization"/>
+        <result property="eduCycleYears" column="edu_cycle_years"/>
+    </resultMap>
+
+    <select id="selectAllCertificates" resultMap="CertificateMasterMap">
+        SELECT
+            id,
+            certificate_name,
+            organization,
+            edu_cycle_years
+        FROM certificate
+        ORDER BY certificate_name ASC
+    </select>
+
 
     <select id="selectCertificatesByEmployeeId" resultMap="CertificateViewMap">
         SELECT
         cwc.id AS cwc_id,
+        e.id AS employee_id,
         e.name AS employee_name,  -- ★ [추가] 직원 테이블의 이름 조회
         m.certificate_name,
         m.organization,
@@ -65,6 +83,7 @@
     <select id="selectCertificates" resultMap="CertificateViewMap">
         SELECT
             cwc.id AS cwc_id,
+            e.id AS employee_id,
             e.name AS employee_name,
             m.certificate_name,
             m.organization,
@@ -83,5 +102,48 @@
         </where>
 
         ORDER BY cwc.issue_date DESC
+    </select>
+
+    <!-- 특정 자격증(Master ID)을 보유한 직원 목록 조회 -->
+    <select id="selectCertificatesByMasterId" resultMap="CertificateViewMap">
+        SELECT
+            cwc.id AS cwc_id,
+            e.id AS employee_id,
+            e.name AS employee_name,
+            m.certificate_name,
+            m.organization,
+            cwc.license_no,
+            cwc.issue_date,
+            cwc.expire_date,
+            cwc.`status`
+        FROM care_worker_certificate cwc
+        JOIN certificate m ON cwc.certificate_id = m.id
+        JOIN care_worker cw ON cwc.care_worker_id = cw.id
+        JOIN employee e ON cw.employee_id = e.id
+        WHERE m.id = #{masterId}
+        <!-- 필요 시 상태 조건 추가 가능 -->
+        <!-- AND cwc.status = 2 -->
+        ORDER BY e.name ASC
+    </select>
+
+    <select id="selectEducationAlerts" resultType="org.ateam.oncare.employee.query.dto.EducationAlertDTO">
+        SELECT
+            e.id AS employeeId,
+            e.name AS name,
+            max_edu.next_edu_date AS nextEduDate,
+            DATEDIFF(max_edu.next_edu_date, CURDATE()) AS dDay,
+            CASE
+                WHEN max_edu.next_edu_date &lt; CURDATE() THEN 'OVERDUE'
+                ELSE 'WARNING'
+            END AS status
+        FROM care_worker_certificate cwc
+        JOIN (
+            SELECT care_worker_certificate_id, MAX(next_edu_date) AS next_edu_date
+            FROM education
+            GROUP BY care_worker_certificate_id
+        ) max_edu ON cwc.id = max_edu.care_worker_certificate_id
+        JOIN care_worker cw ON cwc.care_worker_id = cw.id
+        JOIN employee e ON cw.employee_id = e.id
+        WHERE max_edu.next_edu_date &lt;= #{thresholdDate}
     </select>
 </mapper>

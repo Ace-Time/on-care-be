@@ -29,8 +29,30 @@ public interface EmployeeMapper {
     // 요양보호사(담당수급자) 일정 조회
     List<VisitScheduleVO> selectSchedulesByEmployeeId(Integer employeeId);
 
+    // 물품 회수/수령 일정 조회
+    List<ProductTaskVO> selectProductTasksByEmployeeId(Long employeeId);
+
+    // 교육 예정일 임박/초과 직원 조회
+    List<EducationAlertDTO> selectEducationAlerts();
+
+    // 필터 옵션 조회
+    List<org.ateam.oncare.employee.query.dto.FilterOptionDTO> selectJobFilters();
+
+    List<org.ateam.oncare.employee.query.dto.FilterOptionDTO> selectCertificateFilters();
+
+    List<org.ateam.oncare.employee.query.dto.FilterOptionDTO> selectServiceTypeFilters();
+
+    // 재직 중인 직원 수 조회
+    int countActiveEmployees();
+
+    // 휴직 중인 직원 수 조회
+    int countOnLeaveEmployees();
+
     // 방문 일정 조회 (상세)
     List<VisitScheduleVO> selectVisitSchedules(java.util.Map<String, Object> params);
+
+    // 담당 수급자 조회 (요양보호사 ID 기준)
+    List<org.ateam.oncare.employee.command.dto.AssignedBeneficiaryDTO> selectAssignedBeneficiaries(Long careWorkerId);
 
     void insertEmployee(org.ateam.oncare.employee.command.dto.EmployeeRegisterDto dto);
 
