@@ -16,7 +16,7 @@
             notes,
             schedule_status
         ) VALUES (
-            #{careWorkerId},
+            (SELECT id FROM care_worker WHERE employee_id = #{employeeId}),
             #{request.personalTypeId},
             #{request.customType},
             #{request.title},

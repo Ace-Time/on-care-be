@@ -1,10 +1,12 @@
 package org.ateam.oncare.careworker.query.controller;
 
+import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.ateam.oncare.careworker.query.dto.ApiResponse;
 import org.ateam.oncare.careworker.query.dto.CalendarScheduleDto;
 import org.ateam.oncare.careworker.query.dto.PersonalTypeDto;
 import org.ateam.oncare.careworker.query.dto.ScheduleDetailDto;
 import org.ateam.oncare.careworker.query.service.ScheduleQueryService;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,17 @@ import java.util.List;
 public class ScheduleQueryController {
 
     private final ScheduleQueryService scheduleQueryService;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    // JWT 토큰에서 사용자 ID 추출
+    private Long getEmployeeIdFromToken(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            Claims claims = jwtTokenProvider.getClaimsFromAT(token);
+            return claims.get("id", Long.class);
+        }
+        return 1L; // fallback
+    }
 
     // 캘린더 일정 조회 (월간/주간)
     //  1. 일별 조회 (오늘)
@@ -28,21 +41,23 @@ public class ScheduleQueryController {
     //    GET /api/schedules?startDate=2025-12-01&endDate=2025-12-31
     @GetMapping
     public List<CalendarScheduleDto> getSchedules(
-            @RequestHeader("Care-Worker-Id") Long careWorkerId,
+            @RequestHeader("Authorization") String authHeader,
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        return scheduleQueryService.getSchedules(careWorkerId, startDate, endDate);
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        return scheduleQueryService.getSchedules(employeeId, startDate, endDate);
     }
 
     //  일정 상세 조회
     // 요청 예시: GET /api/schedules/101
     @GetMapping("/{scheduleId}")
     public ScheduleDetailDto getScheduleDetail(
-            @RequestHeader("Care-Worker-Id") Long careWorkerId,
+            @RequestHeader("Authorization") String authHeader,
             @PathVariable Long scheduleId
     ) {
-        return scheduleQueryService.getScheduleDetail(scheduleId, careWorkerId);
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        return scheduleQueryService.getScheduleDetail(scheduleId, employeeId);
     }
 
     // 개인 일정 유형 목록 조회 (드롭다운용)
