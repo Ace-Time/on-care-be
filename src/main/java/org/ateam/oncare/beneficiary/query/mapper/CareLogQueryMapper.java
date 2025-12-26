@@ -19,4 +19,10 @@ public interface CareLogQueryMapper {
             @Param("beneficiaryId") Long beneficiaryId,
             @Param("logId") Long logId
     );
+
+    // 월별 상세 row 전부 (AI 요약용)
+    List<CareLogDetailRow> selectCareLogDetailsByMonth(
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("month") String month // YYYY-MM 필수
+    );
 }
