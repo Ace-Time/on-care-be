@@ -8,10 +8,10 @@ import lombok.Setter;
 public class RentalContractDetailResponse {
 
     private Long rentalContractId;
-    private Long productAssetId;
+    private String productAssetId;
     private String productName;
 
-    private String contractLabel;
+    // 계약대기 / 접수 / 유지 / 계약중 / 종료 / 해지 / 만료
     private String contractStatusName;
 
     private String contractDate;

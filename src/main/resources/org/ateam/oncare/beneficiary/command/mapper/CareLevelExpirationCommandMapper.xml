@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.command.mapper.CareLevelExpirationCommandMapper">
+
+    <!-- expirationId = 수급자의 만료관리 건 -->
+    <update id="updateExtendsStatus">
+        UPDATE expiration_of_care_level
+        SET extends_status = #{extendsStatus}
+        WHERE id = #{expirationId}
+    </update>
+
+    <update id="updateOutboundStatus">
+        UPDATE expiration_of_care_level
+        SET outbound_status = #{outboundStatus}
+        WHERE id = #{expirationId}
+    </update>
+
+    <!-- noticeDate가 null이면 NOW() -->
+    <insert id="insertNotice">
+        INSERT INTO notice_expiration (notice_date, memo, expiration_id, emp_id)
+        VALUES (
+        <choose>
+            <when test="noticeDate != null and noticeDate != ''">
+                #{noticeDate}
+            </when>
+            <otherwise>
+                NOW()
+            </otherwise>
+        </choose>
+        ,
+        #{memo},
+        #{expirationId},
+        #{empId}
+        )
+    </insert>
+
+    <!-- 안내이력 수정 -->
+    <update id="updateNotice">
+        UPDATE notice_expiration
+        SET
+        notice_date =
+        <choose>
+            <when test="noticeDate != null and noticeDate != ''">
+                #{noticeDate}
+            </when>
+            <otherwise>
+                notice_date
+            </otherwise>
+        </choose>
+        ,
+        memo = #{memo},
+        emp_id = #{empId}
+        WHERE id = #{noticeId}
+            AND expiration_id = #{expirationId}
+    </update>
+
+    <!-- 안내이력 삭제 -->
+    <delete id="deleteNotice">
+        DELETE FROM notice_expiration
+        WHERE id = #{noticeId}
+            AND expiration_id = #{expirationId}
+    </delete>
+
+</mapper>

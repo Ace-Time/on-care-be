@@ -5,36 +5,112 @@
 
 <mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BeneficiaryServiceUsageMapper">
 
-    <!-- ✅ 서비스 사용 이력 (월별) : 금액은 월 누계(cost_of_beneficiary) -->
+    <!-- 1) 1번 화면: 월별 전체 누계 -->
     <select id="selectServiceUsageHistory"
-            parameterType="long"
             resultType="org.ateam.oncare.beneficiary.query.dto.response.ServiceUsageResponse$ServiceUsageMonthItem">
-
         SELECT
-        cob.month           AS month,
-        cob.monthly_amount  AS totalAmount
+        cob.month AS month,
+        CAST(cob.monthly_amount AS SIGNED) AS totalAmount
         FROM cost_of_beneficiary cob
         WHERE cob.beneficiary_id = #{beneficiaryId}
         ORDER BY cob.month DESC
-
     </select>
 
-    <!-- ✅ 특정 월의 서비스 타입별 "횟수" (1일 2회면 2회로 카운트됨) -->
-    <select id="selectServiceTypesByMonth"
-            resultType="org.ateam.oncare.beneficiary.query.dto.response.ServiceUsageResponse$ServiceTypeItem">
 
-        SELECT
-        mst.id   AS serviceTypeId,
-        mst.name AS serviceTypeName,
-        COUNT(bs.id) AS usageCount
-        FROM beneficiary_schedule bs
-        JOIN m_service_type mst
-        ON mst.id = bs.service_type_id
-        WHERE bs.beneficiary_id = #{beneficiaryId}
-        AND DATE_FORMAT(bs.start_time, '%Y-%m') = #{month}
-        GROUP BY mst.id, mst.name
-        ORDER BY mst.id
+    <!-- 2) 2번 화면: 선택한 월의 서비스유형별 누계(금액/횟수/총시간) -->
+    <select id="selectServiceTypeSummaryByMonth"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.ServiceTypeSummaryResponse$ServiceTypeSummaryItem">
+        <![CDATA[
+    SELECT
+        cbr.service_type_id AS serviceTypeId,
+        mst.name            AS serviceTypeName,
 
+        SUM(cbr.calculated_amount) AS totalAmount,
+        COUNT(*)                  AS visitCount,
+
+        /* ✅ 총 방문시간(시간) - RFID 기준 */
+        ROUND(SUM(ROUND(TIMESTAMPDIFF(MINUTE, vs.rfid_start_time, vs.rfid_end_time) / 60, 1)),1) AS totalHours
+
+    FROM cost_of_beneficiary_record cbr
+    JOIN visit_schedule vs
+        ON vs.vs_id = cbr.visit_schedule_id
+    JOIN m_service_type mst
+        ON mst.id = cbr.service_type_id
+
+    WHERE cbr.beneficiary_id = #{beneficiaryId}
+
+      /* ✅ RFID 태그 완료된 건만(집계/리스트 포함 조건) */
+      AND vs.rfid_start_time IS NOT NULL
+      AND vs.rfid_end_time   IS NOT NULL
+
+      /* ✅ 선택월 범위 */
+      AND vs.rfid_start_time >= STR_TO_DATE(CONCAT(#{month}, '-01'), '%Y-%m-%d')
+      AND vs.rfid_start_time <  CASE
+                                  /* 선택월이 이번달이면 오늘까지(내일 00:00 미만) */
+                                  WHEN #{month} = DATE_FORMAT(CURDATE(), '%Y-%m')
+                                  THEN DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                                  /* 과거월이면 그 달 말일까지(다음달 1일 00:00 미만) */
+                                  ELSE DATE_ADD(LAST_DAY(STR_TO_DATE(CONCAT(#{month}, '-01'), '%Y-%m-%d')), INTERVAL 1 DAY)
+                                END
+
+    GROUP BY cbr.service_type_id, mst.name
+    ORDER BY cbr.service_type_id
+    ]]>
+    </select>
+
+
+    <!-- 3) 3번 화면: 선택 월 + 선택 서비스유형 방문 리스트(일자/시간/금액 + note + careWorkerName) -->
+    <select id="selectVisitRecordsByMonthAndType"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.ServiceVisitRecordResponse$VisitRecordItem">
+        <![CDATA[
+    SELECT
+        cbr.id                AS recordId,
+        cbr.visit_schedule_id AS visitScheduleId,
+
+        DATE_FORMAT(vs.rfid_start_time, '%Y-%m-%d') AS workDate,
+        DATE_FORMAT(vs.rfid_start_time, '%H:%i')    AS startTime,
+        DATE_FORMAT(vs.rfid_end_time,   '%H:%i')    AS endTime,
+
+        /* ✅ 방문시간(시간) - RFID 기준 */
+        ROUND(TIMESTAMPDIFF(MINUTE, vs.rfid_start_time, vs.rfid_end_time) / 60, 1) AS hours,
+
+        cbr.service_type_id   AS serviceTypeId,
+        mst.name              AS serviceTypeName,
+
+        cbr.calculated_amount AS amount,
+
+        vs.note               AS note,
+
+        e.name                AS careWorkerName
+
+    FROM cost_of_beneficiary_record cbr
+    JOIN visit_schedule vs
+        ON vs.vs_id = cbr.visit_schedule_id
+    JOIN m_service_type mst
+        ON mst.id = cbr.service_type_id
+
+    LEFT JOIN care_worker cw
+        ON cw.id = vs.care_worker_id
+    LEFT JOIN employee e
+        ON e.id = cw.employee_id
+
+    WHERE cbr.beneficiary_id = #{beneficiaryId}
+      AND cbr.service_type_id = #{serviceTypeId}
+
+      /* ✅ RFID 태그 완료된 건만 */
+      AND vs.rfid_start_time IS NOT NULL
+      AND vs.rfid_end_time   IS NOT NULL
+
+      /* ✅ 선택월 범위 (이번달이면 오늘까지 / 과거월이면 말일까지) */
+      AND vs.rfid_start_time >= STR_TO_DATE(CONCAT(#{month}, '-01'), '%Y-%m-%d')
+      AND vs.rfid_start_time <  CASE
+                                  WHEN #{month} = DATE_FORMAT(CURDATE(), '%Y-%m')
+                                  THEN DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+                                  ELSE DATE_ADD(LAST_DAY(STR_TO_DATE(CONCAT(#{month}, '-01'), '%Y-%m-%d')), INTERVAL 1 DAY)
+                                END
+
+    ORDER BY vs.rfid_start_time DESC, cbr.id DESC
+    ]]>
     </select>
 
 </mapper>

@@ -1,7 +1,9 @@
 package org.ateam.oncare.careworker.command.controller;
 
 import org.ateam.oncare.careworker.command.dto.CompleteVisitRequest;
+import org.ateam.oncare.careworker.command.dto.CreateVisitScheduleRequest;
 import org.ateam.oncare.careworker.command.dto.StartVisitRequest;
+import org.ateam.oncare.careworker.command.dto.UpdateVisitScheduleRequest;
 import org.ateam.oncare.careworker.command.service.VisitScheduleCommandService;
 import org.ateam.oncare.careworker.query.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,9 @@ import org.springframework.web.bind.annotation.*;
 public class VisitScheduleCommandController {
 
     private final VisitScheduleCommandService visitScheduleCommandService;
+
+    // 테스트용
+    private final Long TEST_CAREGIVER_ID = 1L;
 
     // 1. 방문 일정 서비스 시작 (SCHEDULED → IN_PROGRESS)
     @PostMapping("/{vsId}/start")
@@ -29,6 +34,29 @@ public class VisitScheduleCommandController {
             @PathVariable Long vsId,
             @RequestBody CompleteVisitRequest request) {
         visitScheduleCommandService.completeVisit(vsId, request);
+        return ApiResponse.success(null);
+    }
+
+    // 3. 방문 요양 일정 작성
+    @PostMapping
+    public ApiResponse<Void> createVisitSchedule(@RequestBody CreateVisitScheduleRequest request) {
+        visitScheduleCommandService.createVisitSchedule(TEST_CAREGIVER_ID, request);
+        return ApiResponse.success(null);
+    }
+
+    // 4. 방문 요양 일정 수정
+    @PatchMapping("/{vsId}")
+    public ApiResponse<Void> updateVisitSchedule(
+            @PathVariable Long vsId,
+            @RequestBody UpdateVisitScheduleRequest request) {
+        visitScheduleCommandService.updateVisitSchedule(vsId, request);
+        return ApiResponse.success(null);
+    }
+
+    // 5. 방문 요양 일정 삭제
+    @DeleteMapping("/{vsId}")
+    public ApiResponse<Void> deleteVisitSchedule(@PathVariable Long vsId) {
+        visitScheduleCommandService.deleteVisitSchedule(vsId);
         return ApiResponse.success(null);
     }
 }
