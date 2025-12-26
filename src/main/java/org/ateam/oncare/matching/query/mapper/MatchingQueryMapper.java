@@ -46,4 +46,24 @@ public interface MatchingQueryMapper {
     List<String> selectCareWorkerServiceTypes(@Param("careWorkerId") Long careWorkerId);
 
     List<WorkingTimeDto> selectCareWorkerWorkingTimes(@Param("careWorkerId") Long careWorkerId);
+
+    Long selectAssignedCareWorkerId(@Param("beneficiaryId") Long beneficiaryId);
+
+    // MatchingQueryMapper.java 에 아래 메서드들만 추가
+
+    List<CareWorkerIdDto> selectAvailableCareWorkerIdsByVisitSchedule(
+            @Param("vsId") Long vsId,
+            @Param("startDt") String startDt,
+            @Param("endDt") String endDt
+    );
+
+    List<CareWorkerIdDto> selectCareWorkerIdsByVisitServiceType(@Param("vsId") Long vsId);
+
+    Long selectCareWorkerIdByVisitScheduleId(@Param("vsId") Long vsId);
+
+    Long selectVisitScheduleBeneficiaryId(@Param("vsId") Long vsId);
+
+    List<CareWorkerIdDto> selectAvailableCareWorkerIdsByVisitTime(String startDt, String endDt);
+    List<CareWorkerIdDto> selectCareWorkerIdsByServiceTypeId(Long serviceTypeId);
+
 }
