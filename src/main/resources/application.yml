@@ -23,3 +23,6 @@ jwt:
   refresh-secret: ${JWT_RT_SECRET}
   access-token-validity: 3600000
   refresh-token-validity: 604800000
+
+ai:
+  base-url: ${AI_HOSTNAME}:${AI_PORT}
