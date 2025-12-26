@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CareLogQueryService {
+public class CareDiaryQueryService {
 
     private final CareLogQueryMapper mapper;
 

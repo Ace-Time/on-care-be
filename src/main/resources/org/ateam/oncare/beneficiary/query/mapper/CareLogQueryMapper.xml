@@ -38,7 +38,7 @@
     </select>
 
 
-    <!-- ✅ 요양일지 상세 1건(원본 컬럼 그대로 가져오기) -->
+    <!-- ✅ 요양일지 상세 1건(일지 리스트에서 하나 누르면 그것에 관한 상세니까) -->
     <select id="selectCareLogDetail"
             resultType="org.ateam.oncare.beneficiary.query.mapper.CareLogDetailRow">
 
@@ -124,6 +124,95 @@
         AND cl.log_id = #{logId}
         AND cl.is_deleted = 0
         LIMIT 1
+    </select>
+
+    <select id="selectCareLogDetailsByMonth"
+            resultType="org.ateam.oncare.beneficiary.query.mapper.CareLogDetailRow">
+        <!-- 월별로 여러건 가져오는 xml => 해당 월의 일지를 다 모아 요약해야 하므로 -->
+
+        SELECT
+        cl.log_id AS logId,
+        cl.beneficiary_id AS beneficiaryId,
+
+        DATE_FORMAT(cl.created_at, '%Y-%m-%d %H:%i:%s') AS recordedAt,
+        DATE_FORMAT(cl.service_date, '%Y-%m-%d') AS serviceDate,
+        DATE_FORMAT(cl.start_time, '%H:%i') AS startTime,
+        DATE_FORMAT(cl.end_time, '%H:%i') AS endTime,
+
+        cl.service_type AS serviceType,
+
+        cl.care_worker_id AS careWorkerId,
+        e.name AS careWorkerName,
+
+        /* 식사/영양 */
+        cl.is_breakfast AS isBreakfast,
+        cl.is_lunch AS isLunch,
+        cl.is_dinner AS isDinner,
+        cl.is_snack AS isSnack,
+        cl.is_meal_prep AS isMealPrep,
+
+        /* 배설 */
+        cl.diaper_count AS diaperCount,
+        cl.toilet_count AS toiletCount,
+        cl.is_portable_toilet AS isPortableToilet,
+        cl.is_urine AS isUrine,
+        cl.is_stool AS isStool,
+        cl.stool_normal AS stoolNormal,
+        cl.stool_diarrhea AS stoolDiarrhea,
+        cl.stool_constipation AS stoolConstipation,
+        cl.is_excretion_mistake AS isExcretionMistake,
+
+        /* 위생/청결 */
+        cl.is_face_wash AS isFaceWash,
+        cl.is_oral_care AS isOralCare,
+        cl.is_hair_wash AS isHairWash,
+        cl.is_body_wash AS isBodyWash,
+        cl.is_change_clothes AS isChangeClothes,
+
+        /* 이동/체위 */
+        cl.is_position_change AS isPositionChange,
+        cl.is_get_up_help AS isGetUpHelp,
+        cl.is_indoor_move AS isIndoorMove,
+        cl.is_walk_help AS isWalkHelp,
+        cl.is_bed_care AS isBedCare,
+
+        /* 인지/정서 */
+        cl.is_emotional_talk AS isEmotionalTalk,
+        cl.is_communication AS isCommunication,
+        cl.is_counseling AS isCounseling,
+        cl.is_cognitive_care AS isCognitiveCare,
+        cl.is_behavior_care AS isBehaviorCare,
+
+        /* 상태(신체) */
+        cl.is_health_good AS isHealthGood,
+        cl.is_pain AS isPain,
+        cl.is_edema AS isEdema,
+        cl.is_skin_issue AS isSkinIssue,
+        cl.is_body_etc AS isBodyEtc,
+
+        /* 상태(기분) */
+        cl.is_mood_calm AS isMoodCalm,
+        cl.is_mood_anxious AS isMoodAnxious,
+        cl.is_mood_depressed AS isMoodDepressed,
+        cl.is_mood_angry AS isMoodAngry,
+        cl.is_mood_etc AS isMoodEtc,
+
+        /* 수면 */
+        cl.is_sleep_lack AS isSleepLack,
+        cl.is_nap_excess AS isNapExcess,
+
+        /* 특이사항 */
+        cl.special_note AS specialNote
+
+        FROM care_logs cl
+        JOIN care_worker cw ON cw.id = cl.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+
+        WHERE cl.beneficiary_id = #{beneficiaryId}
+        AND cl.is_deleted = 0
+        AND DATE_FORMAT(cl.service_date, '%Y-%m') = #{month}
+
+        ORDER BY cl.service_date ASC, cl.start_time ASC, cl.log_id ASC
     </select>
 
 </mapper>

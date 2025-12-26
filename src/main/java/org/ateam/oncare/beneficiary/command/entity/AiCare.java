@@ -1,4 +1,4 @@
-package org.ateam.oncare.beneficiary;
+package org.ateam.oncare.beneficiary.command.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,4 +29,7 @@ public class AiCare {
 
     @Column(name = "beneficiary_id", nullable = false)
     private Long beneficiaryId; // FK mapping target
+
+    @Column(name = "ai_update_at", nullable = false)
+    private LocalDateTime aiUpdateAt;
 }
