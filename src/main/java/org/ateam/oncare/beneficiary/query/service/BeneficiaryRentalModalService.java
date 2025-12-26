@@ -11,7 +11,7 @@ public class BeneficiaryRentalModalService {
 
     private final BeneficiaryRentalUsageMapper mapper;
 
-    public RentalContractDetailResponse getRentalContractDetail(Long beneficiaryId, Long rentalContractId, Long productAssetId) {
+    public RentalContractDetailResponse getRentalContractDetail(Long beneficiaryId, Long rentalContractId, String productAssetId) {
         return mapper.selectRentalContractDetail(beneficiaryId, rentalContractId, productAssetId);
     }
 }

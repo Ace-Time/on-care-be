@@ -5,7 +5,7 @@
 
 <mapper namespace="org.ateam.oncare.beneficiary.command.mapper.BeneficiaryRentalContractMapper">
 
-    <!-- ✅ 계약중(유지/계약중/접수)인 경우에만 계약완료로 변경 -->
+    <!-- ✅ 계약중(유지/계약중/접수/계약대기)인 경우에만 계약완료로 변경 -->
     <update id="completeRentalContract">
         UPDATE rental_contract rc
         SET
@@ -24,7 +24,7 @@
         AND rc.contract_status_cd IN (
         SELECT cs2.id
         FROM contract_status cs2
-        WHERE cs2.name IN ('유지', '계약중', '접수')
+        WHERE cs2.name IN ('유지', '계약중', '접수','계약대기')
         )
     </update>
 

@@ -1,5 +1,7 @@
 package org.ateam.oncare.beneficiary.query.dto.response;
 
+// 서비스탭 1번 화면
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,16 +16,7 @@ public class ServiceUsageResponse {
     @Getter
     @Setter
     public static class ServiceUsageMonthItem {
-        private String month;               // 2025-12
-        private Integer totalAmount;        // cost_of_beneficiary.monthly_amount (월 누계)
-        private List<ServiceTypeItem> serviceTypes;
-    }
-
-    @Getter
-    @Setter
-    public static class ServiceTypeItem {
-        private Integer serviceTypeId;
-        private String serviceTypeName;     // 방문요양, 방문목욕, 방문간호
-        private Integer usageCount;         // ✅ 월/타입별 횟수
+        private String month;        // YYYY-MM
+        private Integer totalAmount; // 월 누계 (cost_of_beneficiary.monthly_amount)
     }
 }
