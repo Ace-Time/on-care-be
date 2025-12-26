@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "ai_care")
@@ -30,6 +31,21 @@ public class AiCare {
     @Column(name = "beneficiary_id", nullable = false)
     private Long beneficiaryId; // FK mapping target
 
-    @Column(name = "ai_update_at", nullable = false)
-    private LocalDateTime aiUpdateAt;
+    @Column(name = "ai_last_log_id", nullable = false)
+    private Long aiLastLogId;
+
+    @Column(name = "ai_logs_count", nullable = false)
+    private Long aiLogsCount;
+
+    @Column(name = "ai_last_service_date", nullable = false)
+    private Date aiLastServiceDate;
+
+    @Column(name = "ai_input_tokens", nullable = false)
+    private Long aiInputTokens;
+
+    @Column(name = "ai_output_tokens", nullable = false)
+    private Long aiOutputTokens;
+
+    @Column(name = "ai_total_tokens", nullable = false)
+    private Long aiTotalTokens;
 }
