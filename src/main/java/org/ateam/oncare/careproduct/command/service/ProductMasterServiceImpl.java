@@ -68,6 +68,7 @@ public class ProductMasterServiceImpl implements ProductMasterService {
         productMaster.setName(requestProductMasterDTO.getName());
         productMaster.setAmount(requestProductMasterDTO.getAmount());
         productMaster.setRentalAmount(requestProductMasterDTO.getRentalAmount());
+        productMaster.setCategoryCd(requestProductMasterDTO.getCategoryCd());
         productMaster.setUpdatedAt(LocalDateTime.now());
         productMaster.setExplanation(requestProductMasterDTO.getExplanation());
         productMasterRepository.save(productMaster);
