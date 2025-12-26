@@ -7,7 +7,7 @@
     <update id="updateVisitStatusToInProgress">
         UPDATE visit_schedule
         SET visit_status = 'IN_PROGRESS',
-            start_dt = #{actualStartTime}
+            rfid_start_time = NOW()
         WHERE vs_id = #{vsId}
           AND visit_status = 'SCHEDULED'
     </update>
@@ -16,7 +16,7 @@
     <update id="updateVisitStatusToCompleted">
         UPDATE visit_schedule
         SET visit_status = 'DONE',
-            end_dt = #{actualEndTime}
+            rfid_end_time = NOW()
         WHERE vs_id = #{vsId}
           AND visit_status = 'IN_PROGRESS'
     </update>

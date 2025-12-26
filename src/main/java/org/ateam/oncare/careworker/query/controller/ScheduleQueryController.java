@@ -19,9 +19,6 @@ public class ScheduleQueryController {
 
     private final ScheduleQueryService scheduleQueryService;
 
-    // ⚠️ 테스트용: 로그인한 유저 대신 ID를 1로 고정합니다.
-    private final Long TEST_CAREGIVER_ID = 1L;
-
     // 캘린더 일정 조회 (월간/주간)
     //  1. 일별 조회 (오늘)
     //    GET /api/schedules?startDate=2025-12-16&endDate=2025-12-16
@@ -31,19 +28,21 @@ public class ScheduleQueryController {
     //    GET /api/schedules?startDate=2025-12-01&endDate=2025-12-31
     @GetMapping
     public List<CalendarScheduleDto> getSchedules(
+            @RequestHeader("Care-Worker-Id") Long careWorkerId,
             @RequestParam("startDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
-        return scheduleQueryService.getSchedules(TEST_CAREGIVER_ID, startDate, endDate);
+        return scheduleQueryService.getSchedules(careWorkerId, startDate, endDate);
     }
 
     //  일정 상세 조회
     // 요청 예시: GET /api/schedules/101
     @GetMapping("/{scheduleId}")
     public ScheduleDetailDto getScheduleDetail(
+            @RequestHeader("Care-Worker-Id") Long careWorkerId,
             @PathVariable Long scheduleId
     ) {
-        return scheduleQueryService.getScheduleDetail(scheduleId, TEST_CAREGIVER_ID);
+        return scheduleQueryService.getScheduleDetail(scheduleId, careWorkerId);
     }
 
     // 개인 일정 유형 목록 조회 (드롭다운용)

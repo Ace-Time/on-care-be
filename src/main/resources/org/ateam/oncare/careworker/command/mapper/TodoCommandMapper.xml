@@ -19,7 +19,7 @@
             #{request.type},
             FALSE,
             NOW(),
-            #{careWorkerId},
+            (SELECT id FROM care_worker WHERE employee_id = #{careWorkerId}),
             #{request.beneficiaryId}
         )
     </insert>
@@ -29,6 +29,7 @@
         UPDATE todo_for_care_worker
         SET clear_st = 1
         WHERE id = #{todoId}
+          AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId})
     </update>
 
     <!-- 할 일 완료 취소 -->
@@ -36,6 +37,7 @@
         UPDATE todo_for_care_worker
         SET clear_st = 0
         WHERE id = #{todoId}
+          AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId})
     </update>
 
     <!-- 할 일 수정 -->
@@ -46,12 +48,14 @@
             type = #{request.type},
             beneficiary_id = #{request.beneficiaryId}
         WHERE id = #{todoId}
+          AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId})
     </update>
 
     <!-- 할 일 삭제 -->
     <delete id="deleteTodo">
         DELETE FROM todo_for_care_worker
         WHERE id = #{todoId}
+          AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId})
     </delete>
 
 </mapper>

@@ -14,13 +14,12 @@ public class PersonalScheduleCommandController {
 
     private final PersonalScheduleCommandService personalScheduleCommandService;
 
-    // 테스트용
-    private final Long TEST_CAREGIVER_ID = 1L;
-
     // 1. 개인 일정 작성
     @PostMapping
-    public ApiResponse<Void> createPersonalSchedule(@RequestBody CreatePersonalScheduleRequest request) {
-        personalScheduleCommandService.createPersonalSchedule(TEST_CAREGIVER_ID, request);
+    public ApiResponse<Void> createPersonalSchedule(
+            @RequestHeader("Care-Worker-Id") Long careWorkerId,
+            @RequestBody CreatePersonalScheduleRequest request) {
+        personalScheduleCommandService.createPersonalSchedule(careWorkerId, request);
         return ApiResponse.success(null);
     }
 

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.AiCareInsertMapper">
+
+    <insert id="insertAiCare">
+        INSERT INTO ai_care
+        (
+        ai_content,
+        ai_input_tokens,
+        ai_output_tokens,
+        ai_total_tokens,
+        ai_month,
+        beneficiary_id,
+        ai_last_log_id,
+        ai_logs_count,
+        ai_last_service_date
+        )
+        VALUES
+        (
+        #{aiContent},
+        #{aiInputTokens},
+        #{aiOutputTokens},
+        #{aiTotalTokens},
+        #{aiMonth},
+        #{beneficiaryId},
+        #{aiLastLogId},
+        #{aiLogsCount},
+        #{aiLastServiceDate}
+        )
+    </insert>
+
+</mapper>

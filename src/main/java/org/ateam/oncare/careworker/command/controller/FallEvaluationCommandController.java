@@ -15,14 +15,13 @@ public class FallEvaluationCommandController {
     private final BasicEvaluationCommandService basicEvaluationCommandService;
     private static final String EVAL_TYPE = "FALL";
 
-    // 테스트용
-    private final Long TEST_CAREGIVER_ID = 1L;
-
     // 1. 낙상위험도 평가 작성
     @PostMapping
-    public ApiResponse<Void> createFallEvaluation(@RequestBody CreateBasicEvaluationRequest request) {
+    public ApiResponse<Void> createFallEvaluation(
+            @RequestHeader("Care-Worker-Id") Long careWorkerId,
+            @RequestBody CreateBasicEvaluationRequest request) {
         request.setEvalType(EVAL_TYPE);
-        basicEvaluationCommandService.createBasicEvaluation(TEST_CAREGIVER_ID, request);
+        basicEvaluationCommandService.createBasicEvaluation(careWorkerId, request);
         return ApiResponse.success(null);
     }
 

@@ -4,7 +4,7 @@ package org.ateam.oncare.beneficiary.query.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.beneficiary.query.dto.response.*;
-import org.ateam.oncare.beneficiary.query.service.BasicEvaluationQueryService;
+import org.ateam.oncare.beneficiary.query.service.BasicTestQueryService;
 import org.ateam.oncare.beneficiary.query.dto.response.ApiOptionalResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/beneficiaries")
-public class BasicEvaluationQueryController {
+public class BasicTestQueryController {
 
-    private final BasicEvaluationQueryService service;
+    private final BasicTestQueryService service;
 
     @GetMapping("/{beneficiaryId}/basic-evaluations/fall/latest")
     public ResponseEntity<ApiOptionalResponse<FallEvaluationLatestResponse>>

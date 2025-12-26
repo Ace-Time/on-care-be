@@ -13,16 +13,23 @@ public interface TodoCommandMapper {
             @Param("request") CreateTodoRequest request);
 
     // 할 일 완료 체크
-    int updateTodoComplete(@Param("todoId") Long todoId);
+    int updateTodoComplete(
+            @Param("employeeId") Long employeeId,
+            @Param("todoId") Long todoId);
 
     // 할 일 완료 취소
-    int updateTodoUncomplete(@Param("todoId") Long todoId);
+    int updateTodoUncomplete(
+            @Param("employeeId") Long employeeId,
+            @Param("todoId") Long todoId);
 
     // 할 일 수정
     int updateTodo(
+            @Param("employeeId") Long employeeId,
             @Param("todoId") Long todoId,
             @Param("request") UpdateTodoRequest request);
 
     // 할 일 삭제
-    int deleteTodo(@Param("todoId") Long todoId);
+    int deleteTodo(
+            @Param("employeeId") Long employeeId,
+            @Param("todoId") Long todoId);
 }
