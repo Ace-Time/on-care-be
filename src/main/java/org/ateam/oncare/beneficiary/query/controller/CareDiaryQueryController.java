@@ -4,7 +4,7 @@ package org.ateam.oncare.beneficiary.query.controller;
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.beneficiary.query.dto.response.CareLogDetailResponse;
 import org.ateam.oncare.beneficiary.query.dto.response.CareLogListResponse;
-import org.ateam.oncare.beneficiary.query.service.CareLogQueryService;
+import org.ateam.oncare.beneficiary.query.service.CareDiaryQueryService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,9 +12,9 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/beneficiaries")
-public class CareLogQueryController {
+public class CareDiaryQueryController {
 
-    private final CareLogQueryService service;
+    private final CareDiaryQueryService service;
 
     /**
      * ✅ 요양일지 리스트 (월 기준)

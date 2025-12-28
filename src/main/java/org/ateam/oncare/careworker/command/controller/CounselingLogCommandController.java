@@ -14,13 +14,12 @@ public class CounselingLogCommandController {
 
     private final CounselingLogCommandService counselingLogCommandService;
 
-    // 테스트용: 로그인한 유저 대신 ID를 1로 고정
-    private final Long TEST_CAREGIVER_ID = 1L;
-
     // 1. 방문상담 작성
     @PostMapping
-    public ApiResponse<Void> createCounselingLog(@RequestBody CreateCounselingLogRequest request) {
-        counselingLogCommandService.createCounselingLog(TEST_CAREGIVER_ID, request);
+    public ApiResponse<Void> createCounselingLog(
+            @RequestHeader("Care-Worker-Id") Long careWorkerId,
+            @RequestBody CreateCounselingLogRequest request) {
+        counselingLogCommandService.createCounselingLog(careWorkerId, request);
         return ApiResponse.success(null);
     }
 

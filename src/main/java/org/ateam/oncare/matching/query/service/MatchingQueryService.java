@@ -24,11 +24,12 @@ public class MatchingQueryService {
      * 1) 시간 충돌 없는 요양보호사
      * 2) 수급자 요구 서비스 타입 "전부" 만족
      * 3) 위험요소 대응 자격증(승인) "전부" 만족
+     * 4) 현재 수급자에게 배치된 요양보호사 제외
      */
     public List<Long> selectFinalCandidateCareWorkerIds(Long beneficiaryId) {
 
         var schedules = mapper.selectBeneficiarySchedules(beneficiaryId);
-        log.info("[SCHEDULE] beneficiaryId={} count={}", beneficiaryId, schedules.size());
+        log.info("[SCHEDULE] beneficiaryId={} count={}", beneficiaryId, schedules == null ? 0 : schedules.size());
 
         if (schedules == null || schedules.isEmpty()) {
             log.warn("[STOP] No schedules for beneficiaryId={}", beneficiaryId);
@@ -72,10 +73,48 @@ public class MatchingQueryService {
 
         log.info("[RISK->CERT SET] count={}", riskCertSet.size());
         timeIntersect.retainAll(riskCertSet);
+        if (timeIntersect.isEmpty()) return List.of();
+
+        // (4) 현재 수급자에게 배치된 요양보호사 제외
+        Long assignedId = mapper.selectAssignedCareWorkerId(beneficiaryId);
+        if (assignedId != null) {
+            boolean removed = timeIntersect.remove(assignedId);
+            log.info("[EXCLUDE ASSIGNED] beneficiaryId={} assignedId={} removed={}", beneficiaryId, assignedId, removed);
+        }
 
         var result = new ArrayList<>(timeIntersect);
         log.info("[FINAL] beneficiaryId={} finalCount={}", beneficiaryId, result.size());
         return result;
+    }
+
+    // 방문일정 리스트
+    public List<Long> selectFinalCandidateCareWorkerIdsByVisitSchedule(
+            Long vsId, String startDt, String endDt
+    ) {
+        Long beneficiaryId = mapper.selectVisitScheduleBeneficiaryId(vsId);
+        if (beneficiaryId == null) return List.of();
+
+        Set<Long> timeSet = mapper.selectAvailableCareWorkerIdsByVisitSchedule(vsId, startDt, endDt).stream()
+                .map(CareWorkerIdDto::getCareWorkerId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (timeSet.isEmpty()) return List.of();
+
+        Set<Long> serviceTypeSet = mapper.selectCareWorkerIdsByVisitServiceType(vsId).stream()
+                .map(CareWorkerIdDto::getCareWorkerId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        timeSet.retainAll(serviceTypeSet);
+        if (timeSet.isEmpty()) return List.of();
+
+        Set<Long> riskCertSet = mapper.selectCareWorkerIdsByRiskCertificates(beneficiaryId).stream()
+                .map(CareWorkerIdDto::getCareWorkerId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        timeSet.retainAll(riskCertSet);
+        if (timeSet.isEmpty()) return List.of();
+
+        Long currentCareWorkerId = mapper.selectCareWorkerIdByVisitScheduleId(vsId);
+        if (currentCareWorkerId != null) timeSet.remove(currentCareWorkerId);
+
+        return new ArrayList<>(timeSet);
     }
 
     public List<BeneficiarySummaryDto> getBeneficiariesSummary() {
@@ -94,21 +133,14 @@ public class MatchingQueryService {
         return detail;
     }
 
-    /**
-     * 후보 요양보호사 카드 조회 (이름/성별/태그)
-     * tags는 XML(resultMap+collection)에서 한 번에 채워지게 구성하는 것을 전제로 함
-     */
     public List<CareWorkerCardDto> getCareWorkerCardsByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return List.of();
 
-        var list = mapper.selectCareWorkerCardsByIds(ids); // tags까지 포함해서 내려오게
+        var list = mapper.selectCareWorkerCardsByIds(ids);
         log.info("[CAREWORKER CARDS] requestedIds={} returned={}", ids.size(), list.size());
         return list;
     }
 
-    /**
-     * beneficiaryId → 후보 IDs 산출 → 카드 조회
-     */
     public List<CareWorkerCardDto> getCandidateCareWorkers(Long beneficiaryId) {
         var ids = selectFinalCandidateCareWorkerIds(beneficiaryId);
         return getCareWorkerCardsByIds(ids);
@@ -122,5 +154,40 @@ public class MatchingQueryService {
         }
         log.info("[CAREWORKER DETAIL] careWorkerId={} name={}", careWorkerId, detail.getName());
         return detail;
+    }
+
+    // 방문일정 "생성" 후보 (기존 로직 유지 + 새 로직 추가)
+    public List<Long> selectFinalCandidateCareWorkerIdsForCreateVisit(
+            Long beneficiaryId, Long serviceTypeId, String startDt, String endDt
+    ) {
+        if (beneficiaryId == null) return List.of();
+        if (serviceTypeId == null) return List.of();
+        if (startDt == null || startDt.isBlank() || endDt == null || endDt.isBlank()) return List.of();
+
+        Set<Long> serviceTypeSet = mapper.selectCareWorkerIdsByServiceTypeId(serviceTypeId).stream()
+                .map(CareWorkerIdDto::getCareWorkerId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (serviceTypeSet.isEmpty()) return List.of();
+
+        Set<Long> riskCertSet = mapper.selectCareWorkerIdsByRiskCertificates(beneficiaryId).stream()
+                .map(CareWorkerIdDto::getCareWorkerId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        serviceTypeSet.retainAll(riskCertSet);
+        if (serviceTypeSet.isEmpty()) return List.of();
+
+        Set<Long> noVisitConflictSet = mapper.selectAvailableCareWorkerIdsByVisitTime(startDt, endDt).stream()
+                .map(CareWorkerIdDto::getCareWorkerId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        serviceTypeSet.retainAll(noVisitConflictSet);
+        if (serviceTypeSet.isEmpty()) return List.of();
+
+        return new ArrayList<>(serviceTypeSet);
+    }
+
+    public List<CareWorkerCardDto> getCreateVisitAvailableCareWorkers(
+            Long beneficiaryId, Long serviceTypeId, String startDt, String endDt
+    ) {
+        var ids = selectFinalCandidateCareWorkerIdsForCreateVisit(beneficiaryId, serviceTypeId, startDt, endDt);
+        return getCareWorkerCardsByIds(ids);
     }
 }

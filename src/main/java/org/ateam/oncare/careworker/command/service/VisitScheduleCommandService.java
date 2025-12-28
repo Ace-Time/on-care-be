@@ -18,27 +18,27 @@ public class VisitScheduleCommandService {
     private final VisitScheduleCommandMapper visitScheduleCommandMapper;
 
     @Transactional
-    public void startVisit(Long vsId, StartVisitRequest request) {
-        int updated = visitScheduleCommandMapper.updateVisitStatusToInProgress(
-                vsId,
-                request.getActualStartTime()
-        );
+    public void startVisit(Long vsId) {
+        log.info("서비스 시작 - vsId: {}", vsId);
+        int updated = visitScheduleCommandMapper.updateVisitStatusToInProgress(vsId);
 
         if (updated == 0) {
             throw new IllegalArgumentException("해당 일정을 찾을 수 없거나 이미 시작되었습니다.");
         }
+
+        log.info("서비스 시작 완료 - vsId: {} (현재 시간 자동 기록)", vsId);
     }
 
     @Transactional
-    public void completeVisit(Long vsId, CompleteVisitRequest request) {
-        int updated = visitScheduleCommandMapper.updateVisitStatusToCompleted(
-                vsId,
-                request.getActualEndTime()
-        );
+    public void completeVisit(Long vsId) {
+        log.info("서비스 종료 - vsId: {}", vsId);
+        int updated = visitScheduleCommandMapper.updateVisitStatusToCompleted(vsId);
 
         if (updated == 0) {
             throw new IllegalArgumentException("해당 일정을 찾을 수 없거나 이미 완료되었습니다.");
         }
+
+        log.info("서비스 종료 완료 - vsId: {} (현재 시간 자동 기록)", vsId);
     }
 
     @Transactional

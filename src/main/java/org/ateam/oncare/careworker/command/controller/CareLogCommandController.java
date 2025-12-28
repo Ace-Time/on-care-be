@@ -14,13 +14,12 @@ public class CareLogCommandController {
 
     private final CareLogCommandService careLogCommandService;
 
-    // 테스트용: 로그인한 유저 대신 ID를 1로 고정
-    private final Long TEST_CAREGIVER_ID = 1L;
-
     // 1. 요양일지 작성
     @PostMapping
-    public ApiResponse<Void> createCareLog(@RequestBody CreateCareLogRequest request) {
-        careLogCommandService.createCareLog(TEST_CAREGIVER_ID, request);
+    public ApiResponse<Void> createCareLog(
+            @RequestHeader("Care-Worker-Id") Long careWorkerId,
+            @RequestBody CreateCareLogRequest request) {
+        careLogCommandService.createCareLog(careWorkerId, request);
         return ApiResponse.success(null);
     }
 

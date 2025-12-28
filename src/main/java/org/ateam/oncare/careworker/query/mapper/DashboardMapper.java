@@ -39,4 +39,7 @@ public interface DashboardMapper {
 
     // 특정 일정의 요양일지 조회
     CareLogDetailDto selectCareLogBySchedule(@Param("vsId") Long vsId);
+
+    // 내 수급자 목록 조회
+    List<MyBeneficiaryDto> selectMyBeneficiaries(@Param("employeeId") Long employeeId);
 }

@@ -10,4 +10,7 @@ import java.util.Optional;
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Integer>, EmployeeRepositoryCustom {
     Optional<Employee> findByEmail(String email);
+
+    // 직업 코드로 검색
+    java.util.List<Employee> findByJobCode(Long jobCode);
 }
