@@ -5,26 +5,30 @@ import lombok.*;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class SubscriptionCounselResponse {
+public class SubscriptionResponse implements CounselHistoryResponse {
     private BigInteger counselHistoryId;
-    private String counselCategoryName;
+    private int counselCategoryId;
     private String detail;
     private String summary;
     private String followUp;
     private String followUpNecessary;
     private String churn;
     private String churnReason;
-    private String counselorName;
+    private int counselorId;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime consultDate;
     private int reservationChannelId;
-    private BigInteger customerId;
-    private String customerType;
-    private String htmlCode;
+    private BigInteger beneficiaryId;
+    private BigInteger potentialId;
+
+    // 가입 상담 관리 내용
+    private Map<Integer,StageData> stageData;
 }

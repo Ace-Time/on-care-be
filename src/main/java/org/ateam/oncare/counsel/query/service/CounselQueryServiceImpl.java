@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigInteger;
@@ -19,6 +20,7 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class CounselQueryServiceImpl implements CounselQueryService {
     private final CounselQueryMapper counselQueryMapper;
 
@@ -56,5 +58,10 @@ public class CounselQueryServiceImpl implements CounselQueryService {
     @Override
     public @Nullable CounselDetailResponse findCounselDetailById(BigInteger counselHistoryId) {
         return counselQueryMapper.findCounselDetailById(counselHistoryId);
+    }
+
+    @Override
+    public Long findPotentialIdByBeneficiaryId(Long beneficiaryId) {
+        return counselQueryMapper.findPotentialIdByBeneficiaryId(beneficiaryId);
     }
 }

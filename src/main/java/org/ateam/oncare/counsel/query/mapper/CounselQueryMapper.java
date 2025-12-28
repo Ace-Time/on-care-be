@@ -24,4 +24,6 @@ public interface CounselQueryMapper {
                                                        @Param("limit")int limit, @Param("offset")long offset);
 
     @Nullable CounselDetailResponse findCounselDetailById(BigInteger counselHistoryId);
+
+    Long findPotentialIdByBeneficiaryId(Long beneficiaryId);
 }

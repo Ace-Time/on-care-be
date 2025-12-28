@@ -18,4 +18,6 @@ public interface CounselQueryService {
     @Nullable Slice<CounselListResponse> findCounselsByCustomerId(BigInteger customerId, String customerType, String counselCategoryName, Pageable pageable);
 
     @Nullable CounselDetailResponse findCounselDetailById(BigInteger counselHistoryId);
+
+    Long findPotentialIdByBeneficiaryId(Long beneficiaryId);
 }

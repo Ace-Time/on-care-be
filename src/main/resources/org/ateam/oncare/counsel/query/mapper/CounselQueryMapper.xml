@@ -230,5 +230,13 @@
             ch.id = #{counselHistoryId}
     </select>
 
+    <select id="findPotentialIdByBeneficiaryId" parameterType="long" resultType="java.lang.Long">
+        SELECT
+               potential_customer_id
+         FROM
+               beneficiary
+         WHERE
+               id = #{beneficiaryId}
+    </select>
 
 </mapper>

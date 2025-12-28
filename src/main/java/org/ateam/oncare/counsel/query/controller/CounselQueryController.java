@@ -45,4 +45,13 @@ public class CounselQueryController {
         return ResponseEntity.ok(counselQueryService.findCounselDetailById(counselHistoryId));
     }
 
+    // 잠재고객의 가입상담 시 제공 정보
+//    @GetMapping("/subscription/{customerId}")
+//    public ResponseEntity<>
+
+    // 잠재고객의 통합상담 시 제공 정보
+
+
+    // 기존 + 가입 = 재가입
+
 }

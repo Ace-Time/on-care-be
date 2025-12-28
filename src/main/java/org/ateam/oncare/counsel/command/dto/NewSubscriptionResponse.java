@@ -11,19 +11,19 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class RegistSubscriptionCounselRequest {
-    // counsel_history 부분
-    private String counselCategoryName;
+public class NewSubscriptionResponse implements CounselHistoryResponse {
+    private BigInteger counselHistoryId;
+    private int counselCategoryId;
     private String detail;
+    private String summary;
     private String followUp;
     private String followUpNecessary;
     private String churn;
     private String churnReason;
+    private int counselorId;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime consultDate;
-    private int employeeId;
     private int reservationChannelId;
-    private BigInteger customerId;
-    private String customerType;
-    private String htmlCode;
+    private BigInteger beneficiaryId;
+    private BigInteger potentialId;
 }
