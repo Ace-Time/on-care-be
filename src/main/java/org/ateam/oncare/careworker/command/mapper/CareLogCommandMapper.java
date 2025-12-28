@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Param;
 public interface CareLogCommandMapper {
     // 요양일지 작성
     int insertCareLog(
-            @Param("careWorkerId") Long careWorkerId,
+            @Param("employeeId") Long employeeId,
             @Param("request") CreateCareLogRequest request);
 
     // 요양일지 수정

@@ -16,9 +16,9 @@ public class CareLogCommandService {
     private final CareLogCommandMapper careLogCommandMapper;
 
     @Transactional
-    public void createCareLog(Long careWorkerId, CreateCareLogRequest request) {
-        log.info("요양일지 작성 시작 - careWorkerId: {}, beneficiaryId: {}", careWorkerId, request.getBeneficiaryId());
-        int inserted = careLogCommandMapper.insertCareLog(careWorkerId, request);
+    public void createCareLog(Long employeeId, CreateCareLogRequest request) {
+        log.info("요양일지 작성 시작 - employeeId: {}, beneficiaryId: {}", employeeId, request.getBeneficiaryId());
+        int inserted = careLogCommandMapper.insertCareLog(employeeId, request);
 
         if (inserted == 0) {
             throw new IllegalStateException("요양일지 작성에 실패했습니다.");

@@ -21,7 +21,16 @@
             is_excretion_mistake, is_sleep_lack, is_nap_excess,
             special_note, care_worker_id, beneficiary_id
         ) VALUES (
-            #{request.vsId}, #{request.serviceDate}, #{request.startTime}, #{request.endTime}, #{request.serviceType},
+            COALESCE(
+                #{request.vsId},
+                (SELECT vs_id FROM visit_schedule
+                 WHERE beneficiary_id = #{request.beneficiaryId}
+                   AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId})
+                   AND DATE(start_dt) = #{request.serviceDate}
+                 ORDER BY start_dt DESC
+                 LIMIT 1)
+            ),
+            #{request.serviceDate}, #{request.startTime}, #{request.endTime}, #{request.serviceType},
             NOW(), NOW(), 0,
             #{request.isBreakfast}, #{request.isLunch}, #{request.isDinner}, #{request.isSnack},
             #{request.diaperCount}, #{request.toiletCount}, #{request.isPortableToilet}, #{request.isUrine}, #{request.isStool},
@@ -34,7 +43,7 @@
             #{request.isHealthGood}, #{request.isPain}, #{request.isEdema}, #{request.isSkinIssue}, #{request.isBodyEtc},
             #{request.isMoodCalm}, #{request.isMoodAnxious}, #{request.isMoodDepressed}, #{request.isMoodAngry}, #{request.isMoodEtc},
             #{request.isExcretionMistake}, #{request.isSleepLack}, #{request.isNapExcess},
-            #{request.specialNote}, (SELECT id FROM care_worker WHERE employee_id = #{careWorkerId}), #{request.beneficiaryId}
+            #{request.specialNote}, (SELECT id FROM care_worker WHERE employee_id = #{employeeId}), #{request.beneficiaryId}
         )
     </insert>
 

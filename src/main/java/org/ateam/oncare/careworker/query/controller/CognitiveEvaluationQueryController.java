@@ -1,9 +1,11 @@
 package org.ateam.oncare.careworker.query.controller;
 
+import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.ateam.oncare.careworker.query.dto.ApiResponse;
 import org.ateam.oncare.careworker.query.dto.BasicEvaluationDetailDto;
 import org.ateam.oncare.careworker.query.dto.BasicEvaluationListDto;
 import org.ateam.oncare.careworker.query.service.BasicEvaluationQueryService;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,14 +17,26 @@ import java.util.List;
 public class CognitiveEvaluationQueryController {
 
     private final BasicEvaluationQueryService basicEvaluationQueryService;
+    private final JwtTokenProvider jwtTokenProvider;
     private static final String EVAL_TYPE = "COGNITIVE";
+
+    // JWT 토큰에서 사용자 ID 추출
+    private Long getEmployeeIdFromToken(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            Claims claims = jwtTokenProvider.getClaimsFromAT(token);
+            return claims.get("id", Long.class);
+        }
+        return 1L; // fallback
+    }
 
     // 1. 인지기능 평가 목록 조회 (요양보호사별)
     @GetMapping
     public ApiResponse<List<BasicEvaluationListDto>> getCognitiveEvaluationList(
-            @RequestHeader("Care-Worker-Id") Long careWorkerId,
+            @RequestHeader("Authorization") String authHeader,
             @RequestParam(required = false) Integer year) {
-        List<BasicEvaluationListDto> data = basicEvaluationQueryService.getBasicEvaluationListByType(careWorkerId, EVAL_TYPE, year);
+        Long employeeId = getEmployeeIdFromToken(authHeader);
+        List<BasicEvaluationListDto> data = basicEvaluationQueryService.getBasicEvaluationListByType(employeeId, EVAL_TYPE, year);
         return ApiResponse.success(data);
     }
 

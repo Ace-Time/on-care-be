@@ -1,9 +1,11 @@
 package org.ateam.oncare.careworker.command.controller;
 
+import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.ateam.oncare.careworker.command.dto.CreateBasicEvaluationRequest;
 import org.ateam.oncare.careworker.command.dto.UpdateBasicEvaluationRequest;
 import org.ateam.oncare.careworker.command.service.BasicEvaluationCommandService;
 import org.ateam.oncare.careworker.query.dto.ApiResponse;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,15 +15,27 @@ import org.springframework.web.bind.annotation.*;
 public class NeedsEvaluationCommandController {
 
     private final BasicEvaluationCommandService basicEvaluationCommandService;
+    private final JwtTokenProvider jwtTokenProvider;
     private static final String EVAL_TYPE = "NEEDS";
+
+    // JWT 토큰에서 사용자 ID 추출
+    private Long getEmployeeIdFromToken(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            Claims claims = jwtTokenProvider.getClaimsFromAT(token);
+            return claims.get("id", Long.class);
+        }
+        return 1L; // fallback
+    }
 
     // 1. 욕구사정 평가 작성
     @PostMapping
     public ApiResponse<Void> createNeedsEvaluation(
-            @RequestHeader("Care-Worker-Id") Long careWorkerId,
+            @RequestHeader("Authorization") String authHeader,
             @RequestBody CreateBasicEvaluationRequest request) {
+        Long employeeId = getEmployeeIdFromToken(authHeader);
         request.setEvalType(EVAL_TYPE);
-        basicEvaluationCommandService.createBasicEvaluation(careWorkerId, request);
+        basicEvaluationCommandService.createBasicEvaluation(employeeId, request);
         return ApiResponse.success(null);
     }
 

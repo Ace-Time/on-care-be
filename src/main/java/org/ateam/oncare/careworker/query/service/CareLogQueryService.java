@@ -16,8 +16,8 @@ public class CareLogQueryService {
 
     private final CareLogMapper careLogMapper;
 
-    public List<CareLogListDto> getCareLogList(Long caregiverId) {
-        return careLogMapper.selectCareLogList(caregiverId);
+    public List<CareLogListDto> getCareLogList(Long employeeId) {
+        return careLogMapper.selectCareLogList(employeeId);
     }
 
     public List<CareLogListDto> getCareLogListByBeneficiary(Long beneficiaryId) {

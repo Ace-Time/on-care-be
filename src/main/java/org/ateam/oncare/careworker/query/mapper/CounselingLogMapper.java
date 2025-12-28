@@ -10,7 +10,7 @@ import java.util.List;
 @Mapper
 public interface CounselingLogMapper {
     // 방문상담 목록 조회 (요양보호사별)
-    List<CounselingLogListDto> selectCounselingLogList(@Param("caregiverId") Long caregiverId);
+    List<CounselingLogListDto> selectCounselingLogList(@Param("employeeId") Long employeeId);
 
     // 방문상담 목록 조회 (수급자별)
     List<CounselingLogListDto> selectCounselingLogListByBeneficiary(@Param("beneficiaryId") Long beneficiaryId);
