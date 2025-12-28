@@ -24,7 +24,4 @@ public class NotificationEventType {
 
     @Column(name = "description", length = 2000)
     private String description;
-
-    @Column(name = "severity")
-    private Integer severity;
 }

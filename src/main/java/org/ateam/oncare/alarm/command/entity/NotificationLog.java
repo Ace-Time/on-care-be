@@ -2,16 +2,15 @@ package org.ateam.oncare.alarm.command.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "notification_log")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Table(name = "notification_log")
 public class NotificationLog {
 
     @Id
@@ -19,30 +18,52 @@ public class NotificationLog {
     @Column(name = "alarm_id")
     private Long alarmId;
 
-    @Column(name = "rule_id", nullable = false)
-    private Long ruleId;
-
-    @Column(name = "template_id", nullable = false)
-    private Long templateId;
-
+    // 수신자 번호 (NOT NULL)
     @Column(name = "receiver_id", nullable = false)
-    private Long receiverId; // 수신자 PK (수급자 or 직원)
+    private Long receiverId;
 
+    // 수신자 타입 (ENUM: RECIPIENT, EMPLOYEE)
     @Enumerated(EnumType.STRING)
     @Column(name = "receiver_type", nullable = false)
-    private ReceiverType receiverType; // Enum: RECIPIENT, EMPLOYEE
+    private ReceiverType receiverType;
 
-    @CreationTimestamp
+    // 제목 (VARCHAR(50), NOT NULL)
+    @Column(name = "title", length = 50, nullable = false)
+    private String title;
+
+    // 내용 (VARCHAR(2000), NOT NULL)
+    @Column(name = "content", length = 2000, nullable = false)
+    private String content;
+
+    // 발송 시각
     @Column(name = "sent_at", nullable = false)
-    private LocalDate sentAt;
+    private LocalDateTime sentAt;
 
+    // 상태 (ENUM: SENT, FAILED, READ)
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private NotificationStatus status; // Enum: SENT, FAILED, READ
+    private NotificationStatus status;
 
+    // 유형 (VARCHAR(50), NOT NULL) - 예: "청구", "만료안내"
+    @Column(name = "template_type", length = 50, nullable = false)
+    private String templateType;
+
+    // 중요도 (INT, NOT NULL)
+    @Column(name = "severity", nullable = false)
+    private Integer severity;
+
+    // 읽은 시간 (NULL 허용)
     @Column(name = "read_at")
-    private LocalDate readAt;
+    private LocalDateTime readAt;
 
-    @Column(name = "channel_type_id", nullable = false)
-    private Integer channelTypeId;
+    // 타겟 타입 (ENUM: RECIPIENT, EMPLOYEE, BOTH)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_type", nullable = false)
+    private TargetType targetType;
+
+    // 읽음 처리 편의 메서드
+    public void markAsRead() {
+        this.status = NotificationStatus.READ;
+        this.readAt = LocalDateTime.now();
+    }
 }

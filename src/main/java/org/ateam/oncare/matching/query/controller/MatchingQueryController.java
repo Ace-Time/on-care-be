@@ -60,4 +60,33 @@ public class MatchingQueryController {
         }
         return ResponseEntity.ok(detail);
     }
+
+    @GetMapping("/careworkers/visit-available")
+    public ResponseEntity<List<CareWorkerCardDto>> getVisitTimeAvailableCareWorkers(
+            @RequestParam("vsId") Long vsId,
+            @RequestParam("startDt") String startDt,
+            @RequestParam("endDt") String endDt
+    ) {
+        List<Long> ids = matchingQueryService.selectFinalCandidateCareWorkerIdsByVisitSchedule(vsId, startDt, endDt);
+        return ResponseEntity.ok(matchingQueryService.getCareWorkerCardsByIds(ids));
+    }
+    @GetMapping("/careworkers/visit-create-available")
+    public ResponseEntity<List<CareWorkerCardDto>> getCreateVisitAvailableCareWorkers(
+            @RequestParam("beneficiaryId") Long beneficiaryId,
+            @RequestParam("serviceTypeId") Long serviceTypeId,
+            @RequestParam("startDt") String startDt,
+            @RequestParam("endDt") String endDt
+    ) {
+        List<Long> ids =
+                matchingQueryService.selectFinalCandidateCareWorkerIdsForCreateVisit(
+                        beneficiaryId,
+                        serviceTypeId,
+                        startDt,
+                        endDt
+                );
+
+        return ResponseEntity.ok(
+                matchingQueryService.getCareWorkerCardsByIds(ids)
+        );
+    }
 }

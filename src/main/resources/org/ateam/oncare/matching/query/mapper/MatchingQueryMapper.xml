@@ -301,6 +301,15 @@
             LIMIT 1
     </select>
 
+    <select id="selectAssignedCareWorkerId" resultType="long">
+        SELECT m.care_worker_id
+        FROM matching m
+        WHERE m.beneficiary_id = #{beneficiaryId}
+          AND m.status = 'Y'
+        ORDER BY m.start_date DESC
+            LIMIT 1
+    </select>
+
     <select id="selectCareWorkerCardsByIds"
             resultMap="CareWorkerCardMap">
         SELECT
@@ -391,4 +400,64 @@
         ORDER BY bs.day, bs.start_time
     </select>
 
+    <select id="selectAvailableCareWorkerIdsByVisitSchedule"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT cw.id AS careWorkerId
+        FROM care_worker cw
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM visit_schedule vs
+            WHERE vs.care_worker_id = cw.id
+              AND vs.vs_id &lt;&gt; #{vsId}
+              AND vs.start_dt &lt; #{endDt}
+              AND vs.end_dt   &gt; #{startDt}
+        )
+        ORDER BY cw.id
+    </select>
+
+    <select id="selectCareWorkerIdsByVisitServiceType"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT cws.care_worker_id AS careWorkerId
+        FROM care_worker_service_type cws
+                 JOIN visit_schedule vs
+                      ON vs.vs_id = #{vsId}
+                          AND cws.m_service_type_id = vs.service_type_id
+        GROUP BY cws.care_worker_id
+    </select>
+
+    <select id="selectCareWorkerIdByVisitScheduleId" resultType="long">
+        SELECT care_worker_id
+        FROM visit_schedule
+        WHERE vs_id = #{vsId}
+    </select>
+
+    <select id="selectVisitScheduleBeneficiaryId" resultType="long">
+        SELECT beneficiary_id
+        FROM visit_schedule
+        WHERE vs_id = #{vsId}
+    </select>
+
+    <select id="selectAvailableCareWorkerIdsByVisitTime"
+            parameterType="map"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT
+            cw.id AS careWorkerId
+        FROM care_worker cw
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM visit_schedule vs
+            WHERE vs.care_worker_id = cw.id
+              AND vs.visit_status IN ('SCHEDULED', 'IN_PROGRESS')
+              AND vs.start_dt &lt; #{endDt}
+              AND vs.end_dt   &gt; #{startDt}
+        )
+    </select>
+    <select id="selectCareWorkerIdsByServiceTypeId"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT
+            cws.care_worker_id AS careWorkerId
+        FROM care_worker_service_type cws
+        WHERE cws.m_service_type_id = #{serviceTypeId}
+        GROUP BY cws.care_worker_id
+    </select>
 </mapper>
