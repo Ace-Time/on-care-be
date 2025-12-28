@@ -33,7 +33,7 @@
             note,
             is_log_written
         ) VALUES (
-            #{careWorkerId},
+            (SELECT id FROM care_worker WHERE employee_id = #{careWorkerId}),
             #{request.beneficiaryId},
             #{request.serviceTypeId},
             #{request.startDt},

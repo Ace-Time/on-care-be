@@ -34,7 +34,7 @@
             #{request.isHealthGood}, #{request.isPain}, #{request.isEdema}, #{request.isSkinIssue}, #{request.isBodyEtc},
             #{request.isMoodCalm}, #{request.isMoodAnxious}, #{request.isMoodDepressed}, #{request.isMoodAngry}, #{request.isMoodEtc},
             #{request.isExcretionMistake}, #{request.isSleepLack}, #{request.isNapExcess},
-            #{request.specialNote}, #{careWorkerId}, #{request.beneficiaryId}
+            #{request.specialNote}, (SELECT id FROM care_worker WHERE employee_id = #{careWorkerId}), #{request.beneficiaryId}
         )
     </insert>
 
