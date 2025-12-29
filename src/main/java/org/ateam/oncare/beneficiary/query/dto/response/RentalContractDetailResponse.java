@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class RentalContractDetailResponse {
 
+    private Long rentalProductId;
     private Long rentalContractId;
     private String productAssetId;
     private String productName;

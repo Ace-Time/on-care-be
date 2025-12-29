@@ -9,8 +9,9 @@ import java.util.List;
 
 @Mapper
 public interface BeneficiaryRentalUsageMapper {
-    List<RentalUsageResponse.RentalItem> selectCurrentRentals(@Param("beneficiaryId") Long beneficiaryId);
-    List<RentalUsageResponse.RentalItem> selectRentalHistories(@Param("beneficiaryId") Long beneficiaryId);
+
+    // ✅ 단일 리스트
+    List<RentalUsageResponse.RentalItem> selectRentals(@Param("beneficiaryId") Long beneficiaryId);
 
     RentalContractDetailResponse selectRentalContractDetail(
             @Param("beneficiaryId") Long beneficiaryId,
