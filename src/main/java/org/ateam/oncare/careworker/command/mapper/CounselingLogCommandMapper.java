@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Param;
 public interface CounselingLogCommandMapper {
     // 방문상담 작성
     int insertCounselingLog(
-            @Param("careWorkerId") Long careWorkerId,
+            @Param("employeeId") Long employeeId,
             @Param("request") CreateCounselingLogRequest request);
 
     // 방문상담 수정

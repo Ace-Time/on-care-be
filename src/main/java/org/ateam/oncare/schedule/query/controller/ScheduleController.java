@@ -3,6 +3,7 @@ package org.ateam.oncare.schedule.query.controller;
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.schedule.query.dto.ScheduleDayItemDto;
 import org.ateam.oncare.schedule.query.dto.ScheduleMonthCountDto;
+import org.ateam.oncare.schedule.query.dto.SchedulePageResponse;
 import org.ateam.oncare.schedule.query.service.ScheduleService;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,18 +34,18 @@ public class ScheduleController {
     }
 
     @GetMapping("/day")
-    public List<ScheduleDayItemDto> getDaySchedules(
+    public SchedulePageResponse<ScheduleDayItemDto> getDaySchedules(
             @RequestParam String date,
             @RequestParam(required = false) Long beneficiaryId,
             @RequestParam(required = false) Integer careWorkerId,
             @RequestParam(required = false) Integer serviceTypeId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false, defaultValue = "ALL") String searchField
+            @RequestParam(required = false, defaultValue = "ALL") String searchField,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
     ) {
-        return scheduleService.getDaySchedules(
-                date,
-                beneficiaryId, careWorkerId, serviceTypeId,
-                keyword, searchField
+        return scheduleService.getDaySchedulesPage(
+                date, beneficiaryId, careWorkerId, serviceTypeId, keyword, searchField, page, size
         );
     }
 

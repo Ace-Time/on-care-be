@@ -18,58 +18,12 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class AssignedBeneficiaryServiceImpl implements AssignedBeneficiaryService {
 
-        private final AssignedBeneficiaryRepository assignedBeneficiaryRepository;
-        private final BeneficiaryRepository beneficiaryRepository;
+        private final org.ateam.oncare.employee.query.mapper.EmployeeMapper employeeMapper;
 
         @Override
         public List<AssignedBeneficiaryDTO> getAssignedBeneficiaries(Long careWorkerId) {
-
-                // 1. [매칭 조회] 해당 요양보호사의 활성 매칭(Y) 가져오기
-                List<Matching> matchings = assignedBeneficiaryRepository.findByCareWorkerIdAndStatus(careWorkerId, "Y");
-
-                if (matchings.isEmpty()) {
-                        return List.of();
-                }
-
-                // 2. [ID 추출] 수급자 ID 목록 추출
-                List<Long> beneficiaryIds = matchings.stream()
-                                .map(Matching::getBeneficiaryId)
-                                .toList();
-
-                // 3. [수급자 조회] ID 목록으로 수급자 정보 일괄 조회 (IN절 활용)
-                List<Beneficiary> beneficiaries = beneficiaryRepository.findAllById(beneficiaryIds);
-
-                // 4. [매핑 준비] 조회 속도를 위해 Map 변환 (Key: ID -> Value: Beneficiary)
-                Map<Long, Beneficiary> beneficiaryMap = beneficiaries.stream()
-                                .collect(Collectors.toMap(Beneficiary::getId, b -> b));
-
-                // 5. [DTO 변환] Matching 정보와 Beneficiary 정보를 합쳐서 반환
-                return matchings.stream()
-                                .map(m -> {
-                                        Beneficiary b = beneficiaryMap.get(m.getBeneficiaryId());
-
-                                        String name = (b != null) ? b.getName() : "정보 없음";
-
-                                        // [수정 포인트]
-                                        // 1. getBirthDate() -> getBirthdate() (대소문자 일치)
-                                        // 2. LocalDate -> String 변환 (.toString())
-                                        String birthDate = (b != null && b.getBirthdate() != null)
-                                                        ? b.getBirthdate().toString()
-                                                        : "";
-
-                                        String gender = (b != null) ? b.getGender() : "";
-
-                                        return AssignedBeneficiaryDTO.builder()
-                                                        .matchingId(m.getId())
-                                                        .startDate(m.getStartDate())
-                                                        .endDate(m.getEndDate())
-                                                        .status(m.getStatus())
-                                                        .beneficiaryId(m.getBeneficiaryId())
-                                                        .name(name)
-                                                        .birthDate(birthDate) // 변환된 문자열 넣기
-                                                        .gender(gender)
-                                                        .build();
-                                })
-                                .toList();
+                // MyBatis Mapper를 사용하여 담당 수급자 목록을 한 번에 조회합니다.
+                // XML query: selectAssignedBeneficiaries
+                return employeeMapper.selectAssignedBeneficiaries(careWorkerId);
         }
 }

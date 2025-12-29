@@ -21,4 +21,5 @@ public class BasicEvaluationListDto {
     private String careLevel;
     private String resultGrade;
     private Integer totalScore;
+    private String specialNote;
 }

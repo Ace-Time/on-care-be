@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -149,5 +148,25 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
                 emitters.remove(userId);
             }
         }
+    }
+
+    @Override
+    public void sendCustom(Long receiverId, String title, String content, String templateType, Integer severity) {
+        NotificationLog log = NotificationLog.builder()
+                .receiverId(receiverId)
+                .receiverType(ReceiverType.EMPLOYEE)
+                .title(title)
+                .content(content)
+                .templateType(templateType)
+                .severity(severity)
+                .targetType(TargetType.EMPLOYEE)
+                .sentAt(java.time.LocalDateTime.now())
+                .status(NotificationStatus.SENT)
+                .build();
+
+        logRepository.save(log);
+
+        NotificationQueryDTO liveData = NotificationQueryDTO.from(log);
+        sendToClient(receiverId, liveData);
     }
 }

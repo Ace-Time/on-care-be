@@ -20,18 +20,41 @@
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
             CASE be.eval_type
-                WHEN 'FALL' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade'))
-                WHEN 'BEDSORE' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
-                WHEN 'COGNITIVE' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
-                WHEN 'NEEDS' THEN '평가완료'
-                ELSE JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                WHEN 'FALL' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
+                WHEN 'BEDSORE' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
+                WHEN 'COGNITIVE' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
+                )
+                WHEN 'NEEDS' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    '평가완료'
+                )
+                ELSE COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
             END AS resultGrade,
             CASE be.eval_type
-                WHEN 'FALL' THEN JSON_EXTRACT(be.eval_data, '$.result.total_score')
+                WHEN 'FALL' THEN COALESCE(
+                    JSON_EXTRACT(be.eval_data, '$.result.total_score'),
+                    JSON_EXTRACT(be.eval_data, '$.total_score')
+                )
                 WHEN 'NEEDS' THEN NULL
-                ELSE JSON_EXTRACT(be.eval_data, '$.total_score')
-            END AS totalScore
+                ELSE COALESCE(
+                    JSON_EXTRACT(be.eval_data, '$.result.total_score'),
+                    JSON_EXTRACT(be.eval_data, '$.total_score')
+                )
+            END AS totalScore,
+            be.special_note AS specialNote
         FROM basic_evaluations be
+                 INNER JOIN care_worker cw ON be.care_worker_id = cw.id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -44,7 +67,7 @@
                  ) bcl ON b.id = bcl.beneficiary_id
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
-        WHERE be.care_worker_id = #{caregiverId}
+        WHERE cw.employee_id = #{caregiverId}
         ORDER BY be.eval_date DESC, be.created_at DESC
     </select>
 
@@ -65,17 +88,39 @@
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
             CASE be.eval_type
-                WHEN 'FALL' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade'))
-                WHEN 'BEDSORE' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
-                WHEN 'COGNITIVE' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
-                WHEN 'NEEDS' THEN '평가완료'
-                ELSE JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                WHEN 'FALL' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
+                WHEN 'BEDSORE' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
+                WHEN 'COGNITIVE' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
+                )
+                WHEN 'NEEDS' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    '평가완료'
+                )
+                ELSE COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
             END AS resultGrade,
             CASE be.eval_type
-                WHEN 'FALL' THEN JSON_EXTRACT(be.eval_data, '$.result.total_score')
+                WHEN 'FALL' THEN COALESCE(
+                    JSON_EXTRACT(be.eval_data, '$.result.total_score'),
+                    JSON_EXTRACT(be.eval_data, '$.total_score')
+                )
                 WHEN 'NEEDS' THEN NULL
-                ELSE JSON_EXTRACT(be.eval_data, '$.total_score')
-            END AS totalScore
+                ELSE COALESCE(
+                    JSON_EXTRACT(be.eval_data, '$.result.total_score'),
+                    JSON_EXTRACT(be.eval_data, '$.total_score')
+                )
+            END AS totalScore,
+            be.special_note AS specialNote
         FROM basic_evaluations be
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
@@ -110,18 +155,41 @@
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
             CASE be.eval_type
-                WHEN 'FALL' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade'))
-                WHEN 'BEDSORE' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
-                WHEN 'COGNITIVE' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
-                WHEN 'NEEDS' THEN '평가완료'
-                ELSE JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                WHEN 'FALL' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
+                WHEN 'BEDSORE' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
+                WHEN 'COGNITIVE' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
+                )
+                WHEN 'NEEDS' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    '평가완료'
+                )
+                ELSE COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
             END AS resultGrade,
             CASE be.eval_type
-                WHEN 'FALL' THEN JSON_EXTRACT(be.eval_data, '$.result.total_score')
+                WHEN 'FALL' THEN COALESCE(
+                    JSON_EXTRACT(be.eval_data, '$.result.total_score'),
+                    JSON_EXTRACT(be.eval_data, '$.total_score')
+                )
                 WHEN 'NEEDS' THEN NULL
-                ELSE JSON_EXTRACT(be.eval_data, '$.total_score')
-            END AS totalScore
+                ELSE COALESCE(
+                    JSON_EXTRACT(be.eval_data, '$.result.total_score'),
+                    JSON_EXTRACT(be.eval_data, '$.total_score')
+                )
+            END AS totalScore,
+            be.special_note AS specialNote
         FROM basic_evaluations be
+                 INNER JOIN care_worker cw ON be.care_worker_id = cw.id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -134,7 +202,7 @@
                  ) bcl ON b.id = bcl.beneficiary_id
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
-        WHERE be.care_worker_id = #{caregiverId}
+        WHERE cw.employee_id = #{caregiverId}
           AND be.eval_type = #{evalType}
           <if test="year != null">
           AND YEAR(be.eval_date) = #{year}
@@ -159,17 +227,39 @@
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
             CASE be.eval_type
-                WHEN 'FALL' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade'))
-                WHEN 'BEDSORE' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
-                WHEN 'COGNITIVE' THEN JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
-                WHEN 'NEEDS' THEN '평가완료'
-                ELSE JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                WHEN 'FALL' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
+                WHEN 'BEDSORE' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
+                WHEN 'COGNITIVE' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
+                )
+                WHEN 'NEEDS' THEN COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    '평가완료'
+                )
+                ELSE COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
+                    JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
+                )
             END AS resultGrade,
             CASE be.eval_type
-                WHEN 'FALL' THEN JSON_EXTRACT(be.eval_data, '$.result.total_score')
+                WHEN 'FALL' THEN COALESCE(
+                    JSON_EXTRACT(be.eval_data, '$.result.total_score'),
+                    JSON_EXTRACT(be.eval_data, '$.total_score')
+                )
                 WHEN 'NEEDS' THEN NULL
-                ELSE JSON_EXTRACT(be.eval_data, '$.total_score')
-            END AS totalScore
+                ELSE COALESCE(
+                    JSON_EXTRACT(be.eval_data, '$.result.total_score'),
+                    JSON_EXTRACT(be.eval_data, '$.total_score')
+                )
+            END AS totalScore,
+            be.special_note AS specialNote
         FROM basic_evaluations be
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
@@ -212,7 +302,8 @@
             b.name AS beneficiaryName,
             b.address AS beneficiaryAddress,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            be.eval_data AS evalData
+            be.eval_data AS evalData,
+            be.special_note AS specialNote
         FROM basic_evaluations be
                  LEFT JOIN eval_templates et ON be.template_id = et.template_id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
@@ -251,7 +342,8 @@
             b.name AS beneficiaryName,
             b.address AS beneficiaryAddress,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            be.eval_data AS evalData
+            be.eval_data AS evalData,
+            be.special_note AS specialNote
         FROM basic_evaluations be
                  LEFT JOIN eval_templates et ON be.template_id = et.template_id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id

@@ -20,6 +20,9 @@ public class BeneficiarySearchRequest {
     // ✅ search
     private String keyword;       // name / phone / address 검색
 
+    // ✅ 요양보호사 필터링 (요양보호사로 로그인시 자동 설정)
+    private Long careWorkerId;    // 요양보호사 ID
+
     // sort
     private String sort = "NAME";       // NAME / RISK / CARE_LEVEL
     private String direction = "ASC";   // ASC / DESC
