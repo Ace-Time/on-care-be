@@ -1,16 +1,14 @@
 package org.ateam.oncare.counsel.command.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "counsel_history")
@@ -39,9 +37,12 @@ public class CounselHistory {
     @Column(name = "follow_up_necessary", nullable = false, length = 1)
     private String followUpNecessary; // "Y" or "N"
 
-    // --- 외래키 ID 직접 매핑 (연관 관계 제거) ---
+    @Column(name = "churn", nullable = false, length = 1)
+    private String churn; // "Y" or "N"
 
-    // 예약 경로 ID (Common 도메인)
+    @Column(name = "churn_reason", length = 2000)
+    private String churnReason;
+
     @Column(name = "m_reservation_channel_id")
     private Integer reservationChannelId;
 
@@ -56,4 +57,7 @@ public class CounselHistory {
     // 수급자 ID (Nullable)
     @Column(name = "beneficiary_id")
     private Long beneficiaryId;
+
+    @Column(name = "counselor_id", nullable = false)
+    private int counselorId;
 }

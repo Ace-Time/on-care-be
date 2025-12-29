@@ -1,16 +1,14 @@
 package org.ateam.oncare.counsel.command.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "potential_stage")
@@ -26,9 +24,6 @@ public class PotentialStage {
 
     @Column(name = "process_status", nullable = false, length = 1)
     private String processStatus; // "P" or "F"
-
-    @Column(name = "reason", length = 2000)
-    private String reason;
 
     @Column(name = "process_time")
     private LocalDateTime processTime;

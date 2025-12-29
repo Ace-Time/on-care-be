@@ -1,5 +1,7 @@
 package org.ateam.oncare.counsel.query.controller;
 
+import lombok.RequiredArgsConstructor;
+import org.ateam.oncare.counsel.query.dto.CounselDetailResponse;
 import org.ateam.oncare.counsel.query.dto.CounselListResponse;
 import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
 import org.ateam.oncare.counsel.query.service.CounselQueryService;
@@ -18,13 +20,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/counsel")
 @Validated
+@RequiredArgsConstructor
 public class CounselQueryController {
     private final CounselQueryService counselQueryService;
-
-    @Autowired
-    public CounselQueryController(CounselQueryService counselQueryService) {
-        this.counselQueryService = counselQueryService;
-    }
 
     @GetMapping("/customers")
     public ResponseEntity<List<CustomerListResponse>> requestCustomerList(
@@ -41,5 +39,19 @@ public class CounselQueryController {
     ) {
         return ResponseEntity.ok(counselQueryService.findCounselsByCustomerId(customerId, customerType, counselCategoryName, pageable));
     }
+
+    @GetMapping("/{counselHistoryId}")
+    public ResponseEntity<CounselDetailResponse> requestCounselDetail(@PathVariable("counselHistoryId")BigInteger counselHistoryId) {
+        return ResponseEntity.ok(counselQueryService.findCounselDetailById(counselHistoryId));
+    }
+
+    // 잠재고객의 가입상담 시 제공 정보
+//    @GetMapping("/subscription/{customerId}")
+//    public ResponseEntity<>
+
+    // 잠재고객의 통합상담 시 제공 정보
+
+
+    // 기존 + 가입 = 재가입
 
 }
