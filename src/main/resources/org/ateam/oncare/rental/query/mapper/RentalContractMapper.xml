@@ -14,6 +14,14 @@
         <result property="cumulativeRevenue" column="cumulativeRevenue"/>
     </resultMap>
 
+    <resultMap id="targetContract" type="org.ateam.oncare.rental.command.dto.RentalContractForCalculationDTO">
+        <id property="id" column="id"/>
+        <result property="productCd" column="product_cd"/>
+        <result property="usedMonthly" column="used_monthly"/>
+        <result property="usedDays" column="used_days"/>
+        <result property="calculationDate" column="calculation_date"/>
+    </resultMap>
+
     <select id="selectRentalContract" resultMap="ContractRental">
         <bind name="limitSize" value="page.pageSize + 1" />
         select
@@ -39,6 +47,38 @@
         </if>
         order by a.contract_status_cd asc
         limit #{limitSize}  offset #{page.offset}
+    </select>
+
+    <select id="selectRentalContractForCalculation" resultMap="targetContract">
+        with  target_date as(
+            select datediff(last_day(#{calcDate}), date_format(#{calcDate}, '%Y-%m-01')) + 1 as days_in_month
+                    , date_format(#{calcDate}, '%Y-%m-01') as target_month
+        ),
+        calc_contract as (
+            select a.id
+                , a.start_date
+                , a.end_date
+                , a.calc_date
+                , a.product_cd
+                , b.target_month
+                , b.days_in_month
+                , greatest(a.start_date, b.target_month ) as calc_start_date
+                , least(ifnull(a.end_date, last_day(b.target_month)), last_day(b.target_month) ) as calc_end_date
+            from rental_contract a
+            join target_date b on 1=1
+            <![CDATA[
+            where a.start_date < date_add(#{calcDate}, interval 1 month)
+            and   ifnull(a.calc_date, 1) < #{calcDate}
+            and   a.contract_status_cd = 2
+            ]]>
+        )
+        select
+        id
+        , product_cd
+        , case when datediff(calc_end_date, calc_start_date) + 1 = days_in_month then 1 else 0 end as used_monthly
+        , datediff(calc_end_date, calc_start_date) + 1 as used_days
+        , #{calcDate} as calculation_date
+        from calc_contract
     </select>
 
 

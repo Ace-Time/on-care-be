@@ -1,4 +1,4 @@
-package org.ateam.oncare.global.emun;
+package org.ateam.oncare.global.enums;
 
 public enum MasterInternalType {
     AUTHORITY

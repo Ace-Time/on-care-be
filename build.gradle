@@ -39,10 +39,10 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 //    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 //    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-    // 2. [정답] 스프링 통합 테스트 (여기에 JPA 테스트 기능도 다 들어있음)
+    // 스프링 통합 테스트 (여기에 JPA 테스트 기능도 다 들어있음)
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-    // 3. [정답] 시큐리티 테스트 (이름이 다릅니다: org.springframework.security 패키지)
+    // 시큐리티 테스트 (이름이 다릅니다: org.springframework.security 패키지)
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 

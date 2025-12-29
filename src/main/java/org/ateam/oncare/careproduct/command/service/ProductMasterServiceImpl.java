@@ -10,6 +10,7 @@ import org.ateam.oncare.careproduct.command.repository.ProductMasterRepository;
 import org.ateam.oncare.careproduct.command.repository.ProductRepository;
 import org.ateam.oncare.careproduct.mapper.ProductCategoryMapper;
 import org.ateam.oncare.careproduct.mapper.ProductMasterMapper;
+import org.ateam.oncare.config.customexception.ExistsAlreadyProductMasterException;
 import org.ateam.oncare.rental.command.service.RentalService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -18,6 +19,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +69,7 @@ public class ProductMasterServiceImpl implements ProductMasterService {
         productMaster.setName(requestProductMasterDTO.getName());
         productMaster.setAmount(requestProductMasterDTO.getAmount());
         productMaster.setRentalAmount(requestProductMasterDTO.getRentalAmount());
+        productMaster.setCategoryCd(requestProductMasterDTO.getCategoryCd());
         productMaster.setUpdatedAt(LocalDateTime.now());
         productMaster.setExplanation(requestProductMasterDTO.getExplanation());
         productMasterRepository.save(productMaster);
@@ -75,10 +79,34 @@ public class ProductMasterServiceImpl implements ProductMasterService {
 
     @Override
     public int registerProductMaster(RequestProductMasterDTO requestProductMasterDTO) {
+
+        productMasterRepository.findById(requestProductMasterDTO.getId()).ifPresent(
+                 entity -> {
+                     throw new ExistsAlreadyProductMasterException(String.format("%s,이미 존재하는 아이템 입니다.", requestProductMasterDTO.getId()));
+                 });
+
         CareProductMaster entity = productMasterMapper.toProductMasterEntity(requestProductMasterDTO);
         productMasterRepository.save(entity);
 
         return 1;
+    }
+
+    @Override
+    public List<ProductAmountForRentalDTO> getProductAmountForRental(List<String> productCodes) {
+
+        List<CareProductMaster> careProductMasters = productMasterRepository.findAllById(productCodes);
+
+        log.debug(" careProductMasters={}",careProductMasters);
+        List<ProductAmountForRentalDTO> productAmountForRentalDTOS
+                = careProductMasters.stream()
+                .map(e ->new ProductAmountForRentalDTO(
+                    e.getId(),
+                    e.getRentalAmount().intValue(),
+                    e.getRentalAmount().divide(BigDecimal.valueOf(30),0, BigDecimal.ROUND_HALF_UP) //일률적으로 30일로 나눠서 하루치 렌탈료 구함
+                            .setScale(-1 , RoundingMode.FLOOR).intValue() //1원 단위 절삭
+                ))
+                .toList();
+        return productAmountForRentalDTOS;
     }
 
     /**
@@ -128,6 +156,7 @@ public class ProductMasterServiceImpl implements ProductMasterService {
                     int total = agg != null ? agg.getTotal() : 0;
                     int available = agg != null ? agg.getAvailable() : 0;
                     int rental = agg != null ? agg.getRental() : 0;
+                    int disuse = agg != null ? agg.getDisuse() : 0;
                     int reserved = agg != null ? agg.getReserved() : 0;
 
                     return new ResponseProductMasterDetailDTO(
@@ -140,9 +169,12 @@ public class ProductMasterServiceImpl implements ProductMasterService {
                             total,              // 총 수량
                             available,          // 가용 수량 (출고예정 차감 됨)
                             rental,             // 대여중 수량
+                            disuse,             // 폐기 수량
                             reserved,           // 출고 예정 수량
                             master.getAmount().intValue(),
-                            master.getRentalAmount().intValue()
+                            master.getRentalAmount().intValue(),
+                            master.getCategoryCd(),
+                            master.getCategoryName()
                     );
                 })
                 .toList();
