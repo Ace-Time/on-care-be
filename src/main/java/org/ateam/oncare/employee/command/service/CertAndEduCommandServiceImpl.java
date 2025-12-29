@@ -72,7 +72,7 @@ public class CertAndEduCommandServiceImpl implements CertAndEduCommandService {
                 .institution(dto.getInstitution())
                 .eduDate(dto.getEduDate())
                 .nextEduDate(dto.getNextEduDate())
-                .isOverdue(dto.getIsOverdue())
+                .isOverdue(dto.getIsOverdue() != null ? dto.getIsOverdue() : false)
                 .status(dto.getStatus() != null ? dto.getStatus() : 0)
                 .build();
 
@@ -91,5 +91,14 @@ public class CertAndEduCommandServiceImpl implements CertAndEduCommandService {
 
         // 3. 상태 업데이트 (Dirty Checking으로 자동 DB 반영)
         certificate.setStatus(statusCode);
+    }
+
+    @Override
+    public void addEducationsBulk(org.ateam.oncare.employee.command.dto.BulkAddEducationDTO dto) {
+        // 선택된 모든 대상에 대해 순차적으로 기존 단건 등록 로직 호출
+        for (Long certId : dto.getCareWorkerCertIds()) {
+            // 각 대상에 대해 교육 이력 추가 (기존 메서드 재사용)
+            this.addEducation(certId, dto.getEducationInfo());
+        }
     }
 }

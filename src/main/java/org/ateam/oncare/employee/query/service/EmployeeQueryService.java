@@ -24,10 +24,46 @@ public interface EmployeeQueryService {
     EmployeeDetailDTO getEmployeeDetail(Long id);
 
     /**
-     * 직원 일정 조회
-     * 
+     * 직원 방문 요양 일정 조회
+     *
      * @param employeeId 직원 ID
-     * @return 방문 일정 리스트
+     * @return 통합 일정 리스트 (Type: 방문요양)
      */
-    List<org.ateam.oncare.employee.query.dto.VisitScheduleVO> getEmployeeSchedules(Integer employeeId);
+    List<org.ateam.oncare.employee.query.dto.ScheduleResDTO> getVisitSchedules(Integer employeeId);
+
+    /**
+     * 직원 물품(렌탈/회수) 일정 조회
+     *
+     * @param employeeId 직원 ID
+     * @return 통합 일정 리스트 (Type: 물품수령/회수)
+     */
+    List<org.ateam.oncare.employee.query.dto.ScheduleResDTO> getProductSchedules(Integer employeeId);
+
+    /**
+     * 교육 예정일 임박/초과 직원 조회
+     *
+     * @return 교육 알림 DTO 리스트
+     */
+    List<org.ateam.oncare.employee.query.dto.EducationAlertDTO> getEducationAlerts();
+
+    /**
+     * 직원 검색 필터 옵션 조회 (직군, 자격증)
+     *
+     * @return 필터 옵션 DTO
+     */
+    org.ateam.oncare.employee.query.dto.EmployeeFilterResponseDTO getEmployeeFilters();
+
+    /**
+     * 현재 재직 중인 직원 수 조회
+     *
+     * @return 직원 수
+     */
+    int countActiveEmployees();
+
+    /**
+     * 현재 휴직 중인 직원 수 조회
+     *
+     * @return 직원 수
+     */
+    int countOnLeaveEmployees();
 }

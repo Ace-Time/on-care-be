@@ -27,4 +27,7 @@ public interface NotificationCommandService {
 
     // 모든 알림 읽음 처리
     void readAllNotifications(Long receiverId);
+
+    // 내용으로 알림 전송
+    void sendCustom(Long receiverId, String title, String content, String templateType, Integer severity);
 }
