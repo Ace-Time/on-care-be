@@ -23,4 +23,11 @@ public interface CertAndEduCommandService {
     void addEducation(Long careWorkerCertId, AddEducationDTO dto);
 
     void updateCertificateStatus(Long certId, CertificateStatusUpdateDTO dto);
+
+    /**
+     * 여러 명의 대상에게 동일한 교육 정보를 일괄 등록
+     * 
+     * @param dto 일괄 등록 정보 (대상 ID 목록 + 공통 교육 정보)
+     */
+    void addEducationsBulk(org.ateam.oncare.employee.command.dto.BulkAddEducationDTO dto);
 }

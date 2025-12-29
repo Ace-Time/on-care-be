@@ -107,10 +107,27 @@ public class MatchingQueryService {
         return new ArrayList<>(timeSet);
     }
 
-    public List<BeneficiarySummaryDto> getBeneficiariesSummary() {
-        var list = mapper.selectBeneficiariesSummary();
-        log.info("[BENEFICIARY SUMMARY] count={}", list.size());
-        return list;
+    public List<BeneficiarySummaryDto> getBeneficiariesSummary(int page, int size, String keyword) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        int offset = safePage * safeSize;
+
+        String q = (keyword == null) ? null : keyword.trim();
+        if (q != null && q.isEmpty()) q = null;
+
+        return mapper.selectBeneficiariesSummary(offset, safeSize, q);
+    }
+
+    public BeneficiaryPageResponse getBeneficiariesPage(int page, int size, String keyword) {
+        int offset = Math.max(page, 0) * size;
+        String q = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+
+        List<BeneficiarySummaryDto> list =
+                mapper.selectBeneficiariesSummary(offset, size, q);
+
+        long total = mapper.countBeneficiaries(q);
+
+        return new BeneficiaryPageResponse(list, page, size, total);
     }
 
     public BeneficiaryDetailDto getBeneficiaryDetail(Long beneficiaryId) {
@@ -399,5 +416,83 @@ public class MatchingQueryService {
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+    public CareWorkerPageResponse getCandidateCareWorkersPage(
+            Long beneficiaryId, int page, int size, String keyword
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+
+        String q = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+
+        List<CareWorkerCardDto> all = getCandidateCareWorkers(beneficiaryId);
+
+        List<CareWorkerCardDto> filtered;
+        if (q == null) {
+            filtered = all;
+        } else {
+            String lower = q.toLowerCase();
+            filtered = all.stream()
+                    .filter(cw -> cw != null && cw.getName() != null
+                            && cw.getName().toLowerCase().contains(lower))
+                    .toList();
+        }
+
+        long total = filtered.size();
+
+        int from = safePage * safeSize;
+        int to = Math.min(from + safeSize, filtered.size());
+
+        List<CareWorkerCardDto> pageList =
+                (from >= filtered.size()) ? List.of() : filtered.subList(from, to);
+
+        return new CareWorkerPageResponse(pageList, safePage, safeSize, total);
+    }
+
+    public CareWorkerPageResponse getVisitTimeAvailableCareWorkersPage(
+            Long vsId, String startDt, String endDt, int page
+    ) {
+        int safePage = Math.max(page, 0);
+        int size = 3;
+
+        List<CareWorkerCardDto> all = getVisitTimeAvailableCareWorkers(vsId, startDt, endDt);
+        if (all == null || all.isEmpty()) {
+            return new CareWorkerPageResponse(List.of(), safePage, size, 0);
+        }
+
+        long total = all.size();
+
+        int from = safePage * size;
+        int to = Math.min(from + size, all.size());
+
+        List<CareWorkerCardDto> pageList =
+                (from >= all.size()) ? List.of() : all.subList(from, to);
+
+        return new CareWorkerPageResponse(pageList, safePage, size, total);
+    }
+    public CareWorkerPageResponse getCreateVisitAvailableCareWorkersPage(
+            Long beneficiaryId, Long serviceTypeId, String startDt, String endDt,
+            int page, int size
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+
+        // ✅ 기존 로직 그대로 호출 (필터링/정렬 그대로)
+        List<CareWorkerCardDto> all =
+                getCreateVisitAvailableCareWorkers(beneficiaryId, serviceTypeId, startDt, endDt);
+
+        if (all == null || all.isEmpty()) {
+            return new CareWorkerPageResponse(List.of(), safePage, safeSize, 0);
+        }
+
+        long total = all.size();
+
+        int from = safePage * safeSize;
+        int to = Math.min(from + safeSize, all.size());
+
+        List<CareWorkerCardDto> pageList =
+                (from >= all.size()) ? List.of() : all.subList(from, to);
+
+        return new CareWorkerPageResponse(pageList, safePage, safeSize, total);
     }
 }

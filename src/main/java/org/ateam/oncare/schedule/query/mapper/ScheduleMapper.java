@@ -37,4 +37,24 @@ public interface ScheduleMapper {
             @Param("serviceTypeId") Integer serviceTypeId,
             @Param("startTime") LocalTime startTime
     );
+
+    List<ScheduleDayItemDto> selectDaySchedulesPaged(
+            @Param("date") LocalDate date,
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("careWorkerId") Integer careWorkerId,
+            @Param("serviceTypeId") Integer serviceTypeId,
+            @Param("keyword") String keyword,
+            @Param("searchField") String searchField,
+            @Param("offset") int offset,
+            @Param("limit") int limit
+    );
+
+    long countDaySchedules(
+            @Param("date") LocalDate date,
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("careWorkerId") Integer careWorkerId,
+            @Param("serviceTypeId") Integer serviceTypeId,
+            @Param("keyword") String keyword,
+            @Param("searchField") String searchField
+    );
 }

@@ -11,8 +11,8 @@ import java.time.LocalDate;
 @ToString
 public class CertificateViewDTO {
     private Long id; // Certificate ID
-
-    private String employeeName;   // ★ [추가] 직원 이름
+    private Long employeeId; // [추가] 직원 ID
+    private String employeeName; // ★ [추가] 직원 이름
 
     private String certificateName; // 자격증 명
     private String organization; // 발급 기관

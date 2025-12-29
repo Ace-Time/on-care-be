@@ -10,4 +10,6 @@ import java.util.List;
 public interface NotificationRuleRepository extends JpaRepository<NotificationRule, Long> {
     // 활성화된 알림 규칙 조회
     List<NotificationRule> findByIsActive(Integer isActive);
+
+    List<NotificationRule> findByTemplateIdAndIsActive(Long templateId, Integer isActive);
 }

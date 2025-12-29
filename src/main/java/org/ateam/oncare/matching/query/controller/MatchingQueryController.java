@@ -19,15 +19,28 @@ public class MatchingQueryController {
      * ✅ (케이스1) 수급자 기준 추천: 정렬 적용된 카드 리스트 반환
      */
     @GetMapping("/careworkers/list")
-    public ResponseEntity<List<CareWorkerCardDto>> getFinalCandidateCareWorkers(
-            @RequestParam("beneficiaryId") Long beneficiaryId
+    public ResponseEntity<CareWorkerPageResponse> getFinalCandidateCareWorkers(
+            @RequestParam Long beneficiaryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam(required = false) String keyword
     ) {
-        return ResponseEntity.ok(matchingQueryService.getCandidateCareWorkers(beneficiaryId));
+        return ResponseEntity.ok(
+                matchingQueryService.getCandidateCareWorkersPage(
+                        beneficiaryId, page, size, keyword
+                )
+        );
     }
 
     @GetMapping("/beneficiaries/list")
-    public ResponseEntity<List<BeneficiarySummaryDto>> getBeneficiariesList() {
-        return ResponseEntity.ok(matchingQueryService.getBeneficiariesSummary());
+    public ResponseEntity<BeneficiaryPageResponse> getBeneficiariesList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam(required = false) String keyword
+    ) {
+        return ResponseEntity.ok(
+                matchingQueryService.getBeneficiariesPage(page, size, keyword)
+        );
     }
 
     @GetMapping("/beneficiaries/{beneficiaryId}")
@@ -52,13 +65,14 @@ public class MatchingQueryController {
      * ✅ (케이스2) 방문일정 기준 추천: 정렬 적용된 카드 리스트 반환
      */
     @GetMapping("/careworkers/visit-available")
-    public ResponseEntity<List<CareWorkerCardDto>> getVisitTimeAvailableCareWorkers(
+    public ResponseEntity<CareWorkerPageResponse> getVisitTimeAvailableCareWorkers(
             @RequestParam("vsId") Long vsId,
             @RequestParam("startDt") String startDt,
-            @RequestParam("endDt") String endDt
+            @RequestParam("endDt") String endDt,
+            @RequestParam(value = "page", defaultValue = "0") int page
     ) {
         return ResponseEntity.ok(
-                matchingQueryService.getVisitTimeAvailableCareWorkers(vsId, startDt, endDt)
+                matchingQueryService.getVisitTimeAvailableCareWorkersPage(vsId, startDt, endDt, page)
         );
     }
 
@@ -66,15 +80,17 @@ public class MatchingQueryController {
      * ✅ (케이스3) 방문일정 생성 추천: 정렬 적용된 카드 리스트 반환
      */
     @GetMapping("/careworkers/visit-create-available")
-    public ResponseEntity<List<CareWorkerCardDto>> getCreateVisitAvailableCareWorkers(
+    public ResponseEntity<CareWorkerPageResponse> getCreateVisitAvailableCareWorkers(
             @RequestParam("beneficiaryId") Long beneficiaryId,
             @RequestParam("serviceTypeId") Long serviceTypeId,
             @RequestParam("startDt") String startDt,
-            @RequestParam("endDt") String endDt
+            @RequestParam("endDt") String endDt,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "8") int size
     ) {
         return ResponseEntity.ok(
-                matchingQueryService.getCreateVisitAvailableCareWorkers(
-                        beneficiaryId, serviceTypeId, startDt, endDt
+                matchingQueryService.getCreateVisitAvailableCareWorkersPage(
+                        beneficiaryId, serviceTypeId, startDt, endDt, page, size
                 )
         );
     }
