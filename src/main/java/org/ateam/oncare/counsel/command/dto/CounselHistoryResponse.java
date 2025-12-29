@@ -10,9 +10,8 @@ public interface CounselHistoryResponse {
     String getFollowUpNecessary();
     String getChurn();
     String getChurnReason();
-    int getReservationChannelId();
-    int getPotentialId();
-    int getBeneficiaryId();
+    BigInteger getPotentialId();
+    BigInteger getBeneficiaryId();
     int getCounselCategoryId();
     int getCounselorId();
 }
