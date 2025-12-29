@@ -49,6 +49,18 @@ public class Employee {
     @Column(name = "dept_code")
     private Integer deptCode;
 
+    @Column(name = "lat")
+    private Double lat;
+
+    @Column(name = "lng")
+    private Double lng;
+
+    @Column(name = "geo_ready", nullable = false)
+    private Boolean geoReady = false;
+    // false: 아직 좌표 없음
+    // true : 좌표 계산 완료
+
+
     @Column(name = "job_code", nullable = false)
     private Long jobCode;
 

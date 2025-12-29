@@ -460,4 +460,94 @@
         WHERE cws.m_service_type_id = #{serviceTypeId}
         GROUP BY cws.care_worker_id
     </select>
+    <select id="selectBeneficiaryLatLng"
+            resultType="org.ateam.oncare.matching.query.dto.LatLngDto">
+        SELECT lat, lng
+        FROM beneficiary
+        WHERE id = #{beneficiaryId}
+    </select>
+    <select id="selectCareWorkerLatLngByIds"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerLatLngDto">
+        SELECT
+        cw.id AS careWorkerId,
+        e.lat AS lat,
+        e.lng AS lng
+        FROM care_worker cw
+        JOIN employee e ON e.id = cw.employee_id
+        WHERE cw.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="selectTagOverlapCounts"
+            resultType="org.ateam.oncare.matching.query.dto.TagOverlapCountDto">
+        SELECT
+        tcw.care_worker_id AS careWorkerId,
+        COUNT(*) AS overlapCount
+        FROM tag_of_care_worker tcw
+        JOIN tag_of_beneficiary tob
+        ON tob.tag_id = tcw.tag_id
+        AND tob.beneficiary_id = #{beneficiaryId}
+        WHERE tcw.care_worker_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY tcw.care_worker_id
+    </select>
+    <!-- ========== beneficiary geo ========== -->
+    <select id="selectBeneficiaryGeoForUpdate" resultType="org.ateam.oncare.matching.query.dto.BeneficiaryGeoDto">
+        SELECT
+            address,
+            lat,
+            lng,
+            geo_ready AS geoReady
+        FROM beneficiary
+        WHERE id = #{beneficiaryId}
+    </select>
+
+    <update id="updateBeneficiaryGeo">
+        UPDATE beneficiary
+        SET lat = #{lat},
+            lng = #{lng},
+            geo_ready = 1
+        WHERE id = #{beneficiaryId}
+    </update>
+
+    <update id="updateBeneficiaryGeoReadyOnly">
+        UPDATE beneficiary
+        SET geo_ready = 1
+        WHERE id = #{beneficiaryId}
+    </update>
+
+    <!-- ========== careworker(employee) geo ========== -->
+    <select id="selectCareWorkerGeoForUpdateByIds" resultType="org.ateam.oncare.matching.query.dto.CareWorkerGeoDto">
+        SELECT
+        cw.id AS careWorkerId,
+        e.address AS address,
+        e.lat AS lat,
+        e.lng AS lng,
+        e.geo_ready AS geoReady
+        FROM care_worker cw
+        JOIN employee e ON e.id = cw.employee_id
+        WHERE cw.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="updateCareWorkerEmployeeGeo">
+        UPDATE employee e
+            JOIN care_worker cw ON cw.employee_id = e.id
+            SET e.lat = #{lat},
+                e.lng = #{lng},
+                e.geo_ready = 1
+        WHERE cw.id = #{careWorkerId}
+    </update>
+
+    <update id="updateCareWorkerEmployeeGeoReadyOnly">
+        UPDATE employee e
+            JOIN care_worker cw ON cw.employee_id = e.id
+            SET e.geo_ready = 1
+        WHERE cw.id = #{careWorkerId}
+    </update>
 </mapper>
