@@ -66,4 +66,23 @@ public interface MatchingQueryMapper {
     List<CareWorkerIdDto> selectAvailableCareWorkerIdsByVisitTime(String startDt, String endDt);
     List<CareWorkerIdDto> selectCareWorkerIdsByServiceTypeId(Long serviceTypeId);
 
+    LatLngDto selectBeneficiaryLatLng(Long beneficiaryId);
+
+    List<CareWorkerLatLngDto> selectCareWorkerLatLngByIds(@Param("ids") List<Long> ids);
+
+    List<TagOverlapCountDto> selectTagOverlapCounts(@Param("beneficiaryId") Long beneficiaryId,
+                                                    @Param("ids") List<Long> ids);
+
+    // geo - beneficiary
+    BeneficiaryGeoDto selectBeneficiaryGeoForUpdate(Long beneficiaryId);
+    int updateBeneficiaryGeo(Long beneficiaryId, Double lat, Double lng);
+    int updateBeneficiaryGeoReadyOnly(Long beneficiaryId);
+
+    // geo - careworker (care_worker -> employee_id)
+    List<CareWorkerGeoDto> selectCareWorkerGeoForUpdateByIds(@org.apache.ibatis.annotations.Param("ids") List<Long> ids);
+    int updateCareWorkerEmployeeGeo(@org.apache.ibatis.annotations.Param("careWorkerId") Long careWorkerId,
+                                    @org.apache.ibatis.annotations.Param("lat") Double lat,
+                                    @org.apache.ibatis.annotations.Param("lng") Double lng);
+    int updateCareWorkerEmployeeGeoReadyOnly(@org.apache.ibatis.annotations.Param("careWorkerId") Long careWorkerId);
+
 }
