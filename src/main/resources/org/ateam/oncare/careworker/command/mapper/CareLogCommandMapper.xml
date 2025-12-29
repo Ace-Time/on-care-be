@@ -111,4 +111,12 @@
         WHERE log_id = #{logId}
     </update>
 
+    <!-- 요양일지 정보 조회 (beneficiaryId, serviceDate) -->
+    <select id="selectCareLogInfo" resultType="org.ateam.oncare.careworker.command.dto.CareLogInfo">
+        SELECT beneficiary_id, service_date
+        FROM care_logs
+        WHERE log_id = #{logId}
+          AND is_deleted = 0
+    </select>
+
 </mapper>
