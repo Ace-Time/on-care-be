@@ -66,4 +66,11 @@ public interface EmployeeQueryService {
      * @return 직원 수
      */
     int countOnLeaveEmployees();
+
+    /**
+     * 직급별 직원 수 조회
+     *
+     * @return 직급별 직원 수 리스트
+     */
+    List<org.ateam.oncare.employee.query.dto.EmployeeCountByJobDTO> countEmployeesByJob();
 }
