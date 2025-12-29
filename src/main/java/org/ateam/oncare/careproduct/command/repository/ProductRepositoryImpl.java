@@ -1,6 +1,7 @@
 package org.ateam.oncare.careproduct.command.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.careproduct.command.dto.*;
 import org.ateam.oncare.careproduct.command.entity.CareProduct;
 import org.ateam.oncare.careproduct.command.entity.QCareProduct;
+import org.ateam.oncare.careproduct.command.entity.QProductStatus;
 import org.ateam.oncare.careproduct.mapper.ProductMapper;
 import org.ateam.oncare.rental.command.dto.RentalContractForCalculationDTO;
 import org.ateam.oncare.rental.command.dto.RentalProductForCalculationDTO;
@@ -28,6 +30,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     private final JPAQueryFactory queryFactory;
     private final ProductMapper productMapper;
     private final QCareProduct product = QCareProduct.careProduct;
+    private final QProductStatus productStatus = QProductStatus.productStatus;
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -43,6 +46,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                                                 .otherwise(0)
                                                 .sum(),
                                         product.productStatus.when(2).then(1).otherwise(0).sum(),
+                                        product.productStatus.when(3).then(1).otherwise(0).sum(),
                                         Expressions.constant(0)
                                 )
                         )
@@ -64,9 +68,10 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
         builder.and(product.productCd.eq(condition.getProductCode()));
 
-        List<CareProduct> products = queryFactory
-                .select(product)
+        List<Tuple> products = queryFactory
+                .select(product,productStatus.name)
                 .from(product)
+                .join(productStatus).on(productStatus.id.eq(product.productStatus.longValue()))
                 .where(builder)
                 .offset(pageable.getOffset())
                 .limit(pageSize + 1) //다음 데이터가 있는지 확인을 위해 1개 더 가지고옴
@@ -79,7 +84,11 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         }
 
         List<ResponseProductDTO> dtos = products.stream()
-                .map(productMapper::toProductDTO)
+                .map(data ->{
+                    ResponseProductDTO dto = productMapper.toProductDTO(data.get(product));
+                    dto.setStatusName(String.valueOf(data.get(productStatus.name)));
+                    return dto;
+                })
                 .toList();
 
         return new SliceImpl<>(dtos, pageable, hasNext);

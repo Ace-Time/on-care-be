@@ -15,6 +15,8 @@ public class ResponseProductDTO {
     private BigDecimal amount;
     private BigDecimal rentalAmount;
     private BigDecimal cumulativeRevenue;
+    private Integer productStatus;
+    private String statusName;
     private String productCd;
     private LocalDate boughtDate;
 }

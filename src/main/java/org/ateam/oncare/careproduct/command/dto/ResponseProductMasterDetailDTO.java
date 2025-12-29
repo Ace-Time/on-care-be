@@ -19,7 +19,10 @@ public class ResponseProductMasterDetailDTO {
     private int totalProducts;
     private int availableProducts;
     private int rentalProducts;
+    private int disuseProducts;
     private int reservedProducts;
     private int purchasePrice;
     private int monthlyRenalFee;
+    private String categoryCode;
+    private String categoryName;
 }

@@ -22,4 +22,5 @@ public interface ProductService {
     @TransactionalEventListener(value = ProductStockEvent.class, phase = TransactionPhase.BEFORE_COMMIT)
     void expectStock(ProductStockEvent productStockEvent);
 
+    List<ResponseProductStatusDTO> getProductStatus();
 }

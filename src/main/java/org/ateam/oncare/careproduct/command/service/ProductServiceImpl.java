@@ -4,10 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.careproduct.command.dto.*;
 import org.ateam.oncare.careproduct.command.entity.CareProduct;
+import org.ateam.oncare.careproduct.command.entity.ProductStatus;
 import org.ateam.oncare.careproduct.command.entity.ProductTask;
 import org.ateam.oncare.careproduct.command.repository.ProductHistoryRepository;
 import org.ateam.oncare.careproduct.command.repository.ProductRepository;
+import org.ateam.oncare.careproduct.command.repository.ProductStatusRepository;
 import org.ateam.oncare.careproduct.command.repository.ProductTaskRepository;
+import org.ateam.oncare.careproduct.mapper.ProductStatusMapstruct;
 import org.ateam.oncare.careproduct.mapper.ProductTaskMapStruct;
 import org.ateam.oncare.global.enums.StockType;
 import org.ateam.oncare.global.eventType.ProductStockEvent;
@@ -33,6 +36,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductHistoryRepository productHistoryRepository;
     private final ProductTaskRepository productTaskRepository;
     private final ProductTaskMapStruct productTaskMapStruct;
+    private final ProductStatusRepository productStatusRepository;
+    private final ProductStatusMapstruct  productStatusMapstruct;
 
     @Override
     public Slice<ResponseProductDTO> getProduct(RequestProductForSelectDTO condition, Pageable pageable) {
@@ -61,6 +66,17 @@ public class ProductServiceImpl implements ProductService {
             inBound(productStockEvent);
         else if(productStockEvent.getStatus() == StockType.Canceled)
             canceled(productStockEvent);
+    }
+
+    @Override
+    public List<ResponseProductStatusDTO> getProductStatus() {
+
+        List<ProductStatus> entities = productStatusRepository.findAll();
+        List<ResponseProductStatusDTO> responseDTOs = entities.stream()
+                .map(productStatusMapstruct::toDTO)
+                .toList();
+
+        return responseDTOs;
     }
 
     private void canceled(ProductStockEvent productStockEvent) {
