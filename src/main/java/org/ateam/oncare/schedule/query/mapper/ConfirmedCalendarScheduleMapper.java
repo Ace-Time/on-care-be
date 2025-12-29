@@ -34,4 +34,24 @@ public interface ConfirmedCalendarScheduleMapper {
     ConfirmedCalendarScheduleDetailDto selectDetailByVsId(
             @Param("vsId") Integer vsId
     );
+
+    List<ConfirmedCalendarDayItemDto> selectDayListPaged(
+            @Param("date") LocalDate date,
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("careWorkerId") Integer careWorkerId,
+            @Param("serviceTypeId") Integer serviceTypeId,
+            @Param("keyword") String keyword,
+            @Param("searchField") String searchField,
+            @Param("offset") int offset,
+            @Param("limit") int limit
+    );
+
+    long countDayList(
+            @Param("date") LocalDate date,
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("careWorkerId") Integer careWorkerId,
+            @Param("serviceTypeId") Integer serviceTypeId,
+            @Param("keyword") String keyword,
+            @Param("searchField") String searchField
+    );
 }
