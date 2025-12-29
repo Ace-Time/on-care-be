@@ -57,4 +57,7 @@ public interface EmployeeMapper {
     void insertEmployee(org.ateam.oncare.employee.command.dto.EmployeeRegisterDto dto);
 
     void insertCareWorker(@org.apache.ibatis.annotations.Param("employeeId") Long employeeId);
+
+    // 직급별 직원 수 조회
+    List<EmployeeCountByJobDTO> countEmployeesByJob();
 }

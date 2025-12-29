@@ -104,4 +104,13 @@ public class EmployeeQueryController {
     public ResponseEntity<Integer> countOnLeaveEmployees() {
         return ResponseEntity.ok(employeeQueryService.countOnLeaveEmployees());
     }
+
+    /**
+     * 직급별 직원 수 조회
+     * GET /api/employees/count/by-job
+     */
+    @GetMapping("/count/by-job")
+    public ResponseEntity<List<org.ateam.oncare.employee.query.dto.EmployeeCountByJobDTO>> countEmployeesByJob() {
+        return ResponseEntity.ok(employeeQueryService.countEmployeesByJob());
+    }
 }

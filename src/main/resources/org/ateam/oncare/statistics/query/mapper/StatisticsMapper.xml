@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.statistics.query.mapper.StatisticsMapper">
+
+    <select id="selectProductStatistics" resultType="org.ateam.oncare.statistics.query.dto.ProductStatisticDTO">
+        SELECT
+            m.name as productName,
+            COALESCE(SUM(c.amount), 0) as totalPurchaseAmount,
+            COALESCE(SUM(c.cumulative_revenue), 0) as totalRevenue,
+            CASE
+                WHEN SUM(c.amount) IS NULL OR SUM(c.amount) = 0 THEN 0
+                ELSE (SUM(c.cumulative_revenue) / SUM(c.amount)) * 100
+            END as returnRate
+        FROM care_product c
+        JOIN m_care_product m ON c.product_cd = m.id
+        GROUP BY m.id, m.name
+        ORDER BY returnRate DESC
+    </select>
+
+    <select id="selectCareLevelExpirationCounts" resultType="org.ateam.oncare.statistics.query.dto.CareLevelExpirationCountDTO">
+        SELECT
+            COUNT(CASE WHEN DATEDIFF(end_date, NOW()) BETWEEN 61 AND 90 THEN 1 END) as days90,
+            COUNT(CASE WHEN DATEDIFF(end_date, NOW()) BETWEEN 46 AND 60 THEN 1 END) as days60,
+            COUNT(CASE WHEN DATEDIFF(end_date, NOW()) BETWEEN 0 AND 45 THEN 1 END) as days45
+        FROM beneficiary_care_level
+    </select>
+
+    <select id="selectMonthlyClientStats" resultType="org.ateam.oncare.statistics.query.dto.MonthlyClientStatsDTO">
+        SELECT
+            m.month,
+            COALESCE(p.cnt, 0) as potentialCount,
+            COALESCE(c.cnt, 0) as contractCount
+        FROM
+            (
+                SELECT DATE_FORMAT(create_at, '%Y-%m') as month FROM potential_customer
+                UNION
+                SELECT DATE_FORMAT(start_date, '%Y-%m') as month FROM contract
+            ) m
+        LEFT JOIN (
+            SELECT DATE_FORMAT(create_at, '%Y-%m') as month, COUNT(*) as cnt
+            FROM potential_customer
+            GROUP BY DATE_FORMAT(create_at, '%Y-%m')
+        ) p ON m.month = p.month
+        LEFT JOIN (
+            SELECT DATE_FORMAT(start_date, '%Y-%m') as month, COUNT(*) as cnt
+            FROM contract
+            GROUP BY DATE_FORMAT(start_date, '%Y-%m')
+        ) c ON m.month = c.month
+        ORDER BY m.month DESC
+        LIMIT 12
+    </select>
+
+    <select id="countUnassignedBeneficiaries" resultType="int">
+        SELECT COUNT(*)
+        FROM beneficiary b
+        WHERE b.status = true -- 서비스 이용 중인 수급자
+          AND NOT EXISTS (
+            SELECT 1
+            FROM matching m
+            WHERE m.beneficiary_id = b.id
+              AND m.status = 'Y' -- 매칭 중인 상태
+          )
+    </select>
+
+    <select id="countPendingApprovals" resultType="int">
+        SELECT COUNT(*)
+        FROM electronic_payment_process
+        WHERE approver_id = #{employeeId}
+          AND approve = '0' -- 미승인 상태
+    </select>
+
+    <select id="selectMonthlyBeneficiaryStats" resultType="org.ateam.oncare.statistics.query.dto.MonthlyBeneficiaryStatsDTO">
+        SELECT
+            m.month,
+            COALESCE(n.cnt, 0) as newBeneficiaryCount,
+            COALESCE(w.cnt, 0) as withdrawnBeneficiaryCount
+        FROM
+            (
+                SELECT DATE_FORMAT(start_date, '%Y-%m') as month FROM contract
+                UNION
+                SELECT DATE_FORMAT(end_date, '%Y-%m') as month FROM contract WHERE contract_status = '해지'
+            ) m
+        LEFT JOIN (
+            SELECT DATE_FORMAT(start_date, '%Y-%m') as month, COUNT(*) as cnt
+            FROM contract
+            GROUP BY DATE_FORMAT(start_date, '%Y-%m')
+        ) n ON m.month = n.month
+        LEFT JOIN (
+            SELECT DATE_FORMAT(end_date, '%Y-%m') as month, COUNT(*) as cnt
+            FROM contract
+            WHERE contract_status = '해지'
+            GROUP BY DATE_FORMAT(end_date, '%Y-%m')
+        ) w ON m.month = w.month
+        ORDER BY m.month DESC
+        LIMIT 12
+    </select>
+
+    <select id="selectUnassignedBeneficiaries" resultType="org.ateam.oncare.statistics.query.dto.UnassignedBeneficiaryDTO">
+        SELECT
+            b.id,
+            b.name,
+            b.gender,
+            b.birthdate,
+            b.address,
+            b.phone,
+            (YEAR(NOW()) - YEAR(b.birthdate)) as age
+        FROM beneficiary b
+        WHERE b.status = true -- 서비스 이용 중인 수급자
+          AND NOT EXISTS (
+            SELECT 1
+            FROM matching m
+            WHERE m.beneficiary_id = b.id
+              AND m.status = 'Y' -- 매칭 중인 상태
+          )
+    </select>
+
+    <select id="selectChurnRiskBeneficiaries" resultType="org.ateam.oncare.statistics.query.dto.ChurnRiskBeneficiaryDTO">
+        SELECT
+            b.id,
+            b.name,
+            (YEAR(NOW()) - YEAR(b.birthdate)) as age,
+            b.last_counsel_date as lastCounselDate,
+            CASE
+                WHEN b.last_counsel_date IS NULL OR DATEDIFF(NOW(), b.last_counsel_date) >= 60 THEN '장기 미상담'
+                ELSE '불만 상담 접수'
+            END as riskReason
+        FROM beneficiary b
+        WHERE b.status = true
+          AND (
+            -- 조건 1: 최근 상담일로부터 60일(n일) 이상 경과 (장기 미상담)
+            (b.last_counsel_date IS NULL OR DATEDIFF(NOW(), b.last_counsel_date) >= 60)
+            -- 조건 2: 최근 60일 내 불만 상담 접수 (이탈 징후)
+            OR EXISTS (
+                SELECT 1 FROM counsel_history ch
+                WHERE ch.beneficiary_id = b.id
+                  AND ch.consult_date >= DATE_SUB(NOW(), INTERVAL 60 DAY)
+                  AND (
+                       ch.detail LIKE CONCAT('%', '불만', '%')
+                    OR ch.detail LIKE CONCAT('%', '해지', '%')
+                    OR ch.detail LIKE CONCAT('%', '종료', '%')
+                    OR ch.detail LIKE CONCAT('%', '이탈', '%')
+                    OR ch.summary LIKE CONCAT('%', '불만', '%')
+                    OR ch.summary LIKE CONCAT('%', '해지', '%')
+                  )
+            )
+          )
+    </select>
+
+    <select id="selectRiskLevelBeneficiaryCounts" resultType="org.ateam.oncare.statistics.query.dto.RiskLevelBeneficiaryCountDTO">
+        SELECT
+            rl.level,
+            rl.score,
+            COUNT(b.id) as count
+        FROM beneficiary b
+        JOIN m_risk_level rl ON b.risk_id = rl.id
+        WHERE b.status = true -- 서비스 이용 중인 수급자만
+        GROUP BY rl.level, rl.score
+        ORDER BY rl.level ASC
+    </select>
+
+    <select id="selectCareGradeBeneficiaryCounts" resultType="org.ateam.oncare.statistics.query.dto.CareGradeBeneficiaryCountDTO">
+        SELECT
+            mcl.level AS grade,
+            COUNT(DISTINCT bcl.beneficiary_id) AS count
+        FROM m_care_level mcl
+        LEFT JOIN beneficiary_count bc ON bc.m_care_level_id = mcl.id
+        LEFT JOIN beneficiary_care_level bcl ON bcl.id = bc.beneficiary_care_level_id
+        LEFT JOIN beneficiary b ON b.id = bcl.beneficiary_id
+        WHERE bcl.start_date &lt;= CURRENT_DATE()
+          AND bcl.end_date &gt;= CURRENT_DATE()
+          AND b.status = 1
+        GROUP BY mcl.id, mcl.level
+        ORDER BY mcl.id ASC
+    </select>
+
+    <select id="selectOverdueBeneficiaries" resultType="org.ateam.oncare.statistics.query.dto.OverdueInvoiceDTO">
+        SELECT
+            i.id                AS invoiceId,
+            i.billing_month     AS billingMonth,
+            i.period_start      AS periodStart,
+            i.period_end        AS periodEnd,
+            i.total_count       AS totalCount,
+            i.own_count         AS ownCount,
+            i.payment_status    AS paymentStatus,
+            i.is_sent           AS isSent,
+            b.id                AS beneficiaryId,
+            b.name              AS beneficiaryName,
+            b.phone             AS phone,
+            b.address           AS address
+        FROM invoice i
+                 JOIN beneficiary b
+                      ON b.id = i.beneficiary_id
+        WHERE
+            i.payment_status = '미납'
+          AND b.status = 1
+        ORDER BY
+            i.billing_month DESC, i.id DESC
+    </select>
+</mapper>

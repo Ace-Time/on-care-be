@@ -105,6 +105,11 @@ public class EmployeeQueryServiceImpl implements EmployeeQueryService {
         return employeeMapper.countOnLeaveEmployees();
     }
 
+    @Override
+    public List<EmployeeCountByJobDTO> countEmployeesByJob() {
+        return employeeMapper.countEmployeesByJob();
+    }
+
     // [기존] 방문 일정 변환 메서드
     private ScheduleResDTO convertVisitToDto(VisitScheduleVO vo) {
         String serviceName = getServiceName(vo.getServiceTypeId());
