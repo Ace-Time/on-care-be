@@ -8,24 +8,25 @@ import java.util.List;
 @Getter
 @Setter
 public class RentalUsageResponse {
-    private List<RentalUsageResponse.RentalItem> current; // 현재 사용 중인 용품
-    private List<RentalUsageResponse.RentalItem> history; // 과거 렌탈 이력
+
+    // ✅ 단일 리스트(현재/과거 구분 없음)
+    private List<RentalItem> items;
 
     @Getter
     @Setter
     public static class RentalItem {
-        private Long rentalContractId;      // 계약 ID
-        private String productAssetId;      // care_product.id (예: EM001-001)
-        private String productName;         // m_care_product.name (예: 휠체어)
+        private Long rentalProductId;     // rp.id (카드 유니크키)
+        private Long rentalContractId;    // rc.id (계약 ID)
+        private String productAssetId;    // care_product.id (예: EM001-001)
+        private String productName;       // m_care_product.name (예: 휠체어)
 
-        // 계약대기 / 접수 / 유지 / 계약중 / 종료 / 해지 / 만료
-        private String contractStatusName;
+        private String contractStatusName; // cs.name
+//        private String rentalStatusName;   // rps.name (용품 상태)
 
+        private String startDate;          // rc.start_date (yyyy-MM-dd)
+        private String endDate;            // rc.end_date   (yyyy-MM-dd, nullable)
 
-        private String startDate;           // yyyy-MM-dd
-        private String endDate;             // yyyy-MM-dd (nullable)
-
-        private Integer monthlyAmount;      // cp.rental_amount (월 렌탈료)
-        private Integer durationMonths;     // 계약기간 개월수(계산)
+        private Integer monthlyAmount;     // cp.rental_amount
+        private Integer durationMonths;    // 계산
     }
 }
