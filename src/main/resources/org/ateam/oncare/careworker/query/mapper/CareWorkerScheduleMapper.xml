@@ -101,7 +101,7 @@
             DATE_FORMAT(vs.start_dt, '%Y-%m-%d') AS date_str,
             CONCAT(TIME_FORMAT(vs.start_dt, '%H:%i'), '-', TIME_FORMAT(vs.end_dt, '%H:%i')) AS time_range,
             COALESCE(mst.name, '일반') AS service_content,
-            '' AS special_notes,
+            vs.note AS special_notes,
 
             /* 수급자 정보 */
             b.id                AS r_id,
