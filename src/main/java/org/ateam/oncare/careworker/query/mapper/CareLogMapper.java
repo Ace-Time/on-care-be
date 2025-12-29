@@ -10,7 +10,7 @@ import java.util.List;
 @Mapper
 public interface CareLogMapper {
     // 요양일지 목록 조회 (요양보호사별)
-    List<CareLogListDto> selectCareLogList(@Param("caregiverId") Long caregiverId);
+    List<CareLogListDto> selectCareLogList(@Param("employeeId") Long employeeId);
 
     // 요양일지 목록 조회 (수급자별)
     List<CareLogListDto> selectCareLogListByBeneficiary(@Param("beneficiaryId") Long beneficiaryId);

@@ -14,6 +14,7 @@
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel
         FROM counseling_logs cl
+                 JOIN care_worker cw ON cl.care_worker_id = cw.id
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -26,7 +27,7 @@
                  ) bcl ON b.id = bcl.beneficiary_id
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
-        WHERE cl.care_worker_id = #{caregiverId}
+        WHERE cw.employee_id = #{employeeId}
         ORDER BY cl.counseling_date DESC, cl.created_at DESC
     </select>
 

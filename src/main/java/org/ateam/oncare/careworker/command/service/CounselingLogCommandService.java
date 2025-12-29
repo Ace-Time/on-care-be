@@ -16,9 +16,9 @@ public class CounselingLogCommandService {
     private final CounselingLogCommandMapper counselingLogCommandMapper;
 
     @Transactional
-    public void createCounselingLog(Long careWorkerId, CreateCounselingLogRequest request) {
-        log.info("방문상담 작성 시작 - beneficiaryId: {}", request.getBeneficiaryId());
-        int inserted = counselingLogCommandMapper.insertCounselingLog(careWorkerId, request);
+    public void createCounselingLog(Long employeeId, CreateCounselingLogRequest request) {
+        log.info("방문상담 작성 시작 - employeeId: {}, beneficiaryId: {}", employeeId, request.getBeneficiaryId());
+        int inserted = counselingLogCommandMapper.insertCounselingLog(employeeId, request);
 
         if (inserted == 0) {
             throw new IllegalStateException("방문상담 작성에 실패했습니다.");

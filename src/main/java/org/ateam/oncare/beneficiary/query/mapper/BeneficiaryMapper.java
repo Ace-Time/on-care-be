@@ -1,6 +1,7 @@
 package org.ateam.oncare.beneficiary.query.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.ateam.oncare.beneficiary.query.dto.request.BeneficiarySearchRequest;
 import org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryListItemResponse;
 
@@ -12,4 +13,7 @@ public interface BeneficiaryMapper {
     List<BeneficiaryListItemResponse> selectBeneficiaries(BeneficiarySearchRequest req);
 
     long countBeneficiaries(BeneficiarySearchRequest req);
+
+    // employeeId로 careWorkerId 조회
+    Long selectCareWorkerIdByEmployeeId(@Param("employeeId") Long employeeId);
 }

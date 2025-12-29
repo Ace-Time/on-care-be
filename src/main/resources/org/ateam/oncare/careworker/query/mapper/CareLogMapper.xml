@@ -7,14 +7,18 @@
     <select id="selectCareLogList" resultType="org.ateam.oncare.careworker.query.dto.CareLogListDto">
         SELECT
             cl.log_id AS logId,
+            cl.vs_id AS vsId,
             cl.service_date AS serviceDate,
             cl.start_time AS startTime,
             cl.end_time AS endTime,
             cl.service_type AS serviceType,
             cl.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
-            COALESCE(mcl.level, '등급없음') AS careLevel
+            b.address AS beneficiaryAddress,
+            COALESCE(mcl.level, '등급없음') AS careLevel,
+            cl.special_note AS specialNote
         FROM care_logs cl
+                 JOIN care_worker cw ON cl.care_worker_id = cw.id
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -27,7 +31,7 @@
                  ) bcl ON b.id = bcl.beneficiary_id
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
-        WHERE cl.care_worker_id = #{caregiverId}
+        WHERE cw.employee_id = #{employeeId}
           AND cl.is_deleted = FALSE
         ORDER BY cl.service_date DESC, cl.created_at DESC
     </select>
@@ -36,13 +40,16 @@
     <select id="selectCareLogListByBeneficiary" resultType="org.ateam.oncare.careworker.query.dto.CareLogListDto">
         SELECT
             cl.log_id AS logId,
+            cl.vs_id AS vsId,
             cl.service_date AS serviceDate,
             cl.start_time AS startTime,
             cl.end_time AS endTime,
             cl.service_type AS serviceType,
             cl.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
-            COALESCE(mcl.level, '등급없음') AS careLevel
+            b.address AS beneficiaryAddress,
+            COALESCE(mcl.level, '등급없음') AS careLevel,
+            cl.special_note AS specialNote
         FROM care_logs cl
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
                  LEFT JOIN (
