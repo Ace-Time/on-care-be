@@ -23,7 +23,13 @@ public interface MatchingQueryMapper {
 
     List<CareWorkerIdDto> selectCareWorkerIdsByRiskCertificates(@Param("beneficiaryId") Long beneficiaryId);
 
-    List<BeneficiarySummaryDto> selectBeneficiariesSummary();
+    List<BeneficiarySummaryDto> selectBeneficiariesSummary(
+            @Param("offset") int offset,
+            @Param("limit") int limit,
+            @Param("keyword") String keyword
+    );
+
+    long countBeneficiaries(@Param("keyword") String keyword);
 
     BeneficiaryDetailDto selectBeneficiaryDetail(@Param("beneficiaryId") Long beneficiaryId);
 
@@ -37,6 +43,8 @@ public interface MatchingQueryMapper {
 
     AssignedCareWorkerDto selectAssignedCareWorker(@Param("beneficiaryId") Long beneficiaryId);
 
+    Long selectAssignedCareWorkerId(@Param("beneficiaryId") Long beneficiaryId);
+
     List<CareWorkerCardDto> selectCareWorkerCardsByIds(@Param("ids") List<Long> ids);
 
     List<String> selectCareWorkerTags(@Param("careWorkerId") Long careWorkerId);
@@ -45,11 +53,9 @@ public interface MatchingQueryMapper {
 
     List<String> selectCareWorkerServiceTypes(@Param("careWorkerId") Long careWorkerId);
 
+    List<String> selectCareWorkerCertificateNames(@Param("careWorkerId") Long careWorkerId);
+
     List<WorkingTimeDto> selectCareWorkerWorkingTimes(@Param("careWorkerId") Long careWorkerId);
-
-    Long selectAssignedCareWorkerId(@Param("beneficiaryId") Long beneficiaryId);
-
-    // MatchingQueryMapper.java 에 아래 메서드들만 추가
 
     List<CareWorkerIdDto> selectAvailableCareWorkerIdsByVisitSchedule(
             @Param("vsId") Long vsId,
@@ -63,26 +69,39 @@ public interface MatchingQueryMapper {
 
     Long selectVisitScheduleBeneficiaryId(@Param("vsId") Long vsId);
 
-    List<CareWorkerIdDto> selectAvailableCareWorkerIdsByVisitTime(String startDt, String endDt);
-    List<CareWorkerIdDto> selectCareWorkerIdsByServiceTypeId(Long serviceTypeId);
+    List<CareWorkerIdDto> selectAvailableCareWorkerIdsByVisitTime(
+            @Param("startDt") String startDt,
+            @Param("endDt") String endDt
+    );
 
-    LatLngDto selectBeneficiaryLatLng(Long beneficiaryId);
+    List<CareWorkerIdDto> selectCareWorkerIdsByServiceTypeId(@Param("serviceTypeId") Long serviceTypeId);
+
+    LatLngDto selectBeneficiaryLatLng(@Param("beneficiaryId") Long beneficiaryId);
 
     List<CareWorkerLatLngDto> selectCareWorkerLatLngByIds(@Param("ids") List<Long> ids);
 
-    List<TagOverlapCountDto> selectTagOverlapCounts(@Param("beneficiaryId") Long beneficiaryId,
-                                                    @Param("ids") List<Long> ids);
+    List<TagOverlapCountDto> selectTagOverlapCounts(
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("ids") List<Long> ids
+    );
 
-    // geo - beneficiary
-    BeneficiaryGeoDto selectBeneficiaryGeoForUpdate(Long beneficiaryId);
-    int updateBeneficiaryGeo(Long beneficiaryId, Double lat, Double lng);
-    int updateBeneficiaryGeoReadyOnly(Long beneficiaryId);
+    BeneficiaryGeoDto selectBeneficiaryGeoForUpdate(@Param("beneficiaryId") Long beneficiaryId);
 
-    // geo - careworker (care_worker -> employee_id)
-    List<CareWorkerGeoDto> selectCareWorkerGeoForUpdateByIds(@org.apache.ibatis.annotations.Param("ids") List<Long> ids);
-    int updateCareWorkerEmployeeGeo(@org.apache.ibatis.annotations.Param("careWorkerId") Long careWorkerId,
-                                    @org.apache.ibatis.annotations.Param("lat") Double lat,
-                                    @org.apache.ibatis.annotations.Param("lng") Double lng);
-    int updateCareWorkerEmployeeGeoReadyOnly(@org.apache.ibatis.annotations.Param("careWorkerId") Long careWorkerId);
+    int updateBeneficiaryGeo(
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("lat") Double lat,
+            @Param("lng") Double lng
+    );
 
+    int updateBeneficiaryGeoReadyOnly(@Param("beneficiaryId") Long beneficiaryId);
+
+    List<CareWorkerGeoDto> selectCareWorkerGeoForUpdateByIds(@Param("ids") List<Long> ids);
+
+    int updateCareWorkerEmployeeGeo(
+            @Param("careWorkerId") Long careWorkerId,
+            @Param("lat") Double lat,
+            @Param("lng") Double lng
+    );
+
+    int updateCareWorkerEmployeeGeoReadyOnly(@Param("careWorkerId") Long careWorkerId);
 }

@@ -175,32 +175,49 @@
     <select id="selectBeneficiariesSummary"
             resultType="org.ateam.oncare.matching.query.dto.BeneficiarySummaryDto">
         SELECT
-            b.id   AS beneficiaryId,
-            b.name AS name,
-            CASE
-                WHEN b.gender = 'M' THEN '남자'
-                WHEN b.gender = 'F' THEN '여자'
-                ELSE b.gender
-                END AS gender,
-            CASE
-                WHEN rl.level = 1 THEN '저위험'
-                WHEN rl.level = 2 THEN '중위험'
-                WHEN rl.level = 3 THEN '고위험'
-                ELSE CONCAT(rl.level, '등급')
-                END AS riskLevel,
-            CASE
-                WHEN EXISTS (
-                    SELECT 1
-                    FROM matching m
-                    WHERE m.beneficiary_id = b.id
-                      AND m.status = 'Y'
-                ) THEN TRUE
-                ELSE FALSE
-                END AS assigned
+        b.id   AS beneficiaryId,
+        b.name AS name,
+        CASE
+        WHEN b.gender = 'M' THEN '남자'
+        WHEN b.gender = 'F' THEN '여자'
+        ELSE b.gender
+        END AS gender,
+        CASE
+        WHEN rl.level = 1 THEN '저위험'
+        WHEN rl.level = 2 THEN '중위험'
+        WHEN rl.level = 3 THEN '고위험'
+        ELSE CONCAT(rl.level, '등급')
+        END AS riskLevel,
+        CASE
+        WHEN EXISTS (
+        SELECT 1
+        FROM matching m
+        WHERE m.beneficiary_id = b.id
+        AND m.status = 'Y'
+        ) THEN TRUE
+        ELSE FALSE
+        END AS assigned
         FROM beneficiary b
-                 LEFT JOIN m_risk_level rl
-                           ON rl.id = b.risk_id
-        ORDER BY b.id
+        LEFT JOIN m_risk_level rl ON rl.id = b.risk_id
+
+        <where>
+            <if test="keyword != null and keyword != ''">
+                b.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+
+        ORDER BY assigned ASC, b.id ASC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countBeneficiaries" resultType="long">
+        SELECT COUNT(*)
+        FROM beneficiary b
+        <where>
+            <if test="keyword != null and keyword != ''">
+                b.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
     </select>
 
     <select id="selectBeneficiaryDetail"
