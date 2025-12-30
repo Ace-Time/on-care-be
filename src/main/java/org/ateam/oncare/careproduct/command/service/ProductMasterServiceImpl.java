@@ -156,7 +156,7 @@ public class ProductMasterServiceImpl implements ProductMasterService {
                     int total = agg != null ? agg.getTotal() : 0;
                     int available = agg != null ? agg.getAvailable() : 0;
                     int rental = agg != null ? agg.getRental() : 0;
-                    int disuse = agg != null ? agg.getDisuse() : 0;
+                    int discard = agg != null ? agg.getDiscard() : 0;
                     int reserved = agg != null ? agg.getReserved() : 0;
 
                     return new ResponseProductMasterDetailDTO(
@@ -169,7 +169,7 @@ public class ProductMasterServiceImpl implements ProductMasterService {
                             total,              // 총 수량
                             available,          // 가용 수량 (출고예정 차감 됨)
                             rental,             // 대여중 수량
-                            disuse,             // 폐기 수량
+                            discard,             // 폐기 수량
                             reserved,           // 출고 예정 수량
                             master.getAmount().intValue(),
                             master.getRentalAmount().intValue(),

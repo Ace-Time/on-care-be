@@ -19,7 +19,7 @@ public class ResponseProductMasterDetailDTO {
     private int totalProducts;
     private int availableProducts;
     private int rentalProducts;
-    private int disuseProducts;
+    private int discardProducts;
     private int reservedProducts;
     private int purchasePrice;
     private int monthlyRenalFee;
