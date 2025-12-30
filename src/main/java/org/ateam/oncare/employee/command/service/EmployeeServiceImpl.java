@@ -7,7 +7,6 @@ import org.ateam.oncare.alarm.command.service.NotificationCommandService;
 import org.ateam.oncare.auth.command.dto.RequestLogin;
 import org.ateam.oncare.employee.command.dto.RequestAuthorityDTO;
 import org.ateam.oncare.employee.command.dto.EmployeeRegisterDto; // Added
-import org.ateam.oncare.employee.command.dto.RequestAuthorityDTO;
 import org.ateam.oncare.employee.command.dto.ResponseAuthorityDTO;
 import org.ateam.oncare.employee.command.dto.ResponseLoginEmployeeDTO;
 import org.ateam.oncare.employee.command.entity.Authority;
@@ -15,7 +14,7 @@ import org.ateam.oncare.employee.command.entity.Employee;
 import org.ateam.oncare.employee.command.repository.AuthorityRepository;
 import org.ateam.oncare.employee.command.repository.EmployeeRepository;
 import org.ateam.oncare.employee.query.mapper.EmployeeMapper; // Added
-import org.ateam.oncare.global.emun.MasterInternalType;
+import org.ateam.oncare.global.enums.MasterInternalType;
 import org.ateam.oncare.global.eventType.MasterDataEvent;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;

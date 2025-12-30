@@ -12,14 +12,16 @@ public class AggregationOfProductDTO {
     private int total;
     private int available;
     private int rental;
+    private int discard;
     private int reserved;
 
     @QueryProjection
-    public AggregationOfProductDTO(String productCode, int total, int available, int rental, int reserved) {
+    public AggregationOfProductDTO(String productCode, int total, int available, int rental, int discard, int reserved) {
         this.productCode = productCode;
         this.total = total;
         this.available = available;
         this.rental = rental;
         this.reserved = reserved;
+        this.discard = discard;
     }
 }

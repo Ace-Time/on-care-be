@@ -38,6 +38,7 @@ public class ProductHistoryRepositoryImpl implements ProductHistoryRepositoryCus
                 .select(productHistory)
                 .from(productHistory)
                 .where(builder)
+                .orderBy(productHistory.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageSize + 1)
                 .fetch();
