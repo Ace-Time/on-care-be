@@ -3,7 +3,7 @@
 
 <mapper namespace="org.ateam.oncare.careworker.query.mapper.CounselingLogMapper">
 
-    <!-- 방문상담 목록 조회 (요양보호사별) -->
+    <!-- 방문상담 목록 조회 (요양보호사별, matching 기준 현재 배정 중인 수급자만) -->
     <select id="selectCounselingLogList" resultType="org.ateam.oncare.careworker.query.dto.CounselingLogListDto">
         SELECT
             cl.counseling_id AS counselingId,
@@ -27,6 +27,7 @@
                  ) bcl ON b.id = bcl.beneficiary_id
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+                 JOIN matching m ON m.care_worker_id = cw.id AND m.beneficiary_id = cl.beneficiary_id AND m.status = 'Y'
         WHERE cw.employee_id = #{employeeId}
         ORDER BY cl.counseling_date DESC, cl.created_at DESC
     </select>

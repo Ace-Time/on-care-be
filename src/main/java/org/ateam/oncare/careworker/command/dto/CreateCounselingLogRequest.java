@@ -23,4 +23,5 @@ public class CreateCounselingLogRequest {
     private String counselorSignUrl;
     private String guardianSignUrl;
     private Long beneficiaryId;
+    private Boolean isDraft = false;  // 임시저장 여부
 }

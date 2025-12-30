@@ -60,4 +60,7 @@ public class CounselingLogs {
 
     @Column(name = "beneficiary_id", nullable = false)
     private Long beneficiaryId;
+
+    @Column(name = "is_draft", nullable = false)
+    private Boolean isDraft = false;  // 임시저장 여부
 }

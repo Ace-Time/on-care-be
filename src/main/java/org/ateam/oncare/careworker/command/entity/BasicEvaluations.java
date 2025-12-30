@@ -54,6 +54,9 @@ public class BasicEvaluations {
     @Column(name = "care_worker_id", nullable = false)
     private Long careworkerId;
 
+    @Column(name = "is_draft", nullable = false)
+    private Boolean isDraft = false;  // 임시저장 여부
+
     // 내부 Enum 정의
     public enum EvaluationType {
         FALL,      // 낙상

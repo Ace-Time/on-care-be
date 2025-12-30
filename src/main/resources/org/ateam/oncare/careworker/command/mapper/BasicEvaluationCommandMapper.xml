@@ -11,6 +11,7 @@
             eval_date,
             eval_data,
             special_note,
+            is_draft,
             created_at,
             beneficiary_id,
             care_worker_id
@@ -20,6 +21,7 @@
             #{request.evalDate},
             #{request.evalData},
             #{request.specialNote},
+            #{request.isDraft},
             NOW(),
             #{request.beneficiaryId},
             (SELECT id FROM care_worker WHERE employee_id = #{careWorkerId})
@@ -33,6 +35,7 @@
             <if test="request.evalDate != null">eval_date = #{request.evalDate},</if>
             <if test="request.evalData != null">eval_data = #{request.evalData},</if>
             <if test="request.specialNote != null">special_note = #{request.specialNote},</if>
+            <if test="request.isDraft != null">is_draft = #{request.isDraft},</if>
         </set>
         WHERE eval_id = #{evalId}
     </update>

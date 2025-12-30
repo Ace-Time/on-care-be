@@ -48,6 +48,9 @@ public class CareLogs {
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted;
 
+    @Column(name = "is_draft", nullable = false)
+    private Boolean isDraft = false;  // 임시저장 여부
+
     // --- 식사 보조 ---
     @Column(name = "is_breakfast", nullable = false) private Boolean isBreakfast;
     @Column(name = "is_lunch", nullable = false) private Boolean isLunch;

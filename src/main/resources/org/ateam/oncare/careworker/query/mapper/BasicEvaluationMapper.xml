@@ -3,7 +3,7 @@
 
 <mapper namespace="org.ateam.oncare.careworker.query.mapper.BasicEvaluationMapper">
 
-    <!-- 기초평가 목록 조회 (요양보호사별) -->
+    <!-- 기초평가 목록 조회 (요양보호사별, matching 기준 현재 배정 중인 수급자만) -->
     <select id="selectBasicEvaluationList" resultType="org.ateam.oncare.careworker.query.dto.BasicEvaluationListDto">
         SELECT
             be.eval_id AS evalId,
@@ -67,6 +67,7 @@
                  ) bcl ON b.id = bcl.beneficiary_id
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+                 JOIN matching m ON m.care_worker_id = cw.id AND m.beneficiary_id = be.beneficiary_id AND m.status = 'Y'
         WHERE cw.employee_id = #{caregiverId}
         ORDER BY be.eval_date DESC, be.created_at DESC
     </select>
@@ -138,7 +139,7 @@
         ORDER BY be.eval_date DESC, be.created_at DESC
     </select>
 
-    <!-- 기초평가 목록 조회 (평가 유형별) -->
+    <!-- 기초평가 목록 조회 (평가 유형별, matching 기준 현재 배정 중인 수급자만) -->
     <select id="selectBasicEvaluationListByType" resultType="org.ateam.oncare.careworker.query.dto.BasicEvaluationListDto">
         SELECT
             be.eval_id AS evalId,
@@ -202,6 +203,7 @@
                  ) bcl ON b.id = bcl.beneficiary_id
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+                 JOIN matching m ON m.care_worker_id = cw.id AND m.beneficiary_id = be.beneficiary_id AND m.status = 'Y'
         WHERE cw.employee_id = #{caregiverId}
           AND be.eval_type = #{evalType}
           <if test="year != null">
