@@ -33,8 +33,9 @@ public class CareLevelExpirationCommandController {
      */
     @PostMapping("/expirations/{expirationId}/notices/absent")
     public void recordAbsent(@PathVariable Integer expirationId,
-                             @RequestParam Integer empId) {
-        service.recordAbsent(expirationId, empId);
+                             @RequestParam Integer empId,
+                             @RequestParam(required = false) String noticeDate) {
+        service.recordAbsent(expirationId, empId, noticeDate);
     }
 
     /**
