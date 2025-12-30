@@ -5,12 +5,13 @@
 
 <mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BeneficiaryRentalUsageMapper">
 
-    <!-- ✅ 현재 렌탈: 날짜 기준(오늘 포함)+ 오늘날짜기준으로 유효한계약만(상태값(접수/유지 등) 필터링 x -->
-    <select id="selectCurrentRentals"
+    <!-- ✅ 렌탈 목록: 단일 리스트(현재/종료 모두) -->
+    <select id="selectRentals"
             parameterType="long"
             resultType="org.ateam.oncare.beneficiary.query.dto.response.RentalUsageResponse$RentalItem">
 
         SELECT
+        rp.id AS rentalProductId,
         rc.id AS rentalContractId,
         cp.id AS productAssetId,
         mcp.name AS productName,
@@ -36,57 +37,25 @@
         JOIN m_care_product mcp ON mcp.id = cp.product_cd
 
         WHERE rc.beneficiary_id = #{beneficiaryId}
-        /* ✅ 현재(진행중) = 오늘 기준 유효한 계약만 */
-        AND rc.start_date &lt;= CURDATE()
-        AND (rc.end_date IS NULL OR rc.end_date &gt;= CURDATE())    <!-- 오늘 기준 유효한 계약만 남게됨 -->
 
-        ORDER BY rc.start_date DESC, rc.id DESC, cp.id ASC
+        /* ✅ 정렬 규칙
+        1) 종료(contractStatusName='종료')는 아래로
+        2) 현재 그룹: start_date 최신순
+        3) 종료 그룹: end_date 최신순
+        */
+        ORDER BY
+        CASE WHEN cs.name = '종료' THEN 1 ELSE 0 END ASC,
+        CASE WHEN cs.name = '종료' THEN rc.end_date ELSE rc.start_date END DESC,
+        rc.id DESC,
+        rp.id DESC
     </select>
 
-
-    <!-- ✅ 과거 렌탈: 날짜 기준 + (상태값(접수/유지 등) 필터링 x)-->
-    <select id="selectRentalHistories"
-            parameterType="long"
-            resultType="org.ateam.oncare.beneficiary.query.dto.response.RentalUsageResponse$RentalItem">
-
-        SELECT
-        rc.id AS rentalContractId,
-        cp.id AS productAssetId,
-        mcp.name AS productName,
-
-        cs.name AS contractStatusName,
-
-        DATE_FORMAT(rc.start_date, '%Y-%m-%d') AS startDate,
-        DATE_FORMAT(rc.end_date,   '%Y-%m-%d') AS endDate,
-
-        CAST(cp.rental_amount AS SIGNED) AS monthlyAmount,
-
-        CASE
-        WHEN rc.end_date IS NULL THEN NULL
-        ELSE TIMESTAMPDIFF(MONTH, rc.start_date, rc.end_date) + 1
-        END AS durationMonths
-
-        FROM rental_contract rc
-        JOIN contract_status cs ON cs.id = rc.contract_status_cd
-        JOIN rental_product rp ON rp.rental_contract_cd = rc.id
-        JOIN rental_product_status rps ON rps.id = rp.rental_status_id
-        JOIN care_product cp ON cp.id = rp.product_id
-        JOIN m_care_product mcp ON mcp.id = cp.product_cd
-
-        WHERE rc.beneficiary_id = #{beneficiaryId}
-        /* ✅ 과거(종료) = end_date가 있고 오늘보다 이전 */
-        AND rc.end_date IS NOT NULL
-        AND rc.end_date &lt; CURDATE()
-
-        ORDER BY rc.end_date DESC, rc.start_date DESC, rc.id DESC, cp.id ASC
-    </select>
-
-
-    <!-- ✅ 렌탈 모달 상세 조회 (계약 1건 + 용품 1건) + end_date기준(상태값 필터링x)-->
+    <!-- ✅ 렌탈 모달 상세 조회 (계약 1건 + 용품 1건) -->
     <select id="selectRentalContractDetail"
             resultType="org.ateam.oncare.beneficiary.query.dto.response.RentalContractDetailResponse">
 
         SELECT
+        rp.id AS rentalProductId,
         rc.id AS rentalContractId,
         cp.id AS productAssetId,
         mcp.name AS productName,
@@ -119,7 +88,6 @@
         WHERE rc.beneficiary_id = #{beneficiaryId}
         AND rc.id = #{rentalContractId}
         AND cp.id = #{productAssetId}
-
         LIMIT 1
     </select>
 

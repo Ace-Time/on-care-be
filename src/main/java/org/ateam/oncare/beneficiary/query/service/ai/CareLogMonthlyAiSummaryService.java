@@ -226,14 +226,17 @@ public class CareLogMonthlyAiSummaryService {
         return out;
     }
 
+    // 해당 컬럼이 1(true)이면 label이 리스트에 추가
     private void addIfTrue(List<String> target, Boolean v, String label) {
         if (Boolean.TRUE.equals(v)) target.add(label);
     }
 
+    // 조건부 라벨 (기저귀 교체, 화장실 이용에 활용)
     private int safeInt(Integer v) {
         return v == null ? 0 : v;
     }
 
+    // 특이사항 글자 수
     private String truncateNote(String s) {
         if (s == null) return null;
         String t = s.trim();
