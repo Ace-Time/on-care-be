@@ -22,13 +22,13 @@ public class BasicEvaluationDetailDto {
     private Integer templateVersion;
     private LocalDate evalDate;
     private LocalDateTime createdAt;
-
     // 수급자 정보
     private Long beneficiaryId;
     private String beneficiaryName;
     private String beneficiaryAddress;
     private String careLevel;
-
     // 평가 데이터 (JSON)
     private String evalData;
+    // 특이사항
+    private String specialNote;
 }

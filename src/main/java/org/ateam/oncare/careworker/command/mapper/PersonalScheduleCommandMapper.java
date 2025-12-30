@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Param;
 public interface PersonalScheduleCommandMapper {
 
     // 개인 일정 작성
-    int insertPersonalSchedule(@Param("careWorkerId") Long careWorkerId, @Param("request") CreatePersonalScheduleRequest request);
+    int insertPersonalSchedule(@Param("employeeId") Long employeeId, @Param("request") CreatePersonalScheduleRequest request);
 
     // 개인 일정 수정
     int updatePersonalSchedule(@Param("psId") Long psId, @Param("request") UpdatePersonalScheduleRequest request);

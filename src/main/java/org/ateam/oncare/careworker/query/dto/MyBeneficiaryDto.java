@@ -16,4 +16,5 @@ public class MyBeneficiaryDto {
     private String address;
     private String phone;
     private String careLevel;      // 요양등급
+    private String serviceTypes;   // 서비스 유형 (방문요양, 방문목욕, 방문간호)
 }

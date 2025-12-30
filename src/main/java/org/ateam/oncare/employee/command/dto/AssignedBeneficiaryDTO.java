@@ -1,11 +1,15 @@
 package org.ateam.oncare.employee.command.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AssignedBeneficiaryDTO {
 
     // 매칭 정보 (수정/취소 시 필요)
@@ -19,4 +23,7 @@ public class AssignedBeneficiaryDTO {
     private String name;
     private String birthDate;
     private String gender;
+
+    // 담당 요양보호사(직원) 이름
+    private String employeeName;
 }

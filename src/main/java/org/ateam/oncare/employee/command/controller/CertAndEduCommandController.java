@@ -50,4 +50,27 @@ public class CertAndEduCommandController {
         certAndEduCommandService.updateCertificateStatus(id, dto);
         return ResponseEntity.ok("상태가 변경되었습니다.");
     }
+
+    /**
+     * 3. 보수 교육 일괄 등록
+     * URL: POST /api/care-workers/educations/bulk
+     */
+    @PostMapping("/educations/bulk")
+    public ResponseEntity<String> addEducationsBulk(
+            @RequestBody org.ateam.oncare.employee.command.dto.BulkAddEducationDTO dto) {
+        certAndEduCommandService.addEducationsBulk(dto);
+        return ResponseEntity.ok("선택한 대상의 교육 이력이 일괄 등록되었습니다.");
+    }
+
+    private final org.ateam.oncare.employee.scheduler.EducationScheduler educationScheduler;
+
+    /**
+     * 보수교육 알림 스케줄러 수동 실행 (테스트용)
+     * URL: POST /api/care-workers/educations/check
+     */
+    @PostMapping("/educations/check")
+    public ResponseEntity<String> triggerEducationCheck() {
+        educationScheduler.checkEducationStatus();
+        return ResponseEntity.ok("보수교육 알림 체크가 실행되었습니다.");
+    }
 }

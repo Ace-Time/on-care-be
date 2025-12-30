@@ -1,6 +1,5 @@
 package org.ateam.oncare.beneficiary.query.mapper;
 
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.ateam.oncare.beneficiary.query.dto.response.CareLevelExpirationDetailResponse;
@@ -12,9 +11,10 @@ import java.util.List;
 @Mapper
 public interface CareLevelExpirationQueryMapper {
 
-    /* 전체조회 */
+    /* 전체조회 (section + extendsStatus optional) */
     List<CareLevelExpirationListResponse.Item> selectExpirationList(
-            @Param("section") Integer section
+            @Param("section") Integer section,
+            @Param("extendsStatus") String extendsStatus
     );
 
     /* 상세조회 */

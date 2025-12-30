@@ -5,7 +5,7 @@
 
 <mapper namespace="org.ateam.oncare.beneficiary.query.mapper.CareLevelExpirationQueryMapper">
 
-    <!-- 1) 만료 예정 전체조회(섹션 필터 optional) -->
+    <!-- 1) 만료 예정 전체조회(섹션 필터 optional + extendsStatus optional) -->
     <select id="selectExpirationList"
             resultType="org.ateam.oncare.beneficiary.query.dto.response.CareLevelExpirationListResponse$Item">
 
@@ -25,6 +25,8 @@
         e.name AS careWorkerName,
 
         IFNULL(ne.noticeCount, 0) AS noticeCount,
+
+        <!-- DB가 KST면 변환하지 말고 그대로 포맷 -->
         DATE_FORMAT(ne.lastNoticeDate, '%Y-%m-%d %H:%i:%s') AS lastNoticeDate,
 
         CASE
@@ -39,13 +41,12 @@
         JOIN beneficiary_care_level bcl
         ON bcl.beneficiary_id = b.id
 
-        /* ✅ DONE 방문 중 가장 최근 1건을 대표 방문으로 선택 */
+        /* 가장 최근 1건을 대표 방문으로 선택 */
         LEFT JOIN visit_schedule vs_done
         ON vs_done.vs_id = (
         SELECT vs2.vs_id
         FROM visit_schedule vs2
         WHERE vs2.beneficiary_id = b.id
-<!--        AND vs2.visit_status = 'DONE'-->
         ORDER BY vs2.start_dt DESC
         LIMIT 1
         )
@@ -53,7 +54,7 @@
         LEFT JOIN care_worker cw
         ON cw.id = vs_done.care_worker_id
 
-        <!-- ✅ care_worker에는 name이 없으므로 employee에서 이름 조회 -->
+        /* care_worker에는 name이 없으므로 employee에서 이름 조회 */
         LEFT JOIN employee e
         ON e.id = cw.employee_id
 
@@ -66,12 +67,18 @@
         GROUP BY expiration_id
         ) ne ON ne.expiration_id = ecl.id
 
-        <!-- extends_status
-          Y : 연장 예정 (만료 알림 목록 포함)
-          N : 연장 안 함 (만료 알림 목록 제외) -->
         WHERE 1=1
         AND ecl.expired_section IN (1,2,3)
-        AND (ecl.extends_status IS NULL OR ecl.extends_status = 'Y')
+
+        <!-- 핵심: extendsStatus 파라미터가 없으면(기본) 기존처럼 Y/NULL만 -->
+        <if test="extendsStatus == null or extendsStatus == ''">
+            AND (ecl.extends_status IS NULL OR ecl.extends_status = 'Y')
+        </if>
+
+        <!-- extendsStatus가 들어오면 해당 값만 -->
+        <if test="extendsStatus != null and extendsStatus != ''">
+            AND ecl.extends_status = #{extendsStatus}
+        </if>
 
         <if test="section != null">
             AND ecl.expired_section = #{section}
@@ -105,7 +112,7 @@
         g.phone AS guardianPhone,
         g.relation AS guardianRelation,
 
-        /* ✅ 장기요양등급 */
+        /* 장기요양등급 */
         mcl.id AS careLevelId,
         mcl.level AS careLevel
 
@@ -113,18 +120,14 @@
         JOIN beneficiary b
         ON b.id = ecl.beneficiary_id
 
-
-        /* ✅ 여기서 bcl을 가져오고 있으니 bcl.id로 등급 조인 가능 */
         JOIN beneficiary_care_level bcl
         ON bcl.beneficiary_id = b.id
 
-        /* ✅ DONE 방문 중 가장 최근 1건을 대표 방문으로 선택 */
         LEFT JOIN visit_schedule vs_done
         ON vs_done.vs_id = (
         SELECT vs2.vs_id
         FROM visit_schedule vs2
         WHERE vs2.beneficiary_id = b.id
-<!--        AND vs2.visit_status = 'DONE'-->
         ORDER BY vs2.start_dt DESC
         LIMIT 1
         )
@@ -132,7 +135,6 @@
         LEFT JOIN care_worker cw
         ON cw.id = vs_done.care_worker_id
 
-        <!-- ✅ care_worker에는 name이 없으므로 employee에서 이름 조회 -->
         LEFT JOIN employee e
         ON e.id = cw.employee_id
 
@@ -140,19 +142,14 @@
         ON g.beneficiary_id = b.id
         AND g.is_primary = 'Y'
 
-        /* ✅ 등급 조인 추가 */
         LEFT JOIN beneficiary_count bc
         ON bc.beneficiary_care_level_id = bcl.id
 
         LEFT JOIN m_care_level mcl
         ON mcl.id = bc.m_care_level_id
 
-        <!-- extends_status
-          Y : 연장 예정 (만료 알림 목록 포함)
-          N : 연장 안 함 (만료 알림 목록 제외) -->
         WHERE ecl.id = #{expirationId}
         AND ecl.expired_section IN (1,2,3)
-        AND (ecl.extends_status IS NULL OR ecl.extends_status = 'Y')
         LIMIT 1
     </select>
 
@@ -162,13 +159,20 @@
             resultType="org.ateam.oncare.beneficiary.query.dto.response.NoticeExpirationListResponse$Item">
 
         SELECT
-        id AS noticeId,
-        DATE_FORMAT(notice_date, '%Y-%m-%d %H:%i:%s') AS noticeDate,
-        memo AS memo,
-        emp_id AS empId
-        FROM notice_expiration
-        WHERE expiration_id = #{expirationId}
-        ORDER BY notice_date DESC, id DESC
+        ne.id AS noticeId,
+        <!-- DB가 KST면 변환하지 말고 그대로 포맷 -->
+        DATE_FORMAT(ne.notice_date, '%Y-%m-%d %H:%i:%s') AS noticeDate,
+        ne.memo AS memo,
+        ne.emp_id AS empId,
+        <!-- 직원 이름 추가 -->
+        e.name AS empName
+
+        FROM notice_expiration ne
+        LEFT JOIN employee e
+        ON ne.emp_id = e.id
+
+        WHERE ne.expiration_id = #{expirationId}
+        ORDER BY ne.notice_date DESC, ne.id DESC
     </select>
 
 </mapper>

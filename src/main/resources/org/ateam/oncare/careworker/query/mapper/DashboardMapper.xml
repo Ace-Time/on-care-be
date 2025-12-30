@@ -269,7 +269,14 @@
             TIMESTAMPDIFF(YEAR, b.birthdate, CURRENT_DATE) AS age,
             b.address,
             b.phone,
-            COALESCE(mcl.level, '등급없음') AS careLevel
+            COALESCE(mcl.level, '등급없음') AS careLevel,
+            (SELECT GROUP_CONCAT(DISTINCT mst.name ORDER BY mst.name SEPARATOR ', ')
+             FROM visit_schedule vs2
+                      JOIN m_service_type mst ON vs2.service_type_id = mst.id
+             WHERE vs2.beneficiary_id = b.id
+               AND vs2.care_worker_id = cw.id
+               AND vs2.visit_status IN ('SCHEDULED', 'IN_PROGRESS', 'DONE')
+            ) AS serviceTypes
         FROM visit_schedule vs
                  JOIN care_worker cw ON vs.care_worker_id = cw.id
                  JOIN beneficiary b ON vs.beneficiary_id = b.id

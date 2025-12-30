@@ -16,9 +16,9 @@ public class PersonalScheduleCommandService {
     private final PersonalScheduleCommandMapper personalScheduleCommandMapper;
 
     @Transactional
-    public void createPersonalSchedule(Long careWorkerId, CreatePersonalScheduleRequest request) {
-        log.info("개인 일정 작성 시작 - careWorkerId: {}, title: {}", careWorkerId, request.getTitle());
-        int inserted = personalScheduleCommandMapper.insertPersonalSchedule(careWorkerId, request);
+    public void createPersonalSchedule(Long employeeId, CreatePersonalScheduleRequest request) {
+        log.info("개인 일정 작성 시작 - employeeId: {}, title: {}", employeeId, request.getTitle());
+        int inserted = personalScheduleCommandMapper.insertPersonalSchedule(employeeId, request);
 
         if (inserted == 0) {
             throw new IllegalStateException("개인 일정 작성에 실패했습니다.");

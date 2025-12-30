@@ -17,9 +17,10 @@
             vs.visit_status AS status,
             b.name AS recipientName
         FROM visit_schedule vs
+                 JOIN care_worker cw ON vs.care_worker_id = cw.id
                  LEFT JOIN beneficiary b ON vs.beneficiary_id = b.id
                  LEFT JOIN m_service_type mst ON vs.service_type_id = mst.id
-        WHERE vs.care_worker_id = #{caregiverId}
+        WHERE cw.employee_id = #{caregiverId}
           AND (
             DATE(vs.start_dt) BETWEEN #{startDate} AND #{endDate}
             OR
@@ -41,8 +42,9 @@
             ps.schedule_status AS status,
             NULL AS recipientName
         FROM personal_schedule ps
+                 JOIN care_worker cw2 ON ps.care_worker_id = cw2.id
                  LEFT JOIN m_personal_type mpt ON ps.personal_type_id = mpt.id
-        WHERE ps.care_worker_id = #{caregiverId}
+        WHERE cw2.employee_id = #{caregiverId}
           AND (
             DATE(ps.start_dt) BETWEEN #{startDate} AND #{endDate}
             OR
@@ -99,7 +101,7 @@
             DATE_FORMAT(vs.start_dt, '%Y-%m-%d') AS date_str,
             CONCAT(TIME_FORMAT(vs.start_dt, '%H:%i'), '-', TIME_FORMAT(vs.end_dt, '%H:%i')) AS time_range,
             COALESCE(mst.name, '일반') AS service_content,
-            '' AS special_notes,
+            vs.note AS special_notes,
 
             /* 수급자 정보 */
             b.id                AS r_id,
@@ -116,6 +118,7 @@
             ms.name             AS significant_name
 
         FROM visit_schedule vs
+                 JOIN care_worker cw ON vs.care_worker_id = cw.id
                  JOIN beneficiary b ON vs.beneficiary_id = b.id
                  LEFT JOIN m_service_type mst ON vs.service_type_id = mst.id
                  LEFT JOIN (
@@ -138,7 +141,7 @@
                  LEFT JOIN m_significant ms ON bs.significant_id = ms.id
 
         WHERE vs.vs_id = #{scheduleId}
-          AND vs.care_worker_id = #{caregiverId}
+          AND cw.employee_id = #{caregiverId}
     </select>
 
 </mapper>

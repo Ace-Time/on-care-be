@@ -20,5 +20,6 @@ public class NoticeExpirationListResponse {
         private String noticeDate; // yyyy-MM-dd HH:mm:ss
         private String memo;
         private Integer empId;
+        private String empName;
     }
 }

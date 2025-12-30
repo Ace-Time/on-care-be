@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.alarm.query.mapper.NotificationMapper">
+
+    <select id="selectAlarmList" resultType="org.ateam.oncare.alarm.query.dto.NotificationQueryDTO">
+        SELECT
+        l.alarm_id      as alarmId,
+        l.title         as title,
+        l.content       as content,
+        l.severity      as severity,
+        l.sent_at       as sentAt,
+        l.status        as status
+        FROM notification_log l
+        WHERE l.receiver_id = #{receiverId}
+        AND l.status != 'READ'
+        ORDER BY l.sent_at DESC, l.alarm_id DESC
+    </select>
+
+    <select id="countUnread" resultType="int">
+        SELECT count(*)
+        FROM notification_log
+        WHERE receiver_id = #{receiverId}
+        AND status != 'READ'
+    </select>
+</mapper>

@@ -13,4 +13,7 @@ public interface EducationRepository extends JpaRepository<Education, Long> {
     @Modifying
     @Query("DELETE FROM Education e WHERE e.careWorkerCertificateId IN :certIds")
     void deleteAllByCareWorkerCertificateIdIn(@Param("certIds") List<Long> certIds);
+
+    // 다음 교육일(만료일)로 검색
+    List<Education> findByNextEduDate(java.time.LocalDate nextEduDate);
 }

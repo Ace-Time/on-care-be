@@ -3,6 +3,7 @@ package org.ateam.oncare.schedule.query.service;
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.schedule.query.dto.ScheduleDayItemDto;
 import org.ateam.oncare.schedule.query.dto.ScheduleMonthCountDto;
+import org.ateam.oncare.schedule.query.dto.SchedulePageResponse;
 import org.ateam.oncare.schedule.query.mapper.ScheduleMapper;
 import org.springframework.stereotype.Service;
 
@@ -69,5 +70,30 @@ public class ScheduleService {
             case "ALL", "BENEFICIARY", "CAREWORKER", "SERVICE" -> upper;
             default -> "ALL";
         };
+    }
+    public SchedulePageResponse<ScheduleDayItemDto> getDaySchedulesPage(
+            String date,
+            Long beneficiaryId, Integer careWorkerId, Integer serviceTypeId,
+            String keyword, String searchField,
+            int page, int size
+    ) {
+        LocalDate day = LocalDate.parse(date);
+
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        int offset = safePage * safeSize;
+
+        String q = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+        String sf = normalizeSearchField(searchField);
+
+        List<ScheduleDayItemDto> list = scheduleMapper.selectDaySchedulesPaged(
+                day, beneficiaryId, careWorkerId, serviceTypeId, q, sf, offset, safeSize
+        );
+
+        long total = scheduleMapper.countDaySchedules(
+                day, beneficiaryId, careWorkerId, serviceTypeId, q, sf
+        );
+
+        return new SchedulePageResponse<>(list, safePage, safeSize, total);
     }
 }

@@ -31,7 +31,7 @@
             #{request.counselorSignUrl},
             #{request.guardianSignUrl},
             NOW(),
-            #{careWorkerId},
+            (SELECT id FROM care_worker WHERE employee_id = #{employeeId}),
             #{request.beneficiaryId}
         )
     </insert>

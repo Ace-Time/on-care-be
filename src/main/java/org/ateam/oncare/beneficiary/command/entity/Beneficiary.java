@@ -43,6 +43,17 @@ public class Beneficiary {
     @Column(name = "status", nullable = false)
     private Boolean status; // 0:해지, 1:서비스중
 
+    @Column(name = "lat")
+    private Double lat;
+
+    @Column(name = "lng")
+    private Double lng;
+
+    @Column(name = "geo_ready", nullable = false)
+    private Boolean geoReady = false;
+    // false: 아직 좌표 없음
+    // true : 좌표 계산 완료
+
     // --- 외래키 ID 직접 매핑 ---
 
     @Column(name = "potential_customer_id", nullable = false)

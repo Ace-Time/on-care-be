@@ -14,14 +14,16 @@ public class EmployeeDetailDTO {
     private Long id;
     private String name;
     private String phone;
+    private String gender;
+    private LocalDate birth;
     private String email;
     private String address;
     private String emergencyNumber;
     private LocalDate hireDate;
 
     // 조인해서 가져올 데이터들
-    private String deptName;    // 추가: 부서명
-    private String jobName;     // 직책명
+    private String deptName; // 추가: 부서명
+    private String jobName; // 직책명
     private String statusField; // 추가: 상태명
 
     // 경력 리스트
@@ -42,6 +44,5 @@ public class EmployeeDetailDTO {
         private String workPeriod;
         private String task;
     }
-
 
 }

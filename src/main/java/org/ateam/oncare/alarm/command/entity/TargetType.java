@@ -1,5 +1,7 @@
 package org.ateam.oncare.alarm.command.entity;
 
 public enum TargetType {
-    RECIPIENT, EMPLOYEE, BOTH
+    RECIPIENT, // 수급자
+    EMPLOYEE, // 직원
+    BOTH // 둘 다
 }

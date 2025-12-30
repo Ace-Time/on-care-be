@@ -36,6 +36,9 @@ public class NotificationTemplate {
     @Column(name = "is_active", nullable = false)
     private Integer isActive; // 0 or 1
 
+    @Column(name = "severity")
+    private Integer severity;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDate createdAt;

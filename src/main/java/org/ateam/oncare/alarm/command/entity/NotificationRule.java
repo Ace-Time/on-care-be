@@ -23,6 +23,9 @@ public class NotificationRule {
     @Column(name = "template_id", nullable = false)
     private Long templateId;
 
+    @Column(name = "channel_type_id", nullable = false)
+    private Integer channelTypeId;
+
     @Column(name = "offset_days")
     private Integer offsetDays;
 
