@@ -6,7 +6,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
-import java.time.LocalDate;
 import java.util.Collection;
 
 @ToString

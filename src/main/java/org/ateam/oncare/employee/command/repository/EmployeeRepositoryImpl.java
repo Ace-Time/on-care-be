@@ -1,12 +1,8 @@
 package org.ateam.oncare.employee.command.repository;
 
 import com.querydsl.core.Tuple;
-import com.querydsl.core.group.GroupBy;
-import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.auth.command.dto.RequestLogin;
-import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import org.ateam.oncare.employee.command.entity.QAuthoritiesOfEmployee;
 import org.ateam.oncare.employee.command.entity.QAuthority;
 import org.ateam.oncare.employee.command.entity.QEmployee;

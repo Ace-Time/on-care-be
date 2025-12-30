@@ -1,5 +1,6 @@
 package org.ateam.oncare.employee.command.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.employee.command.dto.AddCertificateDTO;
 import org.ateam.oncare.employee.command.dto.AddEducationDTO;
@@ -22,7 +23,7 @@ public class CertAndEduCommandController {
     @PostMapping("/employees/{employeeId}/certificates")
     public ResponseEntity<String> addCertificate(
             @PathVariable Long employeeId,
-            @RequestBody AddCertificateDTO dto) {
+            @Valid @RequestBody AddCertificateDTO dto) {
 
         certAndEduCommandService.addCertificate(employeeId, dto);
         return ResponseEntity.ok("자격증이 추가되었습니다.");
@@ -36,7 +37,7 @@ public class CertAndEduCommandController {
     @PostMapping("/certificates/{careWorkerCertId}/educations")
     public ResponseEntity<String> addEducation(
             @PathVariable Long careWorkerCertId,
-            @RequestBody AddEducationDTO dto) {
+            @Valid @RequestBody AddEducationDTO dto) {
 
         certAndEduCommandService.addEducation(careWorkerCertId, dto);
         return ResponseEntity.ok("보수 교육 이력이 추가되었습니다.");

@@ -2,9 +2,9 @@ package org.ateam.oncare.employee.query.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.employee.command.domain.CertAndEduStatus;
-import org.ateam.oncare.employee.query.service.CertAndEduQueryService;
 import org.ateam.oncare.employee.query.dto.CertificateViewDTO;
 import org.ateam.oncare.employee.query.dto.EducationDTO;
+import org.ateam.oncare.employee.query.service.CertAndEduQueryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

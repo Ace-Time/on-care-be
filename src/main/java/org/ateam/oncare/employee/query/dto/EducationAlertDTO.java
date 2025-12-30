@@ -1,6 +1,7 @@
 package org.ateam.oncare.employee.query.dto;
 
 import lombok.Data;
+
 import java.time.LocalDate;
 
 @Data

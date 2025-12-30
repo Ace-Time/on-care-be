@@ -16,7 +16,7 @@ public class NotificationQueryDTO {
     private String title;
     private String content; // Renamed from message
     private Integer severity;
-    private java.time.LocalDateTime sentAt;
+    private LocalDateTime sentAt;
     private String status; // Added for MyBatis mapping
     private boolean isRead;
 

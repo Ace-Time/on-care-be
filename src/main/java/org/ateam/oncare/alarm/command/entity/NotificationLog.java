@@ -2,6 +2,7 @@ package org.ateam.oncare.alarm.command.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity

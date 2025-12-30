@@ -2,9 +2,11 @@ package org.ateam.oncare.alarm.command.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.alarm.command.dto.NotificationRequest;
-
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/test/alarm") // 테스트용 경로

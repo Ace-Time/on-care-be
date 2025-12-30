@@ -1,14 +1,12 @@
 package org.ateam.oncare.employee.query.controller;
 
 import lombok.RequiredArgsConstructor;
-
+import org.ateam.oncare.employee.query.dto.ScheduleResDTO;
 import org.ateam.oncare.employee.query.service.EmployeeQueryService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import org.ateam.oncare.employee.query.dto.ScheduleResDTO;
 
 import java.util.List;
 
