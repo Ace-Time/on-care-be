@@ -3,6 +3,7 @@ package org.ateam.oncare.employee.query.service;
 import org.ateam.oncare.employee.query.dto.EmployeeDetailDTO;
 import org.ateam.oncare.employee.query.dto.EmployeeListDTO;
 import org.ateam.oncare.employee.query.dto.EmployeeSearchCondition;
+
 import java.util.List;
 
 public interface EmployeeQueryService {
@@ -66,4 +67,11 @@ public interface EmployeeQueryService {
      * @return 직원 수
      */
     int countOnLeaveEmployees();
+
+    /**
+     * 직급별 직원 수 조회
+     *
+     * @return 직급별 직원 수 리스트
+     */
+    List<org.ateam.oncare.employee.query.dto.EmployeeCountByJobDTO> countEmployeesByJob();
 }
