@@ -24,4 +24,5 @@ public class CareLogListDto {
     private String beneficiaryAddress;
     private String careLevel;
     private String specialNote;
+    private Boolean isDraft;  // 임시저장 여부
 }

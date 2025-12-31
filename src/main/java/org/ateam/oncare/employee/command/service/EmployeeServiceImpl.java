@@ -2,16 +2,18 @@ package org.ateam.oncare.employee.command.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.alarm.command.dto.NotificationRequest;
 import org.ateam.oncare.alarm.command.service.NotificationCommandService;
 import org.ateam.oncare.auth.command.dto.RequestLogin;
 import org.ateam.oncare.employee.command.dto.RequestAuthorityDTO;
-import org.ateam.oncare.employee.command.dto.EmployeeRegisterDto; // Added
+import org.ateam.oncare.employee.command.dto.EmployeeRequestDTO;
 import org.ateam.oncare.employee.command.dto.ResponseAuthorityDTO;
 import org.ateam.oncare.employee.command.dto.ResponseLoginEmployeeDTO;
 import org.ateam.oncare.employee.command.entity.Authority;
 import org.ateam.oncare.employee.command.entity.Employee;
+import org.ateam.oncare.employee.command.entity.EmployeeCareer;
 import org.ateam.oncare.employee.command.repository.AuthorityRepository;
+import org.ateam.oncare.employee.command.repository.EmployeeCareerCommandRepository;
+import org.ateam.oncare.employee.command.repository.EmployeeCommandRepository;
 import org.ateam.oncare.employee.command.repository.EmployeeRepository;
 import org.ateam.oncare.employee.query.mapper.EmployeeMapper; // Added
 import org.ateam.oncare.global.enums.MasterInternalType;
@@ -20,13 +22,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import org.ateam.oncare.employee.command.dto.EmployeeRequestDTO;
-import org.ateam.oncare.employee.command.entity.Employee;
-import org.ateam.oncare.employee.command.entity.EmployeeCareer;
-import org.ateam.oncare.employee.command.repository.EmployeeCommandRepository;
-import org.ateam.oncare.employee.command.repository.EmployeeCareerCommandRepository;
-
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -43,7 +38,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeMapper employeeMapper;
     private final NotificationCommandService notificationCommandService; // 알림 발송 도구
 
-    // [추가] JPA Repositories
     private final EmployeeCommandRepository employeeCommandRepository;
     private final EmployeeCareerCommandRepository employeeCareerCommandRepository;
 

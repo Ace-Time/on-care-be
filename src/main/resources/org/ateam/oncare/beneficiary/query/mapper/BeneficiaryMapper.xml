@@ -141,13 +141,14 @@
                 )
             </if>
 
-            <!-- ✅ 요양보호사 필터링: 해당 요양보호사가 담당하는 수급자만 조회 -->
+            <!-- ✅ 요양보호사 필터링: matching 기준 현재 배정 중인 수급자만 조회 -->
             <if test="careWorkerId != null">
                 AND EXISTS (
                     SELECT 1
-                    FROM visit_schedule vs
-                    WHERE vs.beneficiary_id = b.id
-                    AND vs.care_worker_id = #{careWorkerId}
+                    FROM matching m
+                    WHERE m.beneficiary_id = b.id
+                    AND m.care_worker_id = #{careWorkerId}
+                    AND m.status = 'Y'
                 )
             </if>
         </where>

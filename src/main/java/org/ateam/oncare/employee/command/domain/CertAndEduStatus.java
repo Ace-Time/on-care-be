@@ -2,6 +2,7 @@ package org.ateam.oncare.employee.command.domain;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+
 import java.util.Arrays;
 
 @Getter

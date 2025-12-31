@@ -7,11 +7,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -29,10 +29,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-
     private final JwtTokenProvider tokenProvider;
     private final UserDetailsService userDetailsService;
-
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -44,21 +42,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = tokenProvider.getClaimsFromAT(jwt);
                 String username = claims.getSubject();
 
-                //추 후 Redis 적용시 Redis에서 토큰 유효성 검사 후 인증 예정 현재는 기능 중지
-//                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                // 추 후 Redis 적용시 Redis에서 토큰 유효성 검사 후 인증 예정 현재는 기능 중지
+                // UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                List<String> authoritiesStr = claims.get("auth",List.class);
+                List<String> authoritiesStr = claims.get("auth", List.class);
 
                 // 토큰에서 권환 추출
-                Collection<? extends GrantedAuthority> authorities =
-                        authoritiesStr.stream()
-                                .map(SimpleGrantedAuthority::new)
-                                .collect(Collectors.toList());
+                Collection<? extends GrantedAuthority> authorities = authoritiesStr.stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
 
-                User principal = new User(username, "",authorities);
+                EmployeeImpl principal = new EmployeeImpl(username, "", authorities);
+                principal.setDetails(
+                        claims.get("id", Long.class),
+                        username,
+                        claims.get("username", String.class),
+                        null, // phone info not in token
+                        claims.get("jobname", String.class));
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(principal, null, authorities);
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(principal,
+                        null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);

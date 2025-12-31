@@ -73,6 +73,7 @@ public interface MatchingQueryMapper {
             @Param("startDt") String startDt,
             @Param("endDt") String endDt
     );
+    ServiceTypePairDto selectBeneficiaryPrimaryServiceType(@Param("beneficiaryId") Long beneficiaryId);
 
     List<CareWorkerIdDto> selectCareWorkerIdsByServiceTypeId(@Param("serviceTypeId") Long serviceTypeId);
 

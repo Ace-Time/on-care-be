@@ -345,4 +345,16 @@
         WHERE s.field = '휴직'
     </select>
 
+    <select id="countEmployeesByJob" resultType="org.ateam.oncare.employee.query.dto.EmployeeCountByJobDTO">
+        SELECT
+            j.name AS jobName,
+            COUNT(e.id) AS count
+        FROM employee e
+        LEFT JOIN m_job j ON e.job_code = j.id
+        LEFT JOIN m_status s ON e.status_id = s.status
+        WHERE s.field = '재직'
+        GROUP BY j.id, j.name
+        ORDER BY j.id ASC
+    </select>
+
 </mapper>

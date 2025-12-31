@@ -1,8 +1,6 @@
 package org.ateam.oncare.employee.query.service;
 
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.employee.query.dto.EmployeeDetailDTO;
-import org.ateam.oncare.employee.query.dto.EmployeeListDTO;
 import org.ateam.oncare.employee.query.dto.*;
 import org.ateam.oncare.employee.query.mapper.EmployeeMapper;
 import org.springframework.stereotype.Service;
@@ -103,6 +101,11 @@ public class EmployeeQueryServiceImpl implements EmployeeQueryService {
     @Override
     public int countOnLeaveEmployees() {
         return employeeMapper.countOnLeaveEmployees();
+    }
+
+    @Override
+    public List<EmployeeCountByJobDTO> countEmployeesByJob() {
+        return employeeMapper.countEmployeesByJob();
     }
 
     // [기존] 방문 일정 변환 메서드

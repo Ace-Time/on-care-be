@@ -136,7 +136,18 @@ public class MatchingQueryService {
             log.warn("[BENEFICIARY DETAIL] beneficiaryId={} NOT FOUND", beneficiaryId);
             return null;
         }
-        log.info("[BENEFICIARY DETAIL] beneficiaryId={} name={}", beneficiaryId, detail.getName());
+
+        var st = mapper.selectBeneficiaryPrimaryServiceType(beneficiaryId);
+        if (st != null) {
+            detail.setServiceTypeId(st.getServiceTypeId());
+            detail.setServiceTypeName(st.getServiceTypeName());
+        }
+
+        detail.setServiceTypes(mapper.selectBeneficiaryServiceTypes(beneficiaryId));
+
+        log.info("[BENEFICIARY DETAIL] beneficiaryId={} name={} serviceTypeId={}",
+                beneficiaryId, detail.getName(), detail.getServiceTypeId());
+
         return detail;
     }
 
