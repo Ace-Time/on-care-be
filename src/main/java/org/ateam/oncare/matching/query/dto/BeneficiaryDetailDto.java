@@ -18,6 +18,8 @@ public class BeneficiaryDetailDto {
     /* =========================
        수급자 요구 조건
     ========================== */
+    private Long serviceTypeId;
+    private String serviceTypeName;
 
     /** 필요 서비스 유형 (방문요양, 방문간호 등) */
     private List<String> serviceTypes;
