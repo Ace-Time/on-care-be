@@ -9,7 +9,7 @@ import org.ateam.oncare.auth.command.dto.ResponseToken;
 import org.ateam.oncare.auth.command.mapper.EmployeeMapper;
 import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import org.ateam.oncare.employee.command.service.EmployeeService;
-import org.ateam.oncare.global.emun.MasterInternalType;
+import org.ateam.oncare.global.enums.MasterInternalType;
 import org.ateam.oncare.global.eventType.MasterDataEvent;
 import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.jspecify.annotations.Nullable;

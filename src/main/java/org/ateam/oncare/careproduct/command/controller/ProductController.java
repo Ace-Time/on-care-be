@@ -55,6 +55,16 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(count);
     }
 
+
+    @GetMapping("/product-status")
+    public ResponseEntity<List<ResponseProductStatusDTO>> getProductStatus() {
+        List<ResponseProductStatusDTO> responseDTO
+                = productService.getProductStatus();
+
+        return ResponseEntity.ok()
+                .body(responseDTO);
+    }
+
     /**
      * 관리용품 탭에 정보로 실 제품의 총재고, 가용, 렌탈 중인 데이터를 포함한 조회
      *

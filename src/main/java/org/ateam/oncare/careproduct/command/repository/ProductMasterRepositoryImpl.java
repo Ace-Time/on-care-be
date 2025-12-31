@@ -1,6 +1,7 @@
 package org.ateam.oncare.careproduct.command.repository;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,9 +45,9 @@ public class ProductMasterRepositoryImpl implements ProductMasterRepositoryCusto
                     .or(master.id.containsIgnoreCase(condition.getCodeOrName())));
         }
 
-        List<CareProductMaster> entities =
+        List<Tuple> tuples =
                 queryFactory
-                        .select(master)
+                        .select(master, category.name)
                         .from(master)
                         .leftJoin(category).on(master.categoryCd.eq(category.id))
                         .where(builder)
@@ -55,14 +56,18 @@ public class ProductMasterRepositoryImpl implements ProductMasterRepositoryCusto
                         .fetch();
 
         boolean hasNext = false;
-        if (entities.size() > pageSize) {
+        if (tuples.size() > pageSize) {
             hasNext = true;
-            entities.remove(pageSize);   // 뒤에 데이터가 있는지 확인을 위해 1개 더 가지고온 데이터 삭제
+            tuples.remove(pageSize);   // 뒤에 데이터가 있는지 확인을 위해 1개 더 가지고온 데이터 삭제
         }
 
-        List<ResponseProductMasterDTO> dtos
-                = entities.stream()
-                .map(productMasterMapper::toProductMasterDTO)
+        List<ResponseProductMasterDTO> dtos = tuples.stream()
+                .map(t -> {
+                    ResponseProductMasterDTO dto = productMasterMapper.toProductMasterDTO(t.get(master));
+                    dto.setCategoryName(t.get(category.name));
+
+                    return dto;
+                })
                 .toList();
 
         return new SliceImpl<>(dtos, pageable, hasNext);

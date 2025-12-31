@@ -47,14 +47,14 @@
                 #{noticeDate}
             </when>
             <otherwise>
-                notice_date
+                NOW()
             </otherwise>
         </choose>
         ,
         memo = #{memo},
         emp_id = #{empId}
         WHERE id = #{noticeId}
-            AND expiration_id = #{expirationId}
+        AND expiration_id = #{expirationId}
     </update>
 
     <!-- 안내이력 삭제 -->

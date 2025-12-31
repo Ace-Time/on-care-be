@@ -8,8 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreateNoticeRequest {
-    // "2025-12-16 10:00:00" 같은 문자열로 받거나 프론트에서 ISO로 보내도 됨
-    private String noticeDate;
+    private String noticeDate; // 프론트에서 직접입력하면 받는 날짜
     private String memo;
     private Integer empId;
 }

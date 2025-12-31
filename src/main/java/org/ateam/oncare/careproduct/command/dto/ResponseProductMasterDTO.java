@@ -20,4 +20,5 @@ public class ResponseProductMasterDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String categoryCd;
+    private String categoryName;
 }
