@@ -10,5 +10,5 @@ import java.util.Optional;
 public interface PotentialStageRepository extends JpaRepository<PotentialStage,Long> {
     List<PotentialStage> findAllByPotentialCustomerId(Long potentialId);
 
-    Optional<PotentialStage> findByPotentialCustomerIdAndStage(long l, int stage);
+    Optional<PotentialStage> findByPotentialCustomerIdAndStage(long potentialCustomerId, int stage);
 }

@@ -47,13 +47,10 @@ public class CounselCommandController {
     }
 
     // 가입 상담 단계별 저장 -> 프론트 구현 후 작성
-//    @PostMapping("/potentialStage/{stage}/{customerId}")
-//    public ResponseEntity<SaveStageDataResponse> saveStageData(@RequestBody StageData request,
-//                                                               @PathVariable int stage,
-//                                                               @PathVariable BigInteger customerId,
-//                                                               @RequestParam String customerType) {
-//        return counselFacadeService.saveStageData(request, stage, customerId, customerType);
-//    }
+    @PostMapping("/potentialStage/{stage}/{customerId}")
+    public ResponseEntity<SaveStageDataResponse> saveStageData(@RequestBody StageData request) {
+        return counselFacadeService.saveStageData(request);
+    }
 
 
 

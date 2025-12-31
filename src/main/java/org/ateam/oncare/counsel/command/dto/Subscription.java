@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -35,5 +36,5 @@ public class Subscription implements CounselHistoryRequired {
 
     // 1단계에서 저장하는걸 반드시 전재한다고 생각하기
     private int stage;
-    private String htmlCode;
+    private Map<String, Object> stageData;
 }

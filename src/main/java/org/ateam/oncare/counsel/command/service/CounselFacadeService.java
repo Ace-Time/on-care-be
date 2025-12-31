@@ -96,9 +96,10 @@ public class CounselFacadeService {
 
 
     // 가입 상담 단계별 저장
-//    public ResponseEntity<SaveStageDataResponse> saveStageData(StageData request, int stage, BigInteger customerId, String customerType) {
-//
-//    }
+    public ResponseEntity<SaveStageDataResponse> saveStageData(StageData request) {
+        potentialStageService.updateStageData(request);
+        return ResponseEntity.ok(new SaveStageDataResponse());
+    }
 
     private NewSubscriptionResponse buildNewSubscriptionResponse(CounselHistory counselHistory) {
         NewSubscriptionResponse response = new NewSubscriptionResponse();

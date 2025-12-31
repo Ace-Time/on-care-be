@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @ToString
 public class GeneralCounselResponse {
     private BigInteger counselHistoryId;
-    private Integer counselCategoryName;
+    private Integer counselCategoryId;
     private String detail;
     private String summary;
     private int guardianSt;
@@ -42,7 +42,7 @@ public class GeneralCounselResponse {
                 .churn(entity.getChurn())
                 .churnReason(entity.getChurnReason())
                 .reservationChannelId(entity.getReservationChannelId() != null ? entity.getReservationChannelId() : 0)
-                .counselCategoryName(entity.getCounselCategoryId())
+                .counselCategoryId(entity.getCounselCategoryId())
 
                 // 수급자/잠재고객 ID 매핑 (null 체크 포함)
                 .beneficiaryId(entity.getBeneficiaryId() != null ? BigInteger.valueOf(entity.getBeneficiaryId()) : null)

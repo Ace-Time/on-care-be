@@ -45,7 +45,7 @@ public class CounselQueryController {
         return ResponseEntity.ok(counselQueryService.findCounselDetailById(counselHistoryId));
     }
 
-    // 잠재고객의 가입상담 시 제공 정보
+    // 해당 고객의 가입상담 프로세스 제공 정보
 //    @GetMapping("/subscription/{customerId}")
 //    public ResponseEntity<>
 
