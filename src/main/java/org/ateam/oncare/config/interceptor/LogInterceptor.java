@@ -21,16 +21,16 @@ public class LogInterceptor implements HandlerInterceptor {
         String clientIp = request.getRemoteAddr();
 
 
-        // 1. 고유 ID 생성 (UUID 앞 8자리만 써도 충분히 식별 가능)
+        // 고유 ID 생성 (UUID 앞 8자리만 써도 충분히 식별 가능)
         String traceId = UUID.randomUUID().toString().substring(0, 8);
 
-        // 2. MDC에 저장 (Key 이름: "traceId") Thread 전용 저장소(쓰레드 유지되는동안 유지됨)
+        // MDC에 저장 (Key 이름: "traceId") Thread 전용 저장소(쓰레드 유지되는동안 유지됨)
         MDC.put("traceId", traceId);
 
-        // 3. 시간 측정 시작
+        // 시간 측정 시작
         request.setAttribute("startTime", System.currentTimeMillis());
 
-        // (선택) 요청 시작 로그 남기기
+        // 요청 시작 로그 남기기
         logger.info("[START] {} | Request incoming",clientIp);
 
         return true;
@@ -62,7 +62,6 @@ public class LogInterceptor implements HandlerInterceptor {
             logger.info("[END] " + message ); // 끝났음을 명시
         }
 
-        // ★ 중요: 쓰레드 풀을 쓰기 때문에 다 쓴 뒤에는 반드시 지워야 함!
         // 안 지우면 다음 요청이 이 쓰레드를 재사용할 때 이전 ID가 남아있을 수 있음.
         MDC.clear();
     }

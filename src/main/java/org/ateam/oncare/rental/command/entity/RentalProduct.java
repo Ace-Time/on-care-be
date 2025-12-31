@@ -2,6 +2,9 @@ package org.ateam.oncare.rental.command.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -10,6 +13,9 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
+@DynamicInsert
+@DynamicUpdate
 public class RentalProduct {
 
     @Id

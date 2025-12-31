@@ -1,5 +1,8 @@
 package org.ateam.oncare.beneficiary.command.service;
 
+// 현재탭: noticeDate null -> NOW()
+// 직접입력탭: noticeDate 값 -> 그 시간으로 업데이트
+
 import lombok.RequiredArgsConstructor;
 import org.ateam.oncare.beneficiary.command.dto.request.CreateNoticeRequest;
 import org.ateam.oncare.beneficiary.command.dto.request.UpdateExtendsStatusRequest;
@@ -25,13 +28,8 @@ public class CareLevelExpirationCommandService {
      * - outbound_status = 'N'
      */
     @Transactional
-    public void recordAbsent(Integer expirationId, Integer empId) {
-        mapper.insertNotice(
-                expirationId,
-                null,
-                "연락 시도했으나 부재중. 추후 재연락 필요.",
-                empId
-        );
+    public void recordAbsent(Integer expirationId, Integer empId, String noticeDate) {
+        mapper.insertNotice(expirationId, noticeDate, "연락 시도했으나 부재중. 추후 재연락 필요.", empId);
         mapper.updateOutboundStatus(expirationId, "N");
     }
 
@@ -42,17 +40,14 @@ public class CareLevelExpirationCommandService {
      */
     @Transactional
     public void completeNotice(Integer expirationId, CreateNoticeRequest req) {
-        mapper.insertNotice(
-                expirationId,
-                req.getNoticeDate(),
-                req.getMemo(),
-                req.getEmpId()
-        );
+        mapper.insertNotice(expirationId, req.getNoticeDate(), req.getMemo(), req.getEmpId());
         mapper.updateOutboundStatus(expirationId, "Y");
     }
 
     @Transactional
     public int updateNotice(Integer expirationId, Integer noticeId, UpdateNoticeRequest req) {
+        // 현재탭: noticeDate null -> NOW()
+        // 직접입력탭: noticeDate 값 -> 그 시간으로 업데이트
         return mapper.updateNotice(expirationId, noticeId, req.getNoticeDate(), req.getMemo(), req.getEmpId());
     }
 

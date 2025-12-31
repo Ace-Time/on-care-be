@@ -1,5 +1,9 @@
 package org.ateam.oncare.config.exception;
 
+import org.ateam.oncare.config.customexception.ExistsAlreadyProductMasterException;
+import org.ateam.oncare.config.customexception.InsufficientStockException;
+import org.ateam.oncare.config.customexception.InvalidRentalDateException;
+import org.ateam.oncare.config.customexception.NotFoundProductMasterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -51,6 +55,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body("잘못된 주소입니다.");
+    }
+
+    @ExceptionHandler(NotFoundProductMasterException.class)
+    public ResponseEntity<String> handle500(Exception e) {
+        log.error( e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("제품의 마스터 정보를 찾지 못 했습니다.");
+    }
+
+    @ExceptionHandler({InsufficientStockException.class, InvalidRentalDateException.class
+    , ExistsAlreadyProductMasterException.class})
+    public ResponseEntity<String> BAD_REQUEST(Exception e) {
+        log.error(e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(e.getMessage());
     }
 
     /**
