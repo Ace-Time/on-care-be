@@ -3,7 +3,7 @@
 
 <mapper namespace="org.ateam.oncare.careworker.query.mapper.CareLogMapper">
 
-    <!-- 요양일지 목록 조회 (요양보호사별) -->
+    <!-- 요양일지 목록 조회 (요양보호사별, matching 기준 현재 배정 중인 수급자만) -->
     <select id="selectCareLogList" resultType="org.ateam.oncare.careworker.query.dto.CareLogListDto">
         SELECT
             cl.log_id AS logId,
@@ -16,7 +16,8 @@
             b.name AS beneficiaryName,
             b.address AS beneficiaryAddress,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            cl.special_note AS specialNote
+            cl.special_note AS specialNote,
+            cl.is_draft AS isDraft
         FROM care_logs cl
                  JOIN care_worker cw ON cl.care_worker_id = cw.id
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
@@ -31,6 +32,7 @@
                  ) bcl ON b.id = bcl.beneficiary_id
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+                 JOIN matching m ON m.care_worker_id = cw.id AND m.beneficiary_id = cl.beneficiary_id AND m.status = 'Y'
         WHERE cw.employee_id = #{employeeId}
           AND cl.is_deleted = FALSE
         ORDER BY cl.service_date DESC, cl.created_at DESC
@@ -49,7 +51,8 @@
             b.name AS beneficiaryName,
             b.address AS beneficiaryAddress,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            cl.special_note AS specialNote
+            cl.special_note AS specialNote,
+            cl.is_draft AS isDraft
         FROM care_logs cl
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
                  LEFT JOIN (
@@ -124,7 +127,8 @@
             cl.is_mood_etc AS isMoodEtc,
             cl.is_sleep_lack AS isSleepLack,
             cl.is_nap_excess AS isNapExcess,
-            cl.special_note AS specialNote
+            cl.special_note AS specialNote,
+            cl.is_draft AS isDraft
         FROM care_logs cl
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
                  LEFT JOIN (

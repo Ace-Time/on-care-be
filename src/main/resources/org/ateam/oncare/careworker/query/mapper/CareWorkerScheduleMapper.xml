@@ -20,6 +20,7 @@
                  JOIN care_worker cw ON vs.care_worker_id = cw.id
                  LEFT JOIN beneficiary b ON vs.beneficiary_id = b.id
                  LEFT JOIN m_service_type mst ON vs.service_type_id = mst.id
+                 JOIN matching m ON m.care_worker_id = cw.id AND m.beneficiary_id = vs.beneficiary_id AND m.status = 'Y'
         WHERE cw.employee_id = #{caregiverId}
           AND (
             DATE(vs.start_dt) BETWEEN #{startDate} AND #{endDate}

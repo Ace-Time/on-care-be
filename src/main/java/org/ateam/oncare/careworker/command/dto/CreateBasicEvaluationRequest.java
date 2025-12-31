@@ -26,6 +26,9 @@ public class CreateBasicEvaluationRequest {
     @Setter
     private String specialNote;  // 특이사항
 
+    @Setter
+    private Boolean isDraft = false;  // 임시저장 여부
+
     // JSON 객체를 문자열로 자동 변환
     @JsonSetter("evalData")
     public void setEvalData(Object evalData) {

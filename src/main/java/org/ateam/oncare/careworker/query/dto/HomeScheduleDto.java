@@ -11,6 +11,7 @@ public class HomeScheduleDto {
     private Long beneficiaryId;        // 수급자 ID
     private String recipientName;      // 수급자 이름
     private String grade;              // 등급 (예: 2등급)
+    private String serviceType;        // 서비스 유형 (예: 방문요양, 방문간호)
     private String visitTime;          // 예정 방문 시간 (예: 09:00-11:00)
     private String address;            // 주소
     private String status;             // 상태 (예: 진행중, 완료)

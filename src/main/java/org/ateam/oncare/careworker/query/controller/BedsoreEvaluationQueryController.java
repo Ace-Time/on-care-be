@@ -1,12 +1,12 @@
 package org.ateam.oncare.careworker.query.controller;
 
-import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.ateam.oncare.careworker.query.dto.ApiResponse;
 import org.ateam.oncare.careworker.query.dto.BasicEvaluationDetailDto;
 import org.ateam.oncare.careworker.query.dto.BasicEvaluationListDto;
 import org.ateam.oncare.careworker.query.service.BasicEvaluationQueryService;
-import io.jsonwebtoken.Claims;
+import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,26 +17,15 @@ import java.util.List;
 public class BedsoreEvaluationQueryController {
 
     private final BasicEvaluationQueryService basicEvaluationQueryService;
-    private final JwtTokenProvider jwtTokenProvider;
     private static final String EVAL_TYPE = "BEDSORE";
-
-    // JWT 토큰에서 사용자 ID 추출
-    private Long getEmployeeIdFromToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            Claims claims = jwtTokenProvider.getClaimsFromAT(token);
-            return claims.get("id", Long.class);
-        }
-        return 1L; // fallback
-    }
 
     // 1. 욕창위험도 평가 목록 조회 (요양보호사별)
     @GetMapping
     public ApiResponse<List<BasicEvaluationListDto>> getBedsoreEvaluationList(
-            @RequestHeader("Authorization") String authHeader,
+            @AuthenticationPrincipal EmployeeImpl employee,
             @RequestParam(required = false) Integer year) {
-        Long employeeId = getEmployeeIdFromToken(authHeader);
-        List<BasicEvaluationListDto> data = basicEvaluationQueryService.getBasicEvaluationListByType(employeeId, EVAL_TYPE, year);
+        List<BasicEvaluationListDto> data = basicEvaluationQueryService.getBasicEvaluationListByType(employee.getId(),
+                EVAL_TYPE, year);
         return ApiResponse.success(data);
     }
 
@@ -45,7 +34,8 @@ public class BedsoreEvaluationQueryController {
     public ApiResponse<List<BasicEvaluationListDto>> getBedsoreEvaluationListByBeneficiary(
             @PathVariable Long beneficiaryId,
             @RequestParam(required = false) Integer year) {
-        List<BasicEvaluationListDto> data = basicEvaluationQueryService.getBasicEvaluationListByBeneficiaryAndType(beneficiaryId, EVAL_TYPE, year);
+        List<BasicEvaluationListDto> data = basicEvaluationQueryService
+                .getBasicEvaluationListByBeneficiaryAndType(beneficiaryId, EVAL_TYPE, year);
         return ApiResponse.success(data);
     }
 

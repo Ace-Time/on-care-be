@@ -12,7 +12,7 @@ import java.util.Collection;
 @ToString
 @Getter
 public class EmployeeImpl extends User {
-    private Integer id;
+    private Long id;
     private String email;
     private String name;
     private String phone;
@@ -23,7 +23,7 @@ public class EmployeeImpl extends User {
         super(username, password, authorities);
     }
 
-    public void setDetails(Integer id, String email, String name, String phone, String jobName) {
+    public void setDetails(Long id, String email, String name, String phone, String jobName) {
         this.id = id;
         this.email = email;
         this.name = name;

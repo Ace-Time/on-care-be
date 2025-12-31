@@ -1,14 +1,14 @@
 package org.ateam.oncare.careworker.command.controller;
 
-import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.ateam.oncare.careworker.command.dto.CompleteVisitRequest;
 import org.ateam.oncare.careworker.command.dto.CreateVisitScheduleRequest;
 import org.ateam.oncare.careworker.command.dto.StartVisitRequest;
 import org.ateam.oncare.careworker.command.dto.UpdateVisitScheduleRequest;
 import org.ateam.oncare.careworker.command.service.VisitScheduleCommandService;
 import org.ateam.oncare.careworker.query.dto.ApiResponse;
-import io.jsonwebtoken.Claims;
+import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,17 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class VisitScheduleCommandController {
 
     private final VisitScheduleCommandService visitScheduleCommandService;
-    private final JwtTokenProvider jwtTokenProvider;
-
-    // JWT 토큰에서 사용자 ID 추출
-    private Long getEmployeeIdFromToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            Claims claims = jwtTokenProvider.getClaimsFromAT(token);
-            return claims.get("id", Long.class);
-        }
-        return 1L; // fallback
-    }
 
     // 1. 방문 일정 서비스 시작 (SCHEDULED → IN_PROGRESS) - 현재 시간 자동 기록
     @PostMapping("/{vsId}/start")
@@ -46,10 +35,9 @@ public class VisitScheduleCommandController {
     // 3. 방문 요양 일정 작성
     @PostMapping
     public ApiResponse<Void> createVisitSchedule(
-            @RequestHeader("Authorization") String authHeader,
+            @AuthenticationPrincipal EmployeeImpl employee,
             @RequestBody CreateVisitScheduleRequest request) {
-        Long careWorkerId = getEmployeeIdFromToken(authHeader);
-        visitScheduleCommandService.createVisitSchedule(careWorkerId, request);
+        visitScheduleCommandService.createVisitSchedule(employee.getId(), request);
         return ApiResponse.success(null);
     }
 

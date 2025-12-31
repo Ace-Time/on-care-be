@@ -19,13 +19,13 @@
             is_health_good, is_pain, is_edema, is_skin_issue, is_body_etc,
             is_mood_calm, is_mood_anxious, is_mood_depressed, is_mood_angry, is_mood_etc,
             is_excretion_mistake, is_sleep_lack, is_nap_excess,
-            special_note, care_worker_id, beneficiary_id
+            special_note, is_draft, care_worker_id, beneficiary_id
         ) VALUES (
             COALESCE(
                 #{request.vsId},
                 (SELECT vs_id FROM visit_schedule
                  WHERE beneficiary_id = #{request.beneficiaryId}
-                   AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId})
+                   AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId} LIMIT 1)
                    AND DATE(start_dt) = #{request.serviceDate}
                  ORDER BY start_dt DESC
                  LIMIT 1)
@@ -43,7 +43,7 @@
             #{request.isHealthGood}, #{request.isPain}, #{request.isEdema}, #{request.isSkinIssue}, #{request.isBodyEtc},
             #{request.isMoodCalm}, #{request.isMoodAnxious}, #{request.isMoodDepressed}, #{request.isMoodAngry}, #{request.isMoodEtc},
             #{request.isExcretionMistake}, #{request.isSleepLack}, #{request.isNapExcess},
-            #{request.specialNote}, (SELECT id FROM care_worker WHERE employee_id = #{employeeId}), #{request.beneficiaryId}
+            #{request.specialNote}, #{request.isDraft}, (SELECT id FROM care_worker WHERE employee_id = #{employeeId} LIMIT 1), #{request.beneficiaryId}
         )
     </insert>
 
@@ -98,6 +98,7 @@
             <if test="request.isSleepLack != null">is_sleep_lack = #{request.isSleepLack},</if>
             <if test="request.isNapExcess != null">is_nap_excess = #{request.isNapExcess},</if>
             <if test="request.specialNote != null">special_note = #{request.specialNote},</if>
+            <if test="request.isDraft != null">is_draft = #{request.isDraft},</if>
         </set>
         WHERE log_id = #{logId}
           AND is_deleted = 0

@@ -31,4 +31,6 @@ public class BasicEvaluationDetailDto {
     private String evalData;
     // 특이사항
     private String specialNote;
+    // 임시저장 여부
+    private Boolean isDraft;
 }
