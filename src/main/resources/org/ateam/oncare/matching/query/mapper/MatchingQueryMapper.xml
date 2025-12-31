@@ -201,8 +201,10 @@
         LEFT JOIN m_risk_level rl ON rl.id = b.risk_id
 
         <where>
+            b.status = 1
+
             <if test="keyword != null and keyword != ''">
-                b.name LIKE CONCAT('%', #{keyword}, '%')
+                AND b.name LIKE CONCAT('%', #{keyword}, '%')
             </if>
         </where>
 
@@ -214,8 +216,10 @@
         SELECT COUNT(*)
         FROM beneficiary b
         <where>
+            b.status = 1
+
             <if test="keyword != null and keyword != ''">
-                b.name LIKE CONCAT('%', #{keyword}, '%')
+                AND b.name LIKE CONCAT('%', #{keyword}, '%')
             </if>
         </where>
     </select>
@@ -276,6 +280,7 @@
     <select id="selectBeneficiaryScheduleViews"
             resultType="org.ateam.oncare.matching.query.dto.BeneficiaryScheduleViewDto">
         SELECT
+            bs.id AS id,
             bs.day AS day,
             CASE bs.day
                 WHEN 1 THEN '월'
@@ -288,6 +293,7 @@
         END AS dayName,
             DATE_FORMAT(bs.start_time, '%H:%i') AS startTime,
             DATE_FORMAT(bs.end_time,   '%H:%i') AS endTime,
+            bs.service_type_id AS serviceTypeId,
             mst.name AS serviceTypeName
         FROM beneficiary_schedule bs
                  LEFT JOIN m_service_type mst
@@ -567,4 +573,16 @@
             SET e.geo_ready = 1
         WHERE cw.id = #{careWorkerId}
     </update>
+
+    <select id="selectBeneficiaryPrimaryServiceType"
+            resultType="org.ateam.oncare.matching.query.dto.ServiceTypePairDto">
+        SELECT
+            bs.service_type_id AS serviceTypeId,
+            mst.name           AS serviceTypeName
+        FROM beneficiary_schedule bs
+                 JOIN m_service_type mst ON mst.id = bs.service_type_id
+        WHERE bs.beneficiary_id = #{beneficiaryId}
+        ORDER BY bs.day, bs.start_time
+            LIMIT 1
+    </select>
 </mapper>
