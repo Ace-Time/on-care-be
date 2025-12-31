@@ -30,14 +30,7 @@ public class RentalController {
     public ResponseEntity<Slice<ResponseContractRentalDTO>> getContractRental(
             RequestContractDTO condition,
             @PageableDefault(size = 10) Pageable pageable) {
-
-        log.debug("condition:{}",condition);
         Slice<ResponseContractRentalDTO> respose = rentalService.getContract(condition,pageable);
-
-        System.out.println(ContractStatusType.values()[1]);
-        System.out.println(ContractStatusType.유지.ordinal());
-        System.out.println(ContractStatusType.유지.name());
-        System.out.println(ContractStatusType.valueOf("접수"));
 
         return ResponseEntity.ok(respose);
     }

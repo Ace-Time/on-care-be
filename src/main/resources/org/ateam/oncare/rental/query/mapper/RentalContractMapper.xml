@@ -9,6 +9,7 @@
         <result property="beneficiary" column="beneficiary"/>
         <result property="employee" column="employee"/>
         <result property="startDate" column="startDate"/>
+        <result property="wantedDate" column="wanted_date"/>
         <result property="endDate" column="endDate"/>
         <result property="expectedEndDate" column="expectedEndDate"/>
         <result property="cumulativeRevenue" column="cumulativeRevenue"/>
@@ -32,6 +33,7 @@
         , d.name as productName
         , c.name as beneficiary
         , b.name as employee
+        , a.wanted_date
         , a.start_date as startDate
         , a.end_date as endDate
         , a.expected_date as expectedEndDate

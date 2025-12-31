@@ -16,6 +16,7 @@ public class ResponseContractRentalDTO {
     private String productName;
     private String beneficiary;
     private String employee;
+    private LocalDate wantedDate;
     private LocalDate startDate;
     private LocalDate endDate;
     private LocalDate expectedEndDate; // 예상 종료일
