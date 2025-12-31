@@ -24,7 +24,7 @@
             #{request.isDraft},
             NOW(),
             #{request.beneficiaryId},
-            (SELECT id FROM care_worker WHERE employee_id = #{careWorkerId})
+            (SELECT id FROM care_worker WHERE employee_id = #{careWorkerId} LIMIT 1)
         )
     </insert>
 
@@ -45,5 +45,17 @@
         DELETE FROM basic_evaluations
         WHERE eval_id = #{evalId}
     </delete>
+
+
+
+    <!-- 최신 템플릿 ID 조회 -->
+    <select id="findLatestTemplateIdByEvalType" resultType="java.lang.Long">
+        SELECT template_id
+        FROM eval_templates
+        WHERE eval_type = #{evalType}
+          AND is_active = TRUE
+        ORDER BY version DESC
+        LIMIT 1
+    </select>
 
 </mapper>

@@ -25,7 +25,7 @@
                 #{request.vsId},
                 (SELECT vs_id FROM visit_schedule
                  WHERE beneficiary_id = #{request.beneficiaryId}
-                   AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId})
+                   AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId} LIMIT 1)
                    AND DATE(start_dt) = #{request.serviceDate}
                  ORDER BY start_dt DESC
                  LIMIT 1)
@@ -43,7 +43,7 @@
             #{request.isHealthGood}, #{request.isPain}, #{request.isEdema}, #{request.isSkinIssue}, #{request.isBodyEtc},
             #{request.isMoodCalm}, #{request.isMoodAnxious}, #{request.isMoodDepressed}, #{request.isMoodAngry}, #{request.isMoodEtc},
             #{request.isExcretionMistake}, #{request.isSleepLack}, #{request.isNapExcess},
-            #{request.specialNote}, #{request.isDraft}, (SELECT id FROM care_worker WHERE employee_id = #{employeeId}), #{request.beneficiaryId}
+            #{request.specialNote}, #{request.isDraft}, (SELECT id FROM care_worker WHERE employee_id = #{employeeId} LIMIT 1), #{request.beneficiaryId}
         )
     </insert>
 

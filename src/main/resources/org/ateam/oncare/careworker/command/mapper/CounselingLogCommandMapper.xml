@@ -33,7 +33,7 @@
             #{request.guardianSignUrl},
             #{request.isDraft},
             NOW(),
-            (SELECT id FROM care_worker WHERE employee_id = #{employeeId}),
+            (SELECT id FROM care_worker WHERE employee_id = #{employeeId} LIMIT 1),
             #{request.beneficiaryId}
         )
     </insert>

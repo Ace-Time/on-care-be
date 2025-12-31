@@ -22,4 +22,7 @@ public class UpdateCounselingLogRequest {
     private LocalDate nextVisitDate;
     private String counselorSignUrl;
     private String guardianSignUrl;
+    private String counselorSignImage; // Base64Encoded
+    private String guardianSignImage; // Base64Encoded
+    private Boolean isDraft; // 임시저장 여부
 }

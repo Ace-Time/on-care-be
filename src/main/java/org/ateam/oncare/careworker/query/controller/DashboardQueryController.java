@@ -1,10 +1,10 @@
 package org.ateam.oncare.careworker.query.controller;
 
-import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.ateam.oncare.careworker.query.dto.*;
 import org.ateam.oncare.careworker.query.service.DashboardQueryService;
-import io.jsonwebtoken.Claims;
+import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,47 +15,34 @@ import java.util.List;
 public class DashboardQueryController {
 
     private final DashboardQueryService dashboardQueryService;
-    private final JwtTokenProvider jwtTokenProvider;
-
-    // JWT 토큰에서 사용자 ID 추출
-    private Long getEmployeeIdFromToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            Claims claims = jwtTokenProvider.getClaimsFromAT(token);
-            return claims.get("id", Long.class);
-        }
-        return 1L; // fallback
-    }
 
     // 1. 요양보호사 정보 요약
     @GetMapping("/summary")
-    public ApiResponse<DashboardSummaryDto> getSummary(@RequestHeader("Authorization") String authHeader) {
-        Long employeeId = getEmployeeIdFromToken(authHeader);
-        DashboardSummaryDto data = dashboardQueryService.getSummary(employeeId);
+    public ApiResponse<DashboardSummaryDto> getSummary(@AuthenticationPrincipal EmployeeImpl employee) {
+        DashboardSummaryDto data = dashboardQueryService.getSummary(employee.getId());
         return ApiResponse.success(data);
     }
 
     // 2. 긴급 알림 (제거됨)
-//    @GetMapping("/notifications/urgent")
-//    public ApiResponse<List<UrgentNotificationDto>> getUrgentNotifications(@RequestHeader("Authorization") String authHeader) {
-//        Long employeeId = getEmployeeIdFromToken(authHeader);
-//        List<UrgentNotificationDto> data = dashboardQueryService.getUrgentNotifications(employeeId);
-//        return ApiResponse.success(data);
-//    }
+    // @GetMapping("/notifications/urgent")
+    // public ApiResponse<List<UrgentNotificationDto>>
+    // getUrgentNotifications(@AuthenticationPrincipal EmployeeImpl employee) {
+    // List<UrgentNotificationDto> data =
+    // dashboardQueryService.getUrgentNotifications(employee.getId());
+    // return ApiResponse.success(data);
+    // }
 
     // 3. 오늘의 일정
     @GetMapping("/schedules/today")
-    public ApiResponse<List<HomeScheduleDto>> getTodaySchedules(@RequestHeader("Authorization") String authHeader) {
-        Long employeeId = getEmployeeIdFromToken(authHeader);
-        List<HomeScheduleDto> data = dashboardQueryService.getTodaySchedules(employeeId);
+    public ApiResponse<List<HomeScheduleDto>> getTodaySchedules(@AuthenticationPrincipal EmployeeImpl employee) {
+        List<HomeScheduleDto> data = dashboardQueryService.getTodaySchedules(employee.getId());
         return ApiResponse.success(data);
     }
 
     // 4. 할 일 목록
     @GetMapping("/todos")
-    public ApiResponse<List<HomeTodoDto>> getTodos(@RequestHeader("Authorization") String authHeader) {
-        Long employeeId = getEmployeeIdFromToken(authHeader);
-        List<HomeTodoDto> data = dashboardQueryService.getTodos(employeeId);
+    public ApiResponse<List<HomeTodoDto>> getTodos(@AuthenticationPrincipal EmployeeImpl employee) {
+        List<HomeTodoDto> data = dashboardQueryService.getTodos(employee.getId());
         return ApiResponse.success(data);
     }
 
@@ -82,9 +69,8 @@ public class DashboardQueryController {
 
     // 8. 내 수급자 목록 조회
     @GetMapping("/my-beneficiaries")
-    public ApiResponse<List<MyBeneficiaryDto>> getMyBeneficiaries(@RequestHeader("Authorization") String authHeader) {
-        Long employeeId = getEmployeeIdFromToken(authHeader);
-        List<MyBeneficiaryDto> data = dashboardQueryService.getMyBeneficiaries(employeeId);
+    public ApiResponse<List<MyBeneficiaryDto>> getMyBeneficiaries(@AuthenticationPrincipal EmployeeImpl employee) {
+        List<MyBeneficiaryDto> data = dashboardQueryService.getMyBeneficiaries(employee.getId());
         return ApiResponse.success(data);
     }
 }

@@ -7,16 +7,19 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface BasicEvaluationCommandMapper {
-    // 기초평가 작성
-    int insertBasicEvaluation(
-            @Param("careWorkerId") Long careWorkerId,
-            @Param("request") CreateBasicEvaluationRequest request);
+        // 기초평가 작성
+        int insertBasicEvaluation(
+                        @Param("careWorkerId") Long careWorkerId,
+                        @Param("request") CreateBasicEvaluationRequest request);
 
-    // 기초평가 수정
-    int updateBasicEvaluation(
-            @Param("evalId") Long evalId,
-            @Param("request") UpdateBasicEvaluationRequest request);
+        // 기초평가 수정
+        int updateBasicEvaluation(
+                        @Param("evalId") Long evalId,
+                        @Param("request") UpdateBasicEvaluationRequest request);
 
-    // 기초평가 삭제
-    int deleteBasicEvaluation(@Param("evalId") Long evalId);
+        // 기초평가 삭제
+        int deleteBasicEvaluation(@Param("evalId") Long evalId);
+
+        // 최신 템플릿 ID 조회
+        Long findLatestTemplateIdByEvalType(@Param("evalType") String evalType);
 }

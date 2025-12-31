@@ -19,4 +19,5 @@ public class CounselingLogListDto {
     private Long beneficiaryId;
     private String beneficiaryName;
     private String careLevel;
+    private Boolean isDraft;  // 임시저장 여부
 }

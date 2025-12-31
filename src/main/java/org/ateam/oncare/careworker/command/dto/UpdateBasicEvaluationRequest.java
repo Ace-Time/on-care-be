@@ -18,10 +18,13 @@ public class UpdateBasicEvaluationRequest {
     private LocalDate evalDate;
 
     @Setter
-    private String evalData;  // JSON 형식
+    private String evalData; // JSON 형식
 
     @Setter
-    private String specialNote;  // 특이사항
+    private String specialNote; // 특이사항
+
+    @Setter
+    private Boolean isDraft; // 임시저장 여부
 
     // JSON 객체를 문자열로 자동 변환
     @JsonSetter("evalData")

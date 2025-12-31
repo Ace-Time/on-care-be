@@ -44,33 +44,32 @@ public class TokenServiceImpl implements TokenService {
         // 리프레시 jti 생성(리프레시 토큰 식별 id)
         String jti = UUID.randomUUID().toString();
 
-        //AT 생성
+        // AT 생성
         String atToken = jwtTokenProvider.generateAccessToken(employee);
-        //RT 생성
-        JwtTokenProvider.RefreshTokenInfo refreshTokenInfo =
-                jwtTokenProvider.generateRefreshToken(employee.getEmail(),jti);
+        // RT 생성
+        JwtTokenProvider.RefreshTokenInfo refreshTokenInfo = jwtTokenProvider.generateRefreshToken(employee.getEmail(),
+                jti);
 
-        RefreshToken refreshTokenEntity =
-                this.saveRefreshToken(clientIp, employee.getId(), refreshTokenInfo, jti,"");
+        RefreshToken refreshTokenEntity = this.saveRefreshToken(clientIp, employee.getId().intValue(), refreshTokenInfo,
+                jti, "");
 
-        log.debug("atToken:{}",atToken);
-        log.debug("refreshTokenInfo:{},{}",refreshTokenInfo.token(),refreshTokenInfo.expiredAt());
+        log.debug("atToken:{}", atToken);
+        log.debug("refreshTokenInfo:{},{}", refreshTokenInfo.token(), refreshTokenInfo.expiredAt());
         log.debug("LocalDateTime:{}", LocalDateTime.now());
         log.debug("refreshTokenEntity:{}", refreshTokenEntity);
 
         refreshTokenRepository.save(refreshTokenEntity);
 
         // 쿠키로 리프레시 전달
-        ResponseCookie cookie =
-                cookieUtil.createRefreshCookie(refreshTokenInfo.token());
+        ResponseCookie cookie = cookieUtil.createRefreshCookie(refreshTokenInfo.token());
 
-        ResponseToken responseToken = new ResponseToken(atToken, cookie,"Bearer", employee.getId());
+        ResponseToken responseToken = new ResponseToken(atToken, cookie, "Bearer", employee.getId());
 
         return responseToken;
     }
 
     @Override
-    public ResponseToken verifyByRefreshToken(String refreshToken, ServletRequest request , String clientIp) {
+    public ResponseToken verifyByRefreshToken(String refreshToken, ServletRequest request, String clientIp) {
         /* 설명. refresh token 전용 검증 */
         if (!jwtTokenProvider.validateRefreshToken(refreshToken)) {
             throw new RuntimeException("Invalid refresh token");
@@ -82,23 +81,22 @@ public class TokenServiceImpl implements TokenService {
 
         RefreshTokenOfEmployeeDTO rtOfEmployee = authQueryService.selectRefreshTokenOfEmployee(jti);
 
-        log.debug("rt : {}" , rtOfEmployee);
+        log.debug("rt : {}", rtOfEmployee);
 
         if (rtOfEmployee.getRevoked() == 1) {
-            log.warn("RT 실패: revoked 토큰. jti={}, userId={}, useremail={}"
-                    , rtOfEmployee.getJti(),rtOfEmployee.getEmployeeId(),rtOfEmployee.getEmployeeId());
+            log.warn("RT 실패: revoked 토큰. jti={}, userId={}, useremail={}", rtOfEmployee.getJti(),
+                    rtOfEmployee.getEmployeeId(), rtOfEmployee.getEmployeeId());
             throw new RuntimeException("Token revoked");
-        }     // 이미 폐기된 토큰 → 재사용 시도
+        } // 이미 폐기된 토큰 → 재사용 시도
 
-        if (!rtOfEmployee.getEmail().equals(email)){
+        if (!rtOfEmployee.getEmail().equals(email)) {
             // 토큰 조작의심되어 토큰 폐기
             refreshTokenRepository.revokeTorken(jti);
-            log.warn("RT 실패: User mismatch. employeeId={}",rtOfEmployee.getEmployeeId());
+            log.warn("RT 실패: User mismatch. employeeId={}", rtOfEmployee.getEmployeeId());
             throw new RuntimeException("User mismatch"); // 사용자 불일치
         }
 
-        if (rtOfEmployee.getExpiresAt().isBefore(LocalDateTime.now()))
-        {
+        if (rtOfEmployee.getExpiresAt().isBefore(LocalDateTime.now())) {
             log.warn("RT 실패: 만료된 RT. jti={}", rtOfEmployee.getJti());
             throw new RuntimeException("Expired"); // 만료
         }
@@ -107,8 +105,8 @@ public class TokenServiceImpl implements TokenService {
         {
             // 토큰 조작의심되어 토큰 폐기
             refreshTokenRepository.revokeTorken(jti);
-            log.warn("RT 실패: 토큰 조작 감지. jti={}, userId={}, useremail={}, token={}"
-                , rtOfEmployee.getJti(),rtOfEmployee.getEmployeeId(),rtOfEmployee.getEmployeeId(), refreshToken);
+            log.warn("RT 실패: 토큰 조작 감지. jti={}, userId={}, useremail={}, token={}", rtOfEmployee.getJti(),
+                    rtOfEmployee.getEmployeeId(), rtOfEmployee.getEmployeeId(), refreshToken);
             throw new RuntimeException("Hash mismatch");
         } // token 조작
 
@@ -120,31 +118,29 @@ public class TokenServiceImpl implements TokenService {
                 .map(SimpleGrantedAuthority::new)// String -> GrantedAuthority 변환
                 .collect(Collectors.toList());
 
-        //새로운 토큰 생성
-        EmployeeImpl employeeImpl = new EmployeeImpl(rtOfEmployee.getEmail(),"",authorities);
+        // 새로운 토큰 생성
+        EmployeeImpl employeeImpl = new EmployeeImpl(rtOfEmployee.getEmail(), "", authorities);
 
         employeeImpl.setDetails(
-                rtOfEmployee.getEmployeeId(),
+                rtOfEmployee.getEmployeeId().longValue(),
                 rtOfEmployee.getEmail(),
                 rtOfEmployee.getName(),
                 rtOfEmployee.getPhone(),
-                rtOfEmployee.getJobName()
-        );
+                rtOfEmployee.getJobName());
 
-        //새로운 RT, AT 생성
+        // 새로운 RT, AT 생성
         ResponseToken responseToken = this.generateToken(clientIp, employeeImpl);
-        log.debug("벌크 연산 결과 count : {}" , count);
+        log.debug("벌크 연산 결과 count : {}", count);
 
         return responseToken;
     }
 
-
     private RefreshToken saveRefreshToken(
-                                    String clientIp,
-                                    Integer employeeId,
-                                    JwtTokenProvider.RefreshTokenInfo refreshToken,
-                                    String jti,
-                                    String device) {
+            String clientIp,
+            Integer employeeId,
+            JwtTokenProvider.RefreshTokenInfo refreshToken,
+            String jti,
+            String device) {
         LocalDateTime issuedAt = refreshToken.issuedAt().toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
@@ -153,14 +149,14 @@ public class TokenServiceImpl implements TokenService {
                 .toLocalDateTime();
 
         return RefreshToken.builder()
-                            .employeeId(employeeId)
-                            .ip(clientIp)
-                            .tokenHash(DigestUtils.sha256Hex(refreshToken.token()))
-                            .jti(jti)
-                            .issuedAt(issuedAt)
-                            .expiresAt(expiresAt)
-                            .revoked(0)
-                            .build();
+                .employeeId(employeeId)
+                .ip(clientIp)
+                .tokenHash(DigestUtils.sha256Hex(refreshToken.token()))
+                .jti(jti)
+                .issuedAt(issuedAt)
+                .expiresAt(expiresAt)
+                .revoked(0)
+                .build();
     }
 
 }

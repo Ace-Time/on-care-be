@@ -46,10 +46,12 @@ public class CounselingLogs {
     @Column(name = "next_visit_date")
     private LocalDate nextVisitDate;
 
-    @Column(name = "counselor_sign_url", nullable = false)
+    @Lob
+    @Column(name = "counselor_sign_url", nullable = true)
     private String counselorSignUrl;
 
-    @Column(name = "guardian_sign_url", nullable = false)
+    @Lob
+    @Column(name = "guardian_sign_url", nullable = true)
     private String guardianSignUrl;
 
     @Column(name = "created_at")

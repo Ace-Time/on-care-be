@@ -12,5 +12,5 @@ public class ResponseToken {
     private String accessToken;
     private ResponseCookie cookie;
     private String tokenType;
-    private int employeeId;
+    private Long employeeId;
 }

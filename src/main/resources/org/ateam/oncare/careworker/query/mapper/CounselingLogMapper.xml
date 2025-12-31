@@ -12,7 +12,8 @@
             cl.satisfaction AS satisfaction,
             cl.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
-            COALESCE(mcl.level, '등급없음') AS careLevel
+            COALESCE(mcl.level, '등급없음') AS careLevel,
+            cl.is_draft AS isDraft
         FROM counseling_logs cl
                  JOIN care_worker cw ON cl.care_worker_id = cw.id
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
@@ -41,7 +42,8 @@
             cl.satisfaction AS satisfaction,
             cl.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
-            COALESCE(mcl.level, '등급없음') AS careLevel
+            COALESCE(mcl.level, '등급없음') AS careLevel,
+            cl.is_draft AS isDraft
         FROM counseling_logs cl
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
                  LEFT JOIN (

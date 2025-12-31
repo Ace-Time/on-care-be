@@ -19,20 +19,21 @@
             be.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            CASE be.eval_type
-                WHEN 'FALL' THEN COALESCE(
+            CASE
+                WHEN be.is_draft = TRUE THEN '임시저장'
+                WHEN be.eval_type = 'FALL' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
                 )
-                WHEN 'BEDSORE' THEN COALESCE(
+                WHEN be.eval_type = 'BEDSORE' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
                 )
-                WHEN 'COGNITIVE' THEN COALESCE(
+                WHEN be.eval_type = 'COGNITIVE' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
                 )
-                WHEN 'NEEDS' THEN COALESCE(
+                WHEN be.eval_type = 'NEEDS' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     '평가완료'
                 )
@@ -88,20 +89,21 @@
             be.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            CASE be.eval_type
-                WHEN 'FALL' THEN COALESCE(
+            CASE
+                WHEN be.is_draft = TRUE THEN '임시저장'
+                WHEN be.eval_type = 'FALL' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
                 )
-                WHEN 'BEDSORE' THEN COALESCE(
+                WHEN be.eval_type = 'BEDSORE' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
                 )
-                WHEN 'COGNITIVE' THEN COALESCE(
+                WHEN be.eval_type = 'COGNITIVE' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
-                )
-                WHEN 'NEEDS' THEN COALESCE(
+                ) <!-- 인지기능 평가 결과 조회 -->
+                WHEN be.eval_type = 'NEEDS' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     '평가완료'
                 )
@@ -155,20 +157,21 @@
             be.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            CASE be.eval_type
-                WHEN 'FALL' THEN COALESCE(
+            CASE
+                WHEN be.is_draft = TRUE THEN '임시저장'
+                WHEN be.eval_type = 'FALL' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
                 )
-                WHEN 'BEDSORE' THEN COALESCE(
+                WHEN be.eval_type = 'BEDSORE' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
                 )
-                WHEN 'COGNITIVE' THEN COALESCE(
+                WHEN be.eval_type = 'COGNITIVE' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
                 )
-                WHEN 'NEEDS' THEN COALESCE(
+                WHEN be.eval_type = 'NEEDS' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     '평가완료'
                 )
@@ -228,20 +231,21 @@
             be.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            CASE be.eval_type
-                WHEN 'FALL' THEN COALESCE(
+            CASE
+                WHEN be.is_draft = TRUE THEN '임시저장'
+                WHEN be.eval_type = 'FALL' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
                 )
-                WHEN 'BEDSORE' THEN COALESCE(
+                WHEN be.eval_type = 'BEDSORE' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade'))
                 )
-                WHEN 'COGNITIVE' THEN COALESCE(
+                WHEN be.eval_type = 'COGNITIVE' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result'))
                 )
-                WHEN 'NEEDS' THEN COALESCE(
+                WHEN be.eval_type = 'NEEDS' THEN COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')),
                     '평가완료'
                 )
@@ -305,7 +309,8 @@
             b.address AS beneficiaryAddress,
             COALESCE(mcl.level, '등급없음') AS careLevel,
             be.eval_data AS evalData,
-            be.special_note AS specialNote
+            be.special_note AS specialNote,
+            be.is_draft AS isDraft
         FROM basic_evaluations be
                  LEFT JOIN eval_templates et ON be.template_id = et.template_id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
@@ -345,7 +350,8 @@
             b.address AS beneficiaryAddress,
             COALESCE(mcl.level, '등급없음') AS careLevel,
             be.eval_data AS evalData,
-            be.special_note AS specialNote
+            be.special_note AS specialNote,
+            be.is_draft AS isDraft
         FROM basic_evaluations be
                  LEFT JOIN eval_templates et ON be.template_id = et.template_id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id

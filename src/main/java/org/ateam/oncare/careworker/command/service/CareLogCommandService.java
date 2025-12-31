@@ -21,6 +21,11 @@ public class CareLogCommandService {
 
     @Transactional
     public void createCareLog(Long employeeId, CreateCareLogRequest request) {
+        if (request.getStartTime() != null && request.getEndTime() != null
+                && request.getStartTime().isAfter(request.getEndTime())) {
+            throw new IllegalArgumentException("종료 시간은 시작 시간보다 빠를 수 없습니다.");
+        }
+
         log.info("요양일지 작성 시작 - employeeId: {}, beneficiaryId: {}", employeeId, request.getBeneficiaryId());
         int inserted = careLogCommandMapper.insertCareLog(employeeId, request);
 
@@ -36,6 +41,11 @@ public class CareLogCommandService {
 
     @Transactional
     public void updateCareLog(Long logId, UpdateCareLogRequest request) {
+        if (request.getStartTime() != null && request.getEndTime() != null
+                && request.getStartTime().isAfter(request.getEndTime())) {
+            throw new IllegalArgumentException("종료 시간은 시작 시간보다 빠를 수 없습니다.");
+        }
+
         log.info("요양일지 수정 시작 - logId: {}", logId);
 
         // 수정 전 요양일지 정보 조회 (beneficiaryId, serviceDate)
