@@ -132,6 +132,8 @@ public class RentalServiceImpl implements RentalService {
         RentalContract entity = contractRepository.findById(request.getId().intValue()).get();
         rentalContractMapstruct.updateFromDTO(request, entity);
 
+        System.out.println("entity ::::" + entity);
+
         // 렌탈 계약 종료 처리 후 철회 하는 경우, 용품 입고 리스트에서 제거
         if(request.getContractStatusCd() != null && request.getContractStatusCd() == 2){
 
