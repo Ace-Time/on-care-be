@@ -12,7 +12,7 @@ on:
 
 # 워크플로우 실행 작업 정의
 jobs:
-  test:
+  deployment:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

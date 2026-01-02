@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/rental")
+@RequestMapping("/api/rental")
 @RequiredArgsConstructor
 @Slf4j
 public class RentalController {
