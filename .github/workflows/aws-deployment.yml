@@ -44,6 +44,8 @@ jobs:
               encoding:
                 charset: UTF-8
                 force: true
+            error:
+              include-stacktrace: never # e.getMessage 호출시 stacTrace 안찍히게 설정
           
           spring:
             datasource:
@@ -63,6 +65,9 @@ jobs:
           jwt:
             access-secret: \${JWT_AT_SECRET}
             refresh-secret: \${JWT_RT_SECRET}
+            access-token-validity: 3600000
+            #  access-token-validity: 10000
+            refresh-token-validity: 604800000
           
           ai:
             base-url: \${AI_HOSTNAME}
