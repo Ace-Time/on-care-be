@@ -9,8 +9,6 @@ permissions:
 on:
   push:
     branches: [ "practice/github-actions-aws" ]
-    pull_request:
-      types: [open]
 
 # 워크플로우 실행 작업 정의
 jobs:
