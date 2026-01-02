@@ -1,7 +1,14 @@
 package org.ateam.oncare.schedule.command.service;
 
 import lombok.RequiredArgsConstructor;
+import org.ateam.oncare.alarm.command.entity.NotificationTemplate;
+import org.ateam.oncare.alarm.command.repository.NotificationTemplateRepository;
+import org.ateam.oncare.alarm.command.service.NotificationCommandService;
+import org.ateam.oncare.beneficiary.command.entity.Beneficiary;
 import org.ateam.oncare.beneficiary.command.entity.BeneficiarySchedule;
+import org.ateam.oncare.employee.command.repository.BeneficiaryRepository;
+import org.ateam.oncare.careworker.command.entity.CareWorker;
+import org.ateam.oncare.careworker.command.repository.CareWorkerRepository;
 import org.ateam.oncare.matching.command.repository.MatchingRepository;
 import org.ateam.oncare.schedule.command.dto.BeneficiaryScheduleCreateRequest;
 import org.ateam.oncare.schedule.command.dto.BeneficiaryScheduleResponse;
@@ -16,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Time;
 import java.time.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +35,15 @@ public class BeneficiaryScheduleCommandService {
     private final BeneficiaryScheduleRepository beneficiaryScheduleRepository;
     private final MatchingRepository matchingRepository;
     private final VisitScheduleRepository visitScheduleRepository;
+
+    // === 알림(추가) ===
+    private final NotificationCommandService notificationCommandService;
+    private final NotificationTemplateRepository notificationTemplateRepository;
+    private final BeneficiaryRepository beneficiaryRepository;
+    private final CareWorkerRepository careWorkerRepository;
+
+    // 템플릿 타입 (DB에 넣어둔 값 그대로)
+    private static final String TEMPLATE_TYPE_SCHEDULE_PREF_CHANGED = "SCHEDULE_PREFERENCE_DAY_CHANGED";
 
     public BeneficiaryScheduleResponse create(BeneficiaryScheduleCreateRequest req) {
         validateBasic(req.getDay(), req.getStartTime(), req.getEndTime());
@@ -76,6 +94,9 @@ public class BeneficiaryScheduleCommandService {
         if (active != null) {
             LocalDate effectiveDate = normalizeEffectiveDate(req.getEffectiveDate());
             syncVisitSchedulesOnCreate(saved, active.getCareWorkerId(), effectiveDate);
+
+            // === 알림: 주기 생성도 "희망 요일 변경" 템플릿으로 통일 ===
+            notifySchedulePreferenceChanged(active.getCareWorkerId(), saved.getBeneficiaryId());
         }
 
         return toResponse(saved);
@@ -141,6 +162,9 @@ public class BeneficiaryScheduleCommandService {
                     bs.getServiceTypeId(), bs.getDay(), bs.getStartTime(), bs.getEndTime(),
                     effectiveDate
             );
+
+            // === 알림: 주기 수정도 무조건 동일 템플릿으로 통일 ===
+            notifySchedulePreferenceChanged(active.getCareWorkerId(), bs.getBeneficiaryId());
         }
 
         return toResponse(bs);
@@ -169,10 +193,80 @@ public class BeneficiaryScheduleCommandService {
                     bs.getEndTime(),
                     eff
             );
+
+            notifySchedulePreferenceChanged(
+                    active.getCareWorkerId(),
+                    bs.getBeneficiaryId()
+            );
         }
 
         beneficiaryScheduleRepository.deleteById(id);
     }
+
+    // =========================
+    // === 알림 메서드(추가) ===
+    // =========================
+
+    private void notifySchedulePreferenceChanged(Long careWorkerId, Long beneficiaryId) {
+        // 1) 수신자(employee_id) 찾기
+        Long receiverEmployeeId = resolveReceiverEmployeeId(careWorkerId);
+
+        // 2) 수급자 이름
+        String beneficiaryName = resolveBeneficiaryName(beneficiaryId);
+
+        // 3) 템플릿 조회
+        NotificationTemplate template = getActiveTemplate(TEMPLATE_TYPE_SCHEDULE_PREF_CHANGED);
+
+        // 4) 치환 변수
+        Map<String, String> vars = new HashMap<>();
+        vars.put("beneficiaryName", beneficiaryName);
+
+        // 5) 치환 적용
+        String title = applyTemplate(template.getTitle(), vars);
+        String content = applyTemplate(template.getContent(), vars);
+
+        // 6) 로그 저장 + SSE 발송
+        notificationCommandService.sendCustom(
+                receiverEmployeeId,
+                title,
+                content,
+                template.getTemplateType(),
+                template.getSeverity()
+        );
+    }
+
+    private NotificationTemplate getActiveTemplate(String templateType) {
+        List<NotificationTemplate> list = notificationTemplateRepository.findByTemplateTypeAndIsActive(templateType, 1);
+        if (list == null || list.isEmpty()) {
+            throw new IllegalStateException("활성 템플릿이 없습니다: " + templateType);
+        }
+        return list.get(0);
+    }
+
+    private String applyTemplate(String template, Map<String, String> vars) {
+        String result = template;
+        for (Map.Entry<String, String> e : vars.entrySet()) {
+            result = result.replace("{" + e.getKey() + "}", e.getValue());
+        }
+        return result;
+    }
+
+    private Long resolveReceiverEmployeeId(Long careWorkerId) {
+        CareWorker cw = careWorkerRepository.findById(careWorkerId)
+                .orElseThrow(() -> new IllegalArgumentException("요양보호사를 찾을 수 없습니다. id=" + careWorkerId));
+        // CareWorker 엔티티에 employeeId 필드가 있다고 가정 (employee_id)
+        return Long.valueOf(cw.getEmployeeId());
+    }
+
+    private String resolveBeneficiaryName(Long beneficiaryId) {
+        Beneficiary b = beneficiaryRepository.findById(beneficiaryId)
+                .orElseThrow(() -> new IllegalArgumentException("수급자를 찾을 수 없습니다. id=" + beneficiaryId));
+        return b.getName();
+    }
+
+    // =========================
+    // === 기존 로직(그대로) ===
+    // =========================
 
     private LocalDate normalizeEffectiveDate(LocalDate effectiveDate) {
         LocalDate today = LocalDate.now();
