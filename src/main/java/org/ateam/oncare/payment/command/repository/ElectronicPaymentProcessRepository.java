@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ElectronicPaymentProcessRepository extends JpaRepository<ElectronicPaymentProcess, Long> {
+public interface ElectronicPaymentProcessRepository extends JpaRepository<ElectronicPaymentProcess, Integer> {
     List<ElectronicPaymentProcess> findByElectronicPaymentIdOrderByStepOrderAsc(Integer electronicPaymentId);
 
     // 특정 문서에서 내 결재 순서 찾기 (현재 대기중인 것)
