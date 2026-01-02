@@ -120,4 +120,13 @@
           AND is_deleted = 0
     </select>
 
+    <!-- 방문 일정 삭제 시 관련 요양일지 삭제 (논리삭제) -->
+    <update id="deleteCareLogsByVsId">
+        UPDATE care_logs
+        SET is_deleted = 1,
+            updated_at = NOW()
+        WHERE vs_id = #{vsId}
+          AND is_deleted = 0
+    </update>
+
 </mapper>
