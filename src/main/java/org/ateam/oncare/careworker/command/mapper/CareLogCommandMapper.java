@@ -23,4 +23,7 @@ public interface CareLogCommandMapper {
 
     // 요양일지 정보 조회 (beneficiaryId, serviceDate)
     CareLogInfo selectCareLogInfo(@Param("logId") Long logId);
+
+    // 방문 일정 삭제 시 관련 요양일지 삭제 (논리삭제)
+    int deleteCareLogsByVsId(@Param("vsId") Long vsId);
 }
