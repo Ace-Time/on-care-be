@@ -100,7 +100,8 @@ jobs:
       - name: Generate deployment package
         run: |
           mkdir -p deploy
-          cp build/libs/*.jar deploy/application.jar
+          # plain.jar를 제외한 나머지 .jar 파일 하나만 application.jar로 복사
+          cp build/libs/[!plain]*.jar deploy/application.jar
           cp Procfile deploy/Procfile
           cp -r .ebextensions deploy/.ebextensions
           cp -r .platform deploy/.platform
