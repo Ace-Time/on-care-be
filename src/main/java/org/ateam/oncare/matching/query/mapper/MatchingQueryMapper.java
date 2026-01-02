@@ -79,6 +79,12 @@ public interface MatchingQueryMapper {
 
     LatLngDto selectBeneficiaryLatLng(@Param("beneficiaryId") Long beneficiaryId);
 
+    int existsBeneficiaryVisitConflict(
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("startDt") String startDt,
+            @Param("endDt") String endDt
+    );
+
     List<CareWorkerLatLngDto> selectCareWorkerLatLngByIds(@Param("ids") List<Long> ids);
 
     List<TagOverlapCountDto> selectTagOverlapCounts(
