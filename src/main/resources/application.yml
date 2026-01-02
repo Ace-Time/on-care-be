@@ -30,4 +30,4 @@ jwt:
   refresh-token-validity: 604800000
 
 ai:
-  base-url: ${AI_HOSTNAME}:${AI_PORT}
+  base-url: ${AI_HOSTNAME}
