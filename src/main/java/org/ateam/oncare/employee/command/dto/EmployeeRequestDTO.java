@@ -21,6 +21,9 @@ public class EmployeeRequestDTO {
     private String name;
     private String address; // 오타 수정됨 (adress -> address)
 
+    private String currentPassword; // 현재 비밀번호 (본인 확인용)
+    private String newPassword; // 변경할 새 비밀번호
+
     @Pattern(regexp = "^010-\\d{4}-\\d{4}$", message = "전화번호 형식이 올바르지 않습니다.")
     private String phone;
 
@@ -57,7 +60,8 @@ public class EmployeeRequestDTO {
     // 만 20세 이상인지 검증하는 커스텀 로직
     @AssertTrue(message = "만 20세 이상만 직원으로 등록 가능합니다.")
     public boolean isAgeValid() {
-        if (birth == null) return false;
+        if (birth == null)
+            return false;
 
         // 오늘 날짜
         LocalDate today = LocalDate.now();

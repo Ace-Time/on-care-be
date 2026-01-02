@@ -141,7 +141,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         // 2. 정보 업데이트 (Setter로 덮어쓰기 -> Dirty Checking)
         if (dto.getName() != null)
             employee.setName(dto.getName());
-        // pw는 유지
+
+        // 비밀번호 변경 처리
+        if (dto.getNewPassword() != null && !dto.getNewPassword().trim().isEmpty()) {
+            // 현재 비밀번호 검증 (암호가 틀렸을 때 예외 발생)
+            if (dto.getCurrentPassword() == null
+                    || !bCryptPasswordEncoder.matches(dto.getCurrentPassword(), employee.getPw())) {
+                throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            }
+            // 일치하면 새 비밀번호 암호화하여 저장
+            employee.setPw(bCryptPasswordEncoder.encode(dto.getNewPassword()));
+        }
         if (dto.getBirth() != null)
             employee.setBirth(dto.getBirth());
         if (dto.getGender() != null)
