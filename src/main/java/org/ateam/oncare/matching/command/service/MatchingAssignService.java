@@ -1,6 +1,13 @@
 package org.ateam.oncare.matching.command.service;
 
 import lombok.RequiredArgsConstructor;
+import org.ateam.oncare.alarm.command.entity.NotificationTemplate;
+import org.ateam.oncare.alarm.command.repository.NotificationTemplateRepository;
+import org.ateam.oncare.alarm.command.service.NotificationCommandService;
+import org.ateam.oncare.beneficiary.command.entity.Beneficiary;
+import org.ateam.oncare.careworker.command.entity.CareWorker;
+import org.ateam.oncare.careworker.command.repository.CareWorkerRepository;
+import org.ateam.oncare.employee.command.repository.BeneficiaryRepository;
 import org.ateam.oncare.matching.command.repository.MatchingRepository;
 import org.ateam.oncare.schedule.command.entity.Matching;
 import org.ateam.oncare.schedule.command.entity.VisitSchedule;
@@ -10,9 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +28,14 @@ public class MatchingAssignService {
     private final VisitScheduleRepository visitScheduleRepository;
     private final BeneficiaryScheduleRepository beneficiaryScheduleRepository;
 
+    private final NotificationCommandService notificationCommandService;
+    private final NotificationTemplateRepository notificationTemplateRepository;
+    private final BeneficiaryRepository beneficiaryRepository;
+    private final CareWorkerRepository careWorkerRepository;
+
+    private static final String TEMPLATE_MATCHING_ASSIGNED = "MATCHING_ASSIGNED";
+    private static final String TEMPLATE_MATCHING_UNASSIGNED = "MATCHING_CANCELED";
+
     public void assign(Long beneficiaryId, Long careWorkerId, LocalDate effectiveDate) {
         if (beneficiaryId == null || careWorkerId == null || effectiveDate == null) {
             throw new IllegalArgumentException("beneficiaryId/careWorkerId/effectiveDate는 필수입니다.");
@@ -31,7 +44,17 @@ public class MatchingAssignService {
             throw new IllegalArgumentException("적용일은 오늘 이후(오늘 포함)만 가능합니다.");
         }
 
+        Optional<Matching> before = matchingRepository.findByBeneficiaryIdAndStatus(beneficiaryId, "Y");
+
+        before.ifPresent(existing -> {
+            if (!existing.getCareWorkerId().equals(careWorkerId)) {
+                notifyMatching(existing.getCareWorkerId(), beneficiaryId, TEMPLATE_MATCHING_UNASSIGNED);
+            }
+        });
+
         upsertMatching(beneficiaryId, careWorkerId, effectiveDate);
+
+        notifyMatching(careWorkerId, beneficiaryId, TEMPLATE_MATCHING_ASSIGNED);
 
         LocalDateTime from = effectiveDate.atStartOfDay();
         LocalDateTime toExclusive = resolveGlobalRangeEndExclusiveToMonthEnd();
@@ -62,6 +85,8 @@ public class MatchingAssignService {
                     existing.setEndDate(effectiveDate.minusDays(1));
                     existing.setReason("매칭 해제");
                     matchingRepository.save(existing);
+
+                    notifyMatching(existing.getCareWorkerId(), beneficiaryId, TEMPLATE_MATCHING_UNASSIGNED);
                 });
 
         LocalDateTime from = effectiveDate.atStartOfDay();
@@ -74,6 +99,49 @@ public class MatchingAssignService {
                 toExclusive,
                 VisitSchedule.VisitStatus.SCHEDULED
         );
+    }
+
+    private void notifyMatching(Long careWorkerId, Long beneficiaryId, String templateType) {
+        Long receiverEmployeeId = resolveEmployeeId(careWorkerId);
+        String beneficiaryName = resolveBeneficiaryName(beneficiaryId);
+
+        NotificationTemplate template = notificationTemplateRepository
+                .findByTemplateTypeAndIsActive(templateType, 1)
+                .stream()
+                .findFirst()
+                .orElseThrow();
+
+        Map<String, String> vars = new HashMap<>();
+        vars.put("beneficiaryName", beneficiaryName);
+
+        String title = apply(template.getTitle(), vars);
+        String content = apply(template.getContent(), vars);
+
+        notificationCommandService.sendCustom(
+                receiverEmployeeId,
+                title,
+                content,
+                template.getTemplateType(),
+                template.getSeverity()
+        );
+    }
+
+    private Long resolveEmployeeId(Long careWorkerId) {
+        CareWorker cw = careWorkerRepository.findById(careWorkerId).orElseThrow();
+        return Long.valueOf(cw.getEmployeeId());
+    }
+
+    private String resolveBeneficiaryName(Long beneficiaryId) {
+        Beneficiary b = beneficiaryRepository.findById(beneficiaryId).orElseThrow();
+        return b.getName();
+    }
+
+    private String apply(String template, Map<String, String> vars) {
+        String result = template;
+        for (var e : vars.entrySet()) {
+            result = result.replace("{" + e.getKey() + "}", e.getValue());
+        }
+        return result;
     }
 
     private void createVisitSchedulesFromBeneficiarySchedules(
@@ -94,31 +162,22 @@ public class MatchingAssignService {
             Integer day = bs.getDay();
             LocalTime st = bs.getStartTime();
             LocalTime et = bs.getEndTime();
-
-            Integer serviceTypeIdInt = bs.getServiceTypeId();   // exists 체크용
-            Long serviceTypeIdLong = (serviceTypeIdInt != null) ? serviceTypeIdInt.longValue() : null; // 저장용
-
-            if (day == null || st == null || et == null || serviceTypeIdInt == null || serviceTypeIdLong == null) continue;
+            Integer serviceTypeIdInt = bs.getServiceTypeId();
+            Long serviceTypeIdLong = serviceTypeIdInt != null ? serviceTypeIdInt.longValue() : null;
+            if (day == null || st == null || et == null || serviceTypeIdLong == null) continue;
 
             DayOfWeek targetDow = mapDayToDayOfWeek(day);
-
             LocalDate first = startDate;
             while (first.getDayOfWeek() != targetDow) first = first.plusDays(1);
 
             for (LocalDate d = first; d.isBefore(endDateExclusive); d = d.plusWeeks(1)) {
                 LocalDateTime sdt = LocalDateTime.of(d, st);
                 LocalDateTime edt = LocalDateTime.of(d, et);
-
-                if (sdt.isBefore(from)) continue;
-                if (!sdt.isBefore(toExclusive)) break;
+                if (sdt.isBefore(from) || !sdt.isBefore(toExclusive)) continue;
 
                 boolean exists = visitScheduleRepository
                         .existsByBeneficiaryIdAndServiceTypeIdAndStartDtAndEndDtAndVisitStatus(
-                                beneficiaryId,
-                                serviceTypeIdInt,
-                                sdt,
-                                edt,
-                                VisitSchedule.VisitStatus.SCHEDULED
+                                beneficiaryId, serviceTypeIdInt, sdt, edt, VisitSchedule.VisitStatus.SCHEDULED
                         );
                 if (exists) continue;
 
@@ -129,10 +188,7 @@ public class MatchingAssignService {
                 v.setStartDt(sdt);
                 v.setEndDt(edt);
                 v.setVisitStatus(VisitSchedule.VisitStatus.SCHEDULED);
-                v.setRfidStartTime(null);
-                v.setRfidEndTime(null);
                 v.setIsLogWritten(false);
-                v.setNote(null);
 
                 toSave.add(v);
             }
@@ -152,7 +208,7 @@ public class MatchingAssignService {
             case 5 -> DayOfWeek.FRIDAY;
             case 6 -> DayOfWeek.SATURDAY;
             case 7 -> DayOfWeek.SUNDAY;
-            default -> throw new IllegalArgumentException("day는 1~7 이어야 합니다: " + day);
+            default -> throw new IllegalArgumentException();
         };
     }
 
@@ -160,9 +216,7 @@ public class MatchingAssignService {
         Optional<Matching> opt = matchingRepository.findByBeneficiaryIdAndStatus(beneficiaryId, "Y");
 
         opt.ifPresentOrElse(existing -> {
-            if (existing.getCareWorkerId() != null && existing.getCareWorkerId().equals(careWorkerId)) {
-                return;
-            }
+            if (existing.getCareWorkerId().equals(careWorkerId)) return;
 
             existing.setStatus("N");
             existing.setEndDate(eff.minusDays(1));
@@ -173,19 +227,14 @@ public class MatchingAssignService {
             next.setBeneficiaryId(beneficiaryId);
             next.setCareWorkerId(careWorkerId);
             next.setStartDate(eff);
-            next.setEndDate(null);
             next.setStatus("Y");
-            next.setReason(null);
             matchingRepository.save(next);
-
         }, () -> {
             Matching next = new Matching();
             next.setBeneficiaryId(beneficiaryId);
             next.setCareWorkerId(careWorkerId);
             next.setStartDate(eff);
-            next.setEndDate(null);
             next.setStatus("Y");
-            next.setReason(null);
             matchingRepository.save(next);
         });
     }
@@ -193,7 +242,6 @@ public class MatchingAssignService {
     private LocalDateTime resolveGlobalRangeEndExclusiveToMonthEnd() {
         LocalDateTime globalMaxEndDt = visitScheduleRepository.findGlobalMaxEndDt();
         if (globalMaxEndDt == null) return null;
-
         YearMonth ym = YearMonth.from(globalMaxEndDt.toLocalDate());
         return ym.plusMonths(1).atDay(1).atStartOfDay();
     }
