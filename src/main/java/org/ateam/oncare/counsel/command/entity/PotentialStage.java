@@ -1,16 +1,17 @@
 package org.ateam.oncare.counsel.command.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "potential_stage")
@@ -27,20 +28,25 @@ public class PotentialStage {
     @Column(name = "process_status", nullable = false, length = 1)
     private String processStatus; // "P" or "F"
 
-    @Column(name = "reason", length = 2000)
-    private String reason;
-
     @Column(name = "process_time")
     private LocalDateTime processTime;
 
-    @Column(name = "month", nullable = false)
-    private LocalDateTime month;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-    @Lob // TEXT 타입 매핑
-    @Column(name = "html_code", nullable = false, columnDefinition = "TEXT")
-    private String htmlCode;
+    // Map -> JSON 변환 위해 @JdbcTypeCode 사용
+    @Column(name = "stage_data", columnDefinition = "json")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> stageData;
 
-    // [변경됨] 객체 참조(@ManyToOne) 대신 ID 값 직접 매핑
     @Column(name = "potential_customer_id", nullable = false)
     private Long potentialCustomerId;
+
+    public void updateStageData(Map<String, Object> stageData, String newProcessStatus) {
+        this.stageData = stageData;
+        if (!newProcessStatus.equals(this.processStatus)) {
+            this.processStatus = newProcessStatus;
+            this.processTime = LocalDateTime.now();
+        }
+    }
 }

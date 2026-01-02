@@ -1,7 +1,12 @@
 package org.ateam.oncare.employee.command.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDate;
 
 @Entity
@@ -32,12 +37,15 @@ public class Employee {
     private String address;
 
     @Column(name = "email", length = 50)
+    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "이메일 형식이 올바르지 않습니다.")
     private String email;
 
     @Column(name = "phone", nullable = false, length = 14)
+    @Pattern(regexp = "^010-\\d{4}-\\d{4}$", message = "전화번호 형식이 올바르지 않습니다.")
     private String phone;
 
     @Column(name = "emergency_number", length = 14)
+    @Pattern(regexp = "^010-\\d{4}-\\d{4}$", message = "비상연락처 형식이 올바르지 않습니다.")
     private String emergencyNumber;
 
     @Column(name = "hire_date")

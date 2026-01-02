@@ -8,6 +8,7 @@ import org.ateam.oncare.schedule.command.repository.VisitScheduleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
@@ -32,6 +33,12 @@ public class ConfirmedVisitScheduleCommandService {
         }
         if (!endDt.isAfter(startDt)) {
             throw new IllegalArgumentException("endDt must be after startDt");
+        }
+
+        // ✅ 오늘 기준 과거(전날 포함) 날짜로는 수정 불가
+        LocalDate today = LocalDate.now();
+        if (startDt.toLocalDate().isBefore(today)) {
+            throw new IllegalStateException("일정 수정은 현재 시각 이후로 가능합니다.");
         }
 
         VisitSchedule vs = visitScheduleRepository.findById(vsId)

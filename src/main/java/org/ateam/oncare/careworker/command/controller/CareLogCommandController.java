@@ -1,12 +1,12 @@
 package org.ateam.oncare.careworker.command.controller;
 
-import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.ateam.oncare.careworker.command.dto.CreateCareLogRequest;
 import org.ateam.oncare.careworker.command.dto.UpdateCareLogRequest;
 import org.ateam.oncare.careworker.command.service.CareLogCommandService;
 import org.ateam.oncare.careworker.query.dto.ApiResponse;
-import io.jsonwebtoken.Claims;
+import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,25 +15,13 @@ import org.springframework.web.bind.annotation.*;
 public class CareLogCommandController {
 
     private final CareLogCommandService careLogCommandService;
-    private final JwtTokenProvider jwtTokenProvider;
-
-    // JWT 토큰에서 사용자 ID 추출
-    private Long getEmployeeIdFromToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            Claims claims = jwtTokenProvider.getClaimsFromAT(token);
-            return claims.get("id", Long.class);
-        }
-        return 1L; // fallback
-    }
 
     // 1. 요양일지 작성
     @PostMapping
     public ApiResponse<Void> createCareLog(
-            @RequestHeader("Authorization") String authHeader,
+            @AuthenticationPrincipal EmployeeImpl employee,
             @RequestBody CreateCareLogRequest request) {
-        Long employeeId = getEmployeeIdFromToken(authHeader);
-        careLogCommandService.createCareLog(employeeId, request);
+        careLogCommandService.createCareLog(employee.getId(), request);
         return ApiResponse.success(null);
     }
 

@@ -36,11 +36,11 @@ public interface EmployeeMapper {
     List<EducationAlertDTO> selectEducationAlerts();
 
     // 필터 옵션 조회
-    List<org.ateam.oncare.employee.query.dto.FilterOptionDTO> selectJobFilters();
+    List<FilterOptionDTO> selectJobFilters();
 
-    List<org.ateam.oncare.employee.query.dto.FilterOptionDTO> selectCertificateFilters();
+    List<FilterOptionDTO> selectCertificateFilters();
 
-    List<org.ateam.oncare.employee.query.dto.FilterOptionDTO> selectServiceTypeFilters();
+    List<FilterOptionDTO> selectServiceTypeFilters();
 
     // 재직 중인 직원 수 조회
     int countActiveEmployees();
@@ -57,4 +57,7 @@ public interface EmployeeMapper {
     void insertEmployee(org.ateam.oncare.employee.command.dto.EmployeeRegisterDto dto);
 
     void insertCareWorker(@org.apache.ibatis.annotations.Param("employeeId") Long employeeId);
+
+    // 직급별 직원 수 조회
+    List<EmployeeCountByJobDTO> countEmployeesByJob();
 }

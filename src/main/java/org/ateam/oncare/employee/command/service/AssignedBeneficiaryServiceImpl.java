@@ -1,17 +1,11 @@
 package org.ateam.oncare.employee.command.service;
 
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.beneficiary.command.entity.Beneficiary;
-import org.ateam.oncare.employee.command.repository.BeneficiaryRepository;
 import org.ateam.oncare.employee.command.dto.AssignedBeneficiaryDTO;
-import org.ateam.oncare.employee.command.repository.AssignedBeneficiaryRepository;
-import org.ateam.oncare.schedule.command.entity.Matching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

@@ -16,6 +16,7 @@
             next_visit_date,
             counselor_sign_url,
             guardian_sign_url,
+            is_draft,
             created_at,
             care_worker_id,
             beneficiary_id
@@ -30,8 +31,9 @@
             #{request.nextVisitDate},
             #{request.counselorSignUrl},
             #{request.guardianSignUrl},
+            #{request.isDraft},
             NOW(),
-            (SELECT id FROM care_worker WHERE employee_id = #{employeeId}),
+            (SELECT id FROM care_worker WHERE employee_id = #{employeeId} LIMIT 1),
             #{request.beneficiaryId}
         )
     </insert>
@@ -50,6 +52,7 @@
             <if test="request.nextVisitDate != null">next_visit_date = #{request.nextVisitDate},</if>
             <if test="request.counselorSignUrl != null">counselor_sign_url = #{request.counselorSignUrl},</if>
             <if test="request.guardianSignUrl != null">guardian_sign_url = #{request.guardianSignUrl},</if>
+            <if test="request.isDraft != null">is_draft = #{request.isDraft},</if>
         </set>
         WHERE counseling_id = #{counselingId}
     </update>

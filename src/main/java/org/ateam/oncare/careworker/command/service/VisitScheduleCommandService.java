@@ -53,6 +53,11 @@ public class VisitScheduleCommandService {
 
     @Transactional
     public void createVisitSchedule(Long careWorkerId, CreateVisitScheduleRequest request) {
+        if (request.getStartDt() != null && request.getEndDt() != null
+                && request.getStartDt().isAfter(request.getEndDt())) {
+            throw new IllegalArgumentException("종료 시간은 시작 시간보다 빠를 수 없습니다.");
+        }
+
         log.info("방문 요양 일정 작성 시작 - careWorkerId: {}, beneficiaryId: {}", careWorkerId, request.getBeneficiaryId());
         int inserted = visitScheduleCommandMapper.insertVisitSchedule(careWorkerId, request);
 
@@ -65,6 +70,11 @@ public class VisitScheduleCommandService {
 
     @Transactional
     public void updateVisitSchedule(Long vsId, UpdateVisitScheduleRequest request) {
+        if (request.getStartDt() != null && request.getEndDt() != null
+                && request.getStartDt().isAfter(request.getEndDt())) {
+            throw new IllegalArgumentException("종료 시간은 시작 시간보다 빠를 수 없습니다.");
+        }
+
         log.info("방문 요양 일정 수정 시작 - vsId: {}", vsId);
         int updated = visitScheduleCommandMapper.updateVisitSchedule(vsId, request);
 

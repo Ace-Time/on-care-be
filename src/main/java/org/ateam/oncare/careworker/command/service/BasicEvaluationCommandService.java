@@ -18,6 +18,15 @@ public class BasicEvaluationCommandService {
     @Transactional
     public void createBasicEvaluation(Long careWorkerId, CreateBasicEvaluationRequest request) {
         log.info("기초평가 작성 시작 - evalType: {}, beneficiaryId: {}", request.getEvalType(), request.getBeneficiaryId());
+
+        if (request.getTemplateId() == null) {
+            Long templateId = basicEvaluationCommandMapper.findLatestTemplateIdByEvalType(request.getEvalType());
+            if (templateId == null) {
+                throw new IllegalStateException("해당 평가 유형의 활성화된 템플릿을 찾을 수 없습니다: " + request.getEvalType());
+            }
+            request.setTemplateId(templateId);
+        }
+
         int inserted = basicEvaluationCommandMapper.insertBasicEvaluation(careWorkerId, request);
 
         if (inserted == 0) {

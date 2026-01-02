@@ -22,5 +22,8 @@ public class CreateCounselingLogRequest {
     private LocalDate nextVisitDate;
     private String counselorSignUrl;
     private String guardianSignUrl;
+    private String counselorSignImage; // Base64Encoded
+    private String guardianSignImage; // Base64Encoded
     private Long beneficiaryId;
+    private Boolean isDraft = false; // 임시저장 여부
 }

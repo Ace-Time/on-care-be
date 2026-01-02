@@ -2,6 +2,7 @@ package org.ateam.oncare.counsel.query.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.ateam.oncare.counsel.query.dto.CounselDetailResponse;
 import org.ateam.oncare.counsel.query.dto.CounselListResponse;
 import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
 import org.jspecify.annotations.Nullable;
@@ -21,4 +22,8 @@ public interface CounselQueryMapper {
                                                        @Param("customerType")String customerType,
                                                        @Param("counselCategoryName")String counselCategoryName,
                                                        @Param("limit")int limit, @Param("offset")long offset);
+
+    @Nullable CounselDetailResponse findCounselDetailById(BigInteger counselHistoryId);
+
+    Long findPotentialIdByBeneficiaryId(Long beneficiaryId);
 }

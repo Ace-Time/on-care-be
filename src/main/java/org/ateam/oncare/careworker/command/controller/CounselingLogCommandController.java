@@ -1,12 +1,12 @@
 package org.ateam.oncare.careworker.command.controller;
 
-import org.ateam.oncare.auth.security.JwtTokenProvider;
 import org.ateam.oncare.careworker.command.dto.CreateCounselingLogRequest;
 import org.ateam.oncare.careworker.command.dto.UpdateCounselingLogRequest;
 import org.ateam.oncare.careworker.command.service.CounselingLogCommandService;
 import org.ateam.oncare.careworker.query.dto.ApiResponse;
-import io.jsonwebtoken.Claims;
+import org.ateam.oncare.employee.command.dto.EmployeeImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,25 +15,13 @@ import org.springframework.web.bind.annotation.*;
 public class CounselingLogCommandController {
 
     private final CounselingLogCommandService counselingLogCommandService;
-    private final JwtTokenProvider jwtTokenProvider;
-
-    // JWT 토큰에서 사용자 ID 추출
-    private Long getEmployeeIdFromToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            Claims claims = jwtTokenProvider.getClaimsFromAT(token);
-            return claims.get("id", Long.class);
-        }
-        return 1L; // fallback
-    }
 
     // 1. 방문상담 작성
     @PostMapping
     public ApiResponse<Void> createCounselingLog(
-            @RequestHeader("Authorization") String authHeader,
+            @AuthenticationPrincipal EmployeeImpl employee,
             @RequestBody CreateCounselingLogRequest request) {
-        Long employeeId = getEmployeeIdFromToken(authHeader);
-        counselingLogCommandService.createCounselingLog(employeeId, request);
+        counselingLogCommandService.createCounselingLog(employee.getId(), request);
         return ApiResponse.success(null);
     }
 
