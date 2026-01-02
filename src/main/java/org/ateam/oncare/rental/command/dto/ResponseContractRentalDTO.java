@@ -16,8 +16,12 @@ public class ResponseContractRentalDTO {
     private String productName;
     private String beneficiary;
     private String employee;
+    private LocalDate wantedDate;
     private LocalDate startDate;
     private LocalDate endDate;
     private LocalDate expectedEndDate; // 예상 종료일
-    private int cumulativeRevenue;
+    private int cumulativeRevenue;  // 총 렌탈 비용
+    private int rentalAmount; // 한달 렌탈비
+    private int statusCode;
+    private String statusName;
 }

@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @DynamicInsert
 @DynamicUpdate
+@ToString
 public class RentalContract {
 
     @Id

@@ -9,9 +9,13 @@
         <result property="beneficiary" column="beneficiary"/>
         <result property="employee" column="employee"/>
         <result property="startDate" column="startDate"/>
+        <result property="wantedDate" column="wanted_date"/>
         <result property="endDate" column="endDate"/>
         <result property="expectedEndDate" column="expectedEndDate"/>
         <result property="cumulativeRevenue" column="cumulativeRevenue"/>
+        <result property="statusCode" column="statusCode"/>
+        <result property="statusName" column="statusName"/>
+        <result property="rentalAmount" column="rental_amount"/>
     </resultMap>
 
     <resultMap id="targetContract" type="org.ateam.oncare.rental.command.dto.RentalContractForCalculationDTO">
@@ -29,14 +33,19 @@
         , d.name as productName
         , c.name as beneficiary
         , b.name as employee
+        , a.wanted_date
         , a.start_date as startDate
         , a.end_date as endDate
         , a.expected_date as expectedEndDate
         , a.cumulative_revenue as cumulativeRevenue
+        , d.rental_amount
+        , e.id as statusCode
+        , e.name as statusName
         from rental_contract a
         join employee b on a.emp_id = b.id
         join beneficiary c on a.beneficiary_id = c.id
         join m_care_product d on a.product_cd = d.id
+        join contract_status e on a.contract_status_cd = e.id
         where 1=1
         <if test="cond.contractStatus != 0">
             and a.contract_status_cd = #{cond.contractStatus}

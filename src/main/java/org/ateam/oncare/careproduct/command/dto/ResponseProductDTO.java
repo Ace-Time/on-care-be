@@ -18,5 +18,6 @@ public class ResponseProductDTO {
     private Integer productStatus;
     private String statusName;
     private String productCd;
+    private String beneficiaryName;
     private LocalDate boughtDate;
 }
