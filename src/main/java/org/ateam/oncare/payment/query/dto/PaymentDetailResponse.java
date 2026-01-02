@@ -14,12 +14,14 @@ public class PaymentDetailResponse {
     private Long id;
     private String categoryName;
     private String title;
-    private String content;         // 결재 내용
+    private String content; // 결재 내용
     private String drafterName;
     private LocalDateTime createdAt;
     private String priority;
     private String status;
     private Long amount;
+    private java.time.LocalDate startDate; // 휴가 시작일 등
+    private java.time.LocalDate endDate; // 휴가 종료일 등
 
     // 결재 라인 정보 (팀장 김팀장 등)
     private List<ApproverInfo> approverList;
