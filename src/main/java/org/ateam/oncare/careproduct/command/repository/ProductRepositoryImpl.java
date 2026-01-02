@@ -2,23 +2,22 @@ package org.ateam.oncare.careproduct.command.repository;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.careproduct.command.dto.*;
-import org.ateam.oncare.careproduct.command.entity.CareProduct;
-import org.ateam.oncare.careproduct.command.entity.QCareProduct;
-import org.ateam.oncare.careproduct.command.entity.QProductStatus;
+import org.ateam.oncare.careproduct.command.entity.*;
+import org.ateam.oncare.careproduct.command.enums.ProductHistoryStatus;
 import org.ateam.oncare.careproduct.mapper.ProductMapper;
-import org.ateam.oncare.rental.command.dto.RentalContractForCalculationDTO;
 import org.ateam.oncare.rental.command.dto.RentalProductForCalculationDTO;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -31,6 +30,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
     private final ProductMapper productMapper;
     private final QCareProduct product = QCareProduct.careProduct;
     private final QProductStatus productStatus = QProductStatus.productStatus;
+    private final QProductHistory productHistory = QProductHistory.productHistory;
     private final JdbcTemplate jdbcTemplate;
 
     @Override
@@ -68,8 +68,22 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
 
         builder.and(product.productCd.eq(condition.getProductCode()));
 
+        Expression<String> renterNameSubQuery = JPAExpressions
+                .select(productHistory.beneficiaryName)
+                .from(productHistory)
+                .where(productHistory.id.eq(
+                        JPAExpressions
+                                .select(productHistory.id.max())
+                                .from(productHistory)
+                                .where(productHistory.productId.eq(product.id)
+                                        .and(productHistory.status.eq(ProductHistoryStatus.RENTAL)))
+                ));
+
         List<Tuple> products = queryFactory
-                .select(product,productStatus.name)
+                .select( product
+                        , productStatus.name
+                        , renterNameSubQuery
+                )
                 .from(product)
                 .join(productStatus).on(productStatus.id.eq(product.productStatus.longValue()))
                 .where(builder)
@@ -87,6 +101,8 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 .map(data ->{
                     ResponseProductDTO dto = productMapper.toProductDTO(data.get(product));
                     dto.setStatusName(String.valueOf(data.get(productStatus.name)));
+                    if(dto.getProductStatus() == 2)
+                        dto.setBeneficiaryName(String.valueOf(data.get(renterNameSubQuery)));
                     return dto;
                 })
                 .toList();

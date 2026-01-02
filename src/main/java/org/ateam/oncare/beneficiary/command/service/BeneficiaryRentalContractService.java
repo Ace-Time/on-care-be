@@ -2,16 +2,22 @@ package org.ateam.oncare.beneficiary.command.service;
 
 
 import lombok.RequiredArgsConstructor;
+import org.ateam.oncare.beneficiary.command.dto.ResponseBeneficiaryDTO;
 import org.ateam.oncare.beneficiary.command.dto.response.RentalContractCompleteResponse;
+import org.ateam.oncare.beneficiary.command.entity.Beneficiary;
 import org.ateam.oncare.beneficiary.command.mapper.BeneficiaryRentalContractMapper;
+import org.ateam.oncare.beneficiary.command.repository.BeneficiaryUpdateRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class BeneficiaryRentalContractService {
 
     private final BeneficiaryRentalContractMapper mapper;
+    private final BeneficiaryUpdateRepository beneficiaryUpdateRepository;
 
     @Transactional
     public RentalContractCompleteResponse completeRentalContract(
@@ -37,5 +43,23 @@ public class BeneficiaryRentalContractService {
                 .contractStatus("종료")
                 .endDate(java.time.LocalDate.now().toString())
                 .build();
+    }
+
+    public List<ResponseBeneficiaryDTO> getEmployeeRental(String name) {
+        List<Beneficiary> entity = beneficiaryUpdateRepository.findByNameAndStatus(name,false);
+//        List<Beneficiary> entity = beneficiaryUpdateRepository.findByName(name);
+
+        return entity.stream()
+                .map(e -> {
+                    return ResponseBeneficiaryDTO.builder()
+                            .id(e.getId())
+                            .birthDate(e.getBirthdate())
+                            .phone(e.getPhone())
+                            .name(e.getName())
+                            .build();
+                })
+                .toList();
+
+
     }
 }
