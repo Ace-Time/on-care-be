@@ -65,7 +65,7 @@ jobs:
             refresh-secret: \${JWT_RT_SECRET}
           
           ai:
-            base-url: ${AI_HOSTNAME}
+            base-url: \${AI_HOSTNAME}
           
           EOL
 
