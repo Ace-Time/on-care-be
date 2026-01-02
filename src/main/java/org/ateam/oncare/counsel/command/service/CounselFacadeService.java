@@ -2,6 +2,7 @@ package org.ateam.oncare.counsel.command.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ateam.oncare.beneficiary.command.service.BeneficiaryRegistService;
 import org.ateam.oncare.beneficiary.query.service.BeneficiaryDetailService;
 import org.ateam.oncare.counsel.command.dto.*;
 import org.ateam.oncare.counsel.command.entity.CounselHistory;
@@ -21,6 +22,7 @@ public class CounselFacadeService {
     private final PotentialStageService potentialStageService;
     private final PotentialCustomerService potentialCustomerService;
     private final CounselQueryService counselQueryService;
+    private final BeneficiaryRegistService beneficiaryRegistService;
 
     @Transactional
     public ResponseEntity<NewSubscriptionResponse> registNewSubscription(Subscription request) {
@@ -96,10 +98,20 @@ public class CounselFacadeService {
 
 
     // 가입 상담 단계별 저장
+    @Transactional
     public ResponseEntity<SaveStageDataResponse> saveStageData(StageData request) {
         potentialStageService.updateStageData(request);
         return ResponseEntity.ok(new SaveStageDataResponse());
     }
+
+    // 가입 상담 단계별 데이터 조회
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<Integer, StageData>> getStageData(Long potentialCustomerId) {
+        Map<Integer, StageData> stageDataMap = potentialStageService.findStageDataByPotentialId(potentialCustomerId);
+        return ResponseEntity.ok(stageDataMap);
+    }
+
+
 
     private NewSubscriptionResponse buildNewSubscriptionResponse(CounselHistory counselHistory) {
         NewSubscriptionResponse response = new NewSubscriptionResponse();

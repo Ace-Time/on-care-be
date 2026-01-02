@@ -1,21 +1,26 @@
 package org.ateam.oncare.counsel.command.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.math.BigInteger;
-import java.time.LocalDateTime;
-
-@Getter
-@Setter
+@Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class SaveStageDataResponse {
-    private int stage;    // 1, 2, 3, 4
-    private String processStatus;  // P or F
-    private LocalDateTime processTime;
-    private LocalDateTime createdAt;
-    private String stageData;
-    private BigInteger potentialId;
+
+    private String message;
+    private boolean success;
+
+    public SaveStageDataResponse(String message) {
+        this.message = message;
+        this.success = true;
+    }
+
+    // 기본 생성자로 성공 응답 반환
+    public SaveStageDataResponse() {
+        this.message = "단계 데이터가 성공적으로 저장되었습니다.";
+        this.success = true;
+    }
 }
