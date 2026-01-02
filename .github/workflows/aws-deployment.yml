@@ -61,8 +61,8 @@ jobs:
                   '[format_sql]': true
 
           jwt:
-            access-secret: ${JWT_AT_SECRET}
-            refresh-secret: ${JWT_RT_SECRET}
+            access-secret: \${JWT_AT_SECRET}
+            refresh-secret: \${JWT_RT_SECRET}
           
           ai:
             base-url: ${AI_HOSTNAME}
