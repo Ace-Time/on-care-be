@@ -204,6 +204,13 @@ public class MatchingQueryService {
         if (serviceTypeId == null) return List.of();
         if (startDt == null || startDt.isBlank() || endDt == null || endDt.isBlank()) return List.of();
 
+        int conflict = mapper.existsBeneficiaryVisitConflict(beneficiaryId, startDt, endDt);
+        if (conflict == 1) {
+            log.info("[STOP] beneficiary time conflict beneficiaryId={} startDt={} endDt={}",
+                    beneficiaryId, startDt, endDt);
+            return List.of();
+        }
+
         Set<Long> serviceTypeSet = mapper.selectCareWorkerIdsByServiceTypeId(serviceTypeId).stream()
                 .map(CareWorkerIdDto::getCareWorkerId)
                 .collect(Collectors.toCollection(LinkedHashSet::new));

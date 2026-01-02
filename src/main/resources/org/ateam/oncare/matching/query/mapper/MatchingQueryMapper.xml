@@ -585,4 +585,14 @@
         ORDER BY bs.day, bs.start_time
             LIMIT 1
     </select>
+    <select id="existsBeneficiaryVisitConflict" resultType="int">
+        SELECT CASE WHEN EXISTS (
+            SELECT 1
+            FROM visit_schedule vs
+            WHERE vs.beneficiary_id = #{beneficiaryId}
+              AND vs.visit_status IN ('SCHEDULED', 'IN_PROGRESS')
+              AND vs.start_dt &lt; #{endDt}
+              AND vs.end_dt   &gt; #{startDt}
+        ) THEN 1 ELSE 0 END
+    </select>
 </mapper>

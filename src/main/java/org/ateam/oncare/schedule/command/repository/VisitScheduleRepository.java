@@ -80,7 +80,6 @@ public interface VisitScheduleRepository extends JpaRepository<VisitSchedule, Lo
             @Param("status") VisitStatus status
     );
 
-
     // (추가) 이미 동일 일정이 있으면 생성 스킵용
     boolean existsByBeneficiaryIdAndServiceTypeIdAndStartDtAndEndDtAndVisitStatus(
             Long beneficiaryId,
@@ -96,5 +95,43 @@ public interface VisitScheduleRepository extends JpaRepository<VisitSchedule, Lo
             LocalDateTime from,
             LocalDateTime toExclusive,
             VisitStatus visitStatus
+    );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+    delete from visit_schedule
+     where beneficiary_id = :beneficiaryId
+       and visit_status = 'SCHEDULED'
+       and start_dt >= :from
+       and start_dt <  :toExclusive
+       and service_type_id = :serviceTypeId
+       and weekday(start_dt) = :weekday0
+       and time(start_dt) = :startTime
+       and time(end_dt)   = :endTime
+""", nativeQuery = true)
+    int deleteScheduledByPatternInRange(
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("serviceTypeId") Long serviceTypeId,
+            @Param("weekday0") int weekday0, // 월=0 ... 일=6
+            @Param("startTime") java.sql.Time startTime,
+            @Param("endTime") java.sql.Time endTime,
+            @Param("from") LocalDateTime from,
+            @Param("toExclusive") LocalDateTime toExclusive
+    );
+
+    @Query("""
+select (count(v) > 0)
+from VisitSchedule v
+where v.beneficiaryId = :beneficiaryId
+  and v.visitStatus = org.ateam.oncare.schedule.command.entity.VisitSchedule.VisitStatus.SCHEDULED
+  and v.serviceTypeId = :serviceTypeId
+  and v.startDt = :startDt
+  and v.endDt = :endDt
+""")
+    boolean existsScheduledExact(
+            @Param("beneficiaryId") Long beneficiaryId,
+            @Param("serviceTypeId") Long serviceTypeId,
+            @Param("startDt") LocalDateTime startDt,
+            @Param("endDt") LocalDateTime endDt
     );
 }
