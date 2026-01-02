@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.payment.query.mapper.PaymentMapper">
+
+    <resultMap id="DashboardStatsMap" type="org.ateam.oncare.payment.query.dto.PaymentDashboardResponse">
+        <result property="myPendingCount" column="myPendingCount"/>
+        <result property="myDraftPendingCount" column="myDraftPendingCount"/>
+        <result property="myApprovedCount" column="myApprovedCount"/>
+        <result property="myRejectedCount" column="myRejectedCount"/>
+    </resultMap>
+
+    <resultMap id="PaymentListMap" type="org.ateam.oncare.payment.query.dto.PaymentListResponse">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="priority" column="priority"/>
+        <result property="amount" column="amount"/>
+        <result property="categoryName" column="categoryName"/>
+        <result property="drafterName" column="drafterName"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <resultMap id="PaymentDetailMap" type="org.ateam.oncare.payment.query.dto.PaymentDetailResponse">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="priority" column="priority"/>
+        <result property="amount" column="amount"/>
+        <result property="categoryName" column="categoryName"/>
+        <result property="drafterName" column="drafterName"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <resultMap id="ApproverInfoMap" type="org.ateam.oncare.payment.query.dto.PaymentDetailResponse$ApproverInfo">
+        <result property="approverName" column="approverName"/>
+        <result property="stepStatus" column="stepStatus"/>
+    </resultMap>
+
+    <select id="selectDashboardStats" resultMap="DashboardStatsMap">
+        SELECT
+        (SELECT COUNT(*)
+        FROM electronic_payment_process pp
+        JOIN electronic_payment ep ON pp.electronic_payment_id = ep.id
+        WHERE pp.employee_id = #{employeeId}
+        AND pp.status = 0) AS myPendingCount,
+
+        (SELECT COUNT(*)
+        FROM electronic_payment
+        WHERE employee_id = #{employeeId}
+        AND status = 0) AS myDraftPendingCount,
+
+        (SELECT COUNT(*)
+        FROM electronic_payment
+        WHERE employee_id = #{employeeId}
+        AND status = 1) AS myApprovedCount,
+
+        (SELECT COUNT(*)
+        FROM electronic_payment
+        WHERE employee_id = #{employeeId}
+        AND status = 2) AS myRejectedCount
+    </select>
+
+    <!-- 결재 목록 총 개수 조회 (페이징용) -->
+    <select id="selectPaymentListCount" resultType="long">
+        SELECT COUNT(*)
+        FROM electronic_payment ep
+        LEFT JOIN employee e ON ep.employee_id = e.id
+        LEFT JOIN electronic_payment_category c ON ep.electronic_payment_category_id = c.id
+        <where>
+            <if test="employeeId != null">
+                AND (
+                ep.employee_id = #{employeeId}
+                OR EXISTS (
+                SELECT 1
+                FROM electronic_payment_process pp
+                WHERE pp.electronic_payment_id = ep.id
+                AND pp.employee_id = #{employeeId}
+                )
+                )
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                ep.title LIKE CONCAT('%', #{keyword}, '%')
+                OR e.name LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="status != null and status != ''">
+                AND ep.status = #{status}
+            </if>
+            <if test="category != null and category != ''">
+                AND c.name = #{category}
+            </if>
+        </where>
+    </select>
+
+    <!-- 결재 목록 조회 -->
+    <select id="selectPaymentList" resultMap="PaymentListMap">
+        SELECT
+            ep.id,
+            ep.title,
+            ep.created_at,
+            CASE
+                WHEN ep.priority = 0 THEN '긴급'
+                WHEN ep.priority = 1 THEN '보통'
+                ELSE '낮음'
+            END AS priority,
+            ep.amount,
+            IFNULL(c.name, '기타') AS categoryName,
+            IFNULL(e.name, '알수없음') AS drafterName,
+            CASE
+                WHEN ep.status = 0 THEN '대기중'
+                WHEN ep.status = 1 THEN '승인'
+                ELSE '반려'
+            END AS status
+        FROM electronic_payment ep
+        LEFT JOIN employee e ON ep.employee_id = e.id
+        LEFT JOIN electronic_payment_category c ON ep.electronic_payment_category_id = c.id
+        <where>
+            <!-- 1. 로그인한 사용자와 관련된 문서만 조회 (기안자 OR 결재자 포함) -->
+            <if test="employeeId != null">
+                AND (
+                    ep.employee_id = #{employeeId}
+                    OR EXISTS (
+                        SELECT 1
+                        FROM electronic_payment_process pp
+                        WHERE pp.electronic_payment_id = ep.id
+                        AND pp.employee_id = #{employeeId}
+                    )
+                )
+            </if>
+
+            <!-- 2. 검색어 (제목 or 기안자명) -->
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    ep.title LIKE CONCAT('%', #{keyword}, '%')
+                    OR e.name LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+
+            <!-- 3. 결재 상태 필터 -->
+            <if test="status != null and status != ''">
+                AND ep.status = #{status}
+            </if>
+            
+            <!-- 4. 카테고리 필터 -->
+            <if test="category != null and category != ''">
+                AND c.name = #{category}
+            </if>
+        </where>
+        ORDER BY ep.id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="selectPaymentDetail" resultMap="PaymentDetailMap">
+        SELECT
+        ep.id,
+        ep.title,
+        ep.content,
+        ep.created_at,
+        CASE
+            WHEN ep.priority = 0 THEN '긴급'
+            WHEN ep.priority = 1 THEN '보통'
+            ELSE '낮음'
+        END AS priority,
+        ep.amount,
+        c.name AS categoryName,
+        e.name AS drafterName,
+        CASE
+            WHEN ep.status = 0 THEN '대기중'
+            WHEN ep.status = 1 THEN '승인'
+            ELSE '반려'
+        END AS status
+        FROM electronic_payment ep
+        LEFT JOIN employee e ON ep.employee_id = e.id
+        LEFT JOIN electronic_payment_category c ON ep.electronic_payment_category_id = c.id
+        WHERE ep.id = #{id}
+    </select>
+
+    <select id="selectApproverList" resultMap="ApproverInfoMap">
+        SELECT
+        e.name AS approverName,
+        CASE
+            WHEN pp.status = 0 THEN '대기중'
+            WHEN pp.status = 1 THEN '승인'
+            ELSE '반려'
+        END AS stepStatus
+        FROM electronic_payment_process pp
+        JOIN employee e ON pp.employee_id = e.id
+        WHERE pp.electronic_payment_id = #{paymentId}
+        ORDER BY pp.step_order ASC
+    </select>
+
+    <select id="selectPaymentCategories" resultType="org.ateam.oncare.payment.query.dto.PaymentCategoryResponse">
+        SELECT id, name
+        FROM electronic_payment_category
+        ORDER BY id ASC
+    </select>
+    
+    <!-- 1. 직원 검색 -->
+    <select id="selectUsersByKeyword" resultType="org.ateam.oncare.payment.query.dto.PaymentUserResponse">
+        SELECT 
+            e.id, 
+            e.name, 
+            IFNULL(j.name, '사원') AS jobTitle,
+            IFNULL(d.dept_name, '소속없음') AS departmentName
+        FROM employee e
+        LEFT JOIN m_job j ON e.job_code = j.id
+        LEFT JOIN m_department d ON e.dept_code = d.id
+        <where>
+            (e.name LIKE CONCAT('%', #{keyword}, '%') 
+             OR j.name LIKE CONCAT('%', #{keyword}, '%')
+             OR d.dept_name LIKE CONCAT('%', #{keyword}, '%')
+            )
+            <if test="excludeSelf and myId != null">
+                AND e.id != #{myId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 2. 최근 결재선 (본인이 기안한 문서의 결재자들) -->
+    <select id="selectRecentApprovers" resultType="org.ateam.oncare.payment.query.dto.PaymentUserResponse">
+        SELECT DISTINCT
+            e.id, 
+            e.name, 
+            IFNULL(j.name, '사원') AS jobTitle,
+            IFNULL(d.dept_name, '소속없음') AS departmentName
+        FROM electronic_payment ep
+        JOIN electronic_payment_process pp ON ep.id = pp.electronic_payment_id
+        JOIN employee e ON pp.employee_id = e.id
+        LEFT JOIN m_job j ON e.job_code = j.id
+        LEFT JOIN m_department d ON e.dept_code = d.id
+        WHERE ep.employee_id = #{myId} <!-- 내가 기안한 문서 -->
+        ORDER BY pp.id DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 3. 우리 부서원 조회 (요청에 따라 같은 직무(Job)를 가진 동료 조회로 변경) -->
+    <select id="selectMyDepartmentMembers" resultType="org.ateam.oncare.payment.query.dto.PaymentUserResponse">
+        SELECT 
+            e.id, 
+            e.name, 
+            IFNULL(j.name, '사원') AS jobTitle,
+            IFNULL(d.dept_name, '소속없음') AS departmentName
+        FROM employee e
+        LEFT JOIN m_job j ON e.job_code = j.id
+        LEFT JOIN m_department d ON e.dept_code = d.id
+        WHERE e.job_code = (SELECT sub_e.job_code FROM employee sub_e WHERE sub_e.id = #{myId})
+        AND e.id != #{myId}
+    </select>
+    
+    <!-- 4. 즐겨찾기 (임시: 빈 리스트) -->
+    <select id="selectFavoriteApprovers" resultType="org.ateam.oncare.payment.query.dto.PaymentUserResponse">
+        SELECT 
+            e.id, 
+            e.name, 
+            IFNULL(j.name, '사원') AS jobTitle,
+            IFNULL(d.dept_name, '소속없음') AS departmentName
+        FROM employee e
+        LEFT JOIN m_job j ON e.job_code = j.id
+        LEFT JOIN m_department d ON e.dept_code = d.id
+        WHERE 1=0 <!-- 항상 빈 결과 -->
+    </select>
+    
+    <!-- 5. 부서 목록 -->
+    <select id="selectAllDepartments" resultType="org.ateam.oncare.payment.query.dto.DepartmentTreeResponse">
+        SELECT id AS deptId, dept_name AS deptName
+        FROM m_department
+    </select>
+    
+    <!-- 6. 특정 부서 직원 조회 -->
+    <select id="selectUsersByDeptId" resultType="org.ateam.oncare.payment.query.dto.PaymentUserResponse">
+        SELECT 
+            e.id, 
+            e.name, 
+            IFNULL(j.name, '사원') AS jobTitle,
+            IFNULL(d.dept_name, '소속없음') AS departmentName
+        FROM employee e
+        LEFT JOIN m_job j ON e.job_code = j.id
+        LEFT JOIN m_department d ON e.dept_code = d.id
+        WHERE e.dept_code = #{deptId}
+    </select>
+
+</mapper>

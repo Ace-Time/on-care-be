@@ -20,6 +20,8 @@ import org.ateam.oncare.global.enums.MasterInternalType;
 import org.ateam.oncare.global.eventType.MasterDataEvent;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -43,6 +45,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     // 요양보호사 직종 코드 (DB의 m_job 테이블 id와 맞춰주세요. 예: 1)
     private static final Long JOB_CODE_CARE_WORKER = 5L;
+
+    private final PasswordEncoder bCryptPasswordEncoder;
 
     @Override
     public ResponseLoginEmployeeDTO getEmployee(RequestLogin loginRequest) {
@@ -88,7 +92,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         // 1. Employee 엔티티 생성 및 값 세팅
         Employee employee = new Employee();
         employee.setName(dto.getName());
-        employee.setPw("1234"); // 비밀번호 디폴트 고정
+        employee.setPw(bCryptPasswordEncoder.encode("1234")); // 비밀번호 디폴트 고정
         employee.setBirth(dto.getBirth());
         employee.setGender(dto.getGender());
         employee.setAddress(dto.getAddress());
@@ -137,7 +141,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         // 2. 정보 업데이트 (Setter로 덮어쓰기 -> Dirty Checking)
         if (dto.getName() != null)
             employee.setName(dto.getName());
-        // pw는 유지
+
+        // 비밀번호 변경 처리
+        if (dto.getNewPassword() != null && !dto.getNewPassword().trim().isEmpty()) {
+            // 현재 비밀번호 검증 (암호가 틀렸을 때 예외 발생)
+            if (dto.getCurrentPassword() == null
+                    || !bCryptPasswordEncoder.matches(dto.getCurrentPassword(), employee.getPw())) {
+                throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+            }
+            // 일치하면 새 비밀번호 암호화하여 저장
+            employee.setPw(bCryptPasswordEncoder.encode(dto.getNewPassword()));
+        }
         if (dto.getBirth() != null)
             employee.setBirth(dto.getBirth());
         if (dto.getGender() != null)

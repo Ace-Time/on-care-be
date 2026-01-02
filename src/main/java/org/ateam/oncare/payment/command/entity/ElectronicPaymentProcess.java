@@ -15,16 +15,21 @@ public class ElectronicPaymentProcess {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false)
-    private String approve; // '0': 미승인, '1': 승인
+    @Column(name = "electronic_payment_id", nullable = false)
+    private Integer electronicPaymentId;
 
-    @Column(name = "drafter_id", nullable = false)
-    private Integer drafterId; // 기안자 (혹은 전 단계 승인자)
+    @Column(name = "employee_id", nullable = false)
+    private Long employeeId; // 결재자 ID
 
-    @Column(name = "approver_id", nullable = false)
-    private Integer approverId; // 승인해야 할 사람
+    @Column(name = "step_order", nullable = false)
+    private Integer stepOrder;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "electronic_payment_id")
-    private ElectronicPayment electronicPayment;
+    @Column(name = "status", nullable = false)
+    private Integer status; // 0:대기, 1:승인, 2:반려
+
+    @Column(name = "comment")
+    private String comment;
+
+    @Column(name = "processed_at")
+    private java.time.LocalDateTime processedAt;
 }
