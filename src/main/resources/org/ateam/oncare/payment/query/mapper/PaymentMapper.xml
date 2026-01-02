@@ -29,6 +29,8 @@
         <result property="createdAt" column="created_at"/>
         <result property="priority" column="priority"/>
         <result property="amount" column="amount"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
         <result property="categoryName" column="categoryName"/>
         <result property="drafterName" column="drafterName"/>
         <result property="status" column="status"/>
@@ -45,7 +47,14 @@
         FROM electronic_payment_process pp
         JOIN electronic_payment ep ON pp.electronic_payment_id = ep.id
         WHERE pp.employee_id = #{employeeId}
-        AND pp.status = 0) AS myPendingCount,
+        AND pp.status = 0
+        AND ep.status = 0
+        AND pp.step_order = (
+            SELECT MIN(sub_pp.step_order)
+            FROM electronic_payment_process sub_pp
+            WHERE sub_pp.electronic_payment_id = ep.id
+            AND sub_pp.status = 0
+        )) AS myPendingCount,
 
         (SELECT COUNT(*)
         FROM electronic_payment
@@ -166,6 +175,8 @@
             ELSE '낮음'
         END AS priority,
         ep.amount,
+        ep.start_date,
+        ep.end_date,
         c.name AS categoryName,
         e.name AS drafterName,
         CASE
