@@ -80,15 +80,22 @@
         LEFT JOIN electronic_payment_category c ON ep.electronic_payment_category_id = c.id
         <where>
             <if test="employeeId != null">
-                AND (
-                ep.employee_id = #{employeeId}
-                OR EXISTS (
-                SELECT 1
-                FROM electronic_payment_process pp
-                WHERE pp.electronic_payment_id = ep.id
-                AND pp.employee_id = #{employeeId}
-                )
-                )
+                <choose>
+                    <when test="myRequest != null and myRequest == true">
+                        AND ep.employee_id = #{employeeId}
+                    </when>
+                    <otherwise>
+                        AND (
+                        ep.employee_id = #{employeeId}
+                        OR EXISTS (
+                        SELECT 1
+                        FROM electronic_payment_process pp
+                        WHERE pp.electronic_payment_id = ep.id
+                        AND pp.employee_id = #{employeeId}
+                        )
+                        )
+                    </otherwise>
+                </choose>
             </if>
             <if test="keyword != null and keyword != ''">
                 AND (
@@ -96,8 +103,44 @@
                 OR e.name LIKE CONCAT('%', #{keyword}, '%')
                 )
             </if>
+            <!-- 3. 결재 상태 필터 (개인화된 목록) -->
             <if test="status != null and status != ''">
-                AND ep.status = #{status}
+                <choose>
+                    <when test="status == '0'">
+                        <!-- 대기중: 내가 결재해야 할 차례인 문서 -->
+                        AND ep.status = 0
+                        AND EXISTS (
+                            SELECT 1
+                            FROM electronic_payment_process pp
+                            WHERE pp.electronic_payment_id = ep.id
+                            AND pp.employee_id = #{employeeId}
+                            AND pp.status = 0
+                            AND pp.step_order = (
+                                SELECT MIN(sub_pp.step_order)
+                                FROM electronic_payment_process sub_pp
+                                WHERE sub_pp.electronic_payment_id = ep.id
+                                AND sub_pp.status = 0
+                            )
+                        )
+                    </when>
+                    <when test="status == '1'">
+                        <!-- 승인: 내가 승인한 문서 (내 결재 단계가 '승인' 상태인 것) -->
+                        AND EXISTS (
+                            SELECT 1
+                            FROM electronic_payment_process pp
+                            WHERE pp.electronic_payment_id = ep.id
+                            AND pp.employee_id = #{employeeId}
+                            AND pp.status = 1
+                        )
+                    </when>
+                    <when test="status == '2'">
+                        <!-- 반려: 문서 자체가 반려된 것 -->
+                        AND ep.status = 2
+                    </when>
+                    <otherwise>
+                        AND ep.status = #{status}
+                    </otherwise>
+                </choose>
             </if>
             <if test="category != null and category != ''">
                 AND c.name = #{category}
@@ -128,17 +171,24 @@
         LEFT JOIN employee e ON ep.employee_id = e.id
         LEFT JOIN electronic_payment_category c ON ep.electronic_payment_category_id = c.id
         <where>
-            <!-- 1. 로그인한 사용자와 관련된 문서만 조회 (기안자 OR 결재자 포함) -->
+            <!-- 1. 조회 조건 (myRequest=true: 내가 기안한 문서 / else: 나와 관련된 모든 문서) -->
             <if test="employeeId != null">
-                AND (
-                    ep.employee_id = #{employeeId}
-                    OR EXISTS (
-                        SELECT 1
-                        FROM electronic_payment_process pp
-                        WHERE pp.electronic_payment_id = ep.id
-                        AND pp.employee_id = #{employeeId}
-                    )
-                )
+                <choose>
+                    <when test="myRequest != null and myRequest == true">
+                        AND ep.employee_id = #{employeeId}
+                    </when>
+                    <otherwise>
+                        AND (
+                            ep.employee_id = #{employeeId}
+                            OR EXISTS (
+                                SELECT 1
+                                FROM electronic_payment_process pp
+                                WHERE pp.electronic_payment_id = ep.id
+                                AND pp.employee_id = #{employeeId}
+                            )
+                        )
+                    </otherwise>
+                </choose>
             </if>
 
             <!-- 2. 검색어 (제목 or 기안자명) -->
@@ -149,9 +199,44 @@
                 )
             </if>
 
-            <!-- 3. 결재 상태 필터 -->
+            <!-- 3. 결재 상태 필터 (개인화된 목록) -->
             <if test="status != null and status != ''">
-                AND ep.status = #{status}
+                <choose>
+                    <when test="status == '0'">
+                        <!-- 대기중: 내가 결재해야 할 차례인 문서 -->
+                        AND ep.status = 0
+                        AND EXISTS (
+                            SELECT 1
+                            FROM electronic_payment_process pp
+                            WHERE pp.electronic_payment_id = ep.id
+                            AND pp.employee_id = #{employeeId}
+                            AND pp.status = 0
+                            AND pp.step_order = (
+                                SELECT MIN(sub_pp.step_order)
+                                FROM electronic_payment_process sub_pp
+                                WHERE sub_pp.electronic_payment_id = ep.id
+                                AND sub_pp.status = 0
+                            )
+                        )
+                    </when>
+                    <when test="status == '1'">
+                        <!-- 승인: 내가 승인한 문서 (내 결재 단계가 '승인' 상태인 것) -->
+                        AND EXISTS (
+                            SELECT 1
+                            FROM electronic_payment_process pp
+                            WHERE pp.electronic_payment_id = ep.id
+                            AND pp.employee_id = #{employeeId}
+                            AND pp.status = 1
+                        )
+                    </when>
+                    <when test="status == '2'">
+                        <!-- 반려: 문서 자체가 반려된 것 -->
+                        AND ep.status = 2
+                    </when>
+                    <otherwise>
+                        AND ep.status = #{status}
+                    </otherwise>
+                </choose>
             </if>
             
             <!-- 4. 카테고리 필터 -->
