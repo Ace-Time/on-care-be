@@ -1,4 +1,4 @@
-name: Code Review
+name: AWS Deploy
 
 # GitHub 저장소 읽기 및 PR 쓰기 권한을 설정
 permissions:
@@ -8,7 +8,7 @@ permissions:
 # PR 이벤트 관련해서 워크플로우 실행
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "practice/github-actions-aw" ]
 
 # 워크플로우 실행 작업 정의
 jobs:

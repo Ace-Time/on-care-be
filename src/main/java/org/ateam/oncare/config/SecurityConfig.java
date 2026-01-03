@@ -51,7 +51,11 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 특정 클라이언트만 허용 (예: 프론트엔드 주소)
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5173",
+                "http://localhost:8080",
+                "https://healthsystem.shop",
+                "http://healthsystem.shop"    ));
 
         // 허용할 HTTP 메소드 (GET, POST 등)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

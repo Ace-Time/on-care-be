@@ -179,7 +179,7 @@ public class RentalServiceImpl implements RentalService {
     @Override
     public ResponseRentalProductDTO terminateProduct(Long rnetalProductId) {
 
-        RentalProduct rentalProduct = rentalProductRepository.findByRentalContractCd(rnetalProductId);
+        RentalProduct rentalProduct = rentalProductRepository.findByRentalContractCdAndRentalStatusId(rnetalProductId, 1);
 
         // 유지 상태 상태 -> 회수 접수로 변경
         rentalProduct.setRentalStatusId(2L);
