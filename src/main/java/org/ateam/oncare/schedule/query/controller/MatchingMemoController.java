@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/schedule/memo")
+@RequestMapping("/api/schedule/memo")
 @RequiredArgsConstructor
 public class MatchingMemoController {
 

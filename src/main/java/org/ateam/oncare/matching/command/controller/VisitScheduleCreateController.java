@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/matching/visit-schedules")
+@RequestMapping("/api/matching/visit-schedules")
 public class VisitScheduleCreateController {
 
     private final VisitScheduleCreateService visitScheduleCreateService;

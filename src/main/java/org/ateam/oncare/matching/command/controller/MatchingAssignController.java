@@ -11,7 +11,7 @@ import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/matching/assign")
+@RequestMapping("/api/matching/assign")
 public class MatchingAssignController {
 
     private final MatchingAssignService matchingAssignService;

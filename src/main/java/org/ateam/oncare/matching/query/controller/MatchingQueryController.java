@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/matching")
+@RequestMapping("/api/matching")
 public class MatchingQueryController {
 
     private final MatchingQueryService matchingQueryService;

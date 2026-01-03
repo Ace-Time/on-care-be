@@ -8,7 +8,7 @@ import org.ateam.oncare.schedule.command.service.MatchingMemoCommandService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/schedule/memo")
+@RequestMapping("/api/schedule/memo")
 @RequiredArgsConstructor
 public class MatchingMemoCommandController {
 
