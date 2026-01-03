@@ -51,7 +51,7 @@ public class CareLogMonthlyAiSummaryService {
                 .build();
 
         // 3) FastAPI 호출
-        String url = aiBaseUrl + "/summaries/monthly";
+        String url = aiBaseUrl + "/ai/summaries/monthly";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
