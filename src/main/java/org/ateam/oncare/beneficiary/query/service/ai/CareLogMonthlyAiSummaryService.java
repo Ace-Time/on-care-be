@@ -3,6 +3,7 @@ package org.ateam.oncare.beneficiary.query.service.ai;
 // DB -> (칩 변환) -> FastAPI 호출
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.beneficiary.query.dto.ai.MonthlySummaryAiRequest;
 import org.ateam.oncare.beneficiary.query.dto.ai.MonthlySummaryAiResponse;
 import org.ateam.oncare.beneficiary.query.mapper.AiCareInsertMapper;
@@ -11,6 +12,7 @@ import org.ateam.oncare.beneficiary.query.mapper.CareLogQueryMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -20,6 +22,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CareLogMonthlyAiSummaryService {
 
     private final CareLogQueryMapper mapper;
@@ -51,20 +54,26 @@ public class CareLogMonthlyAiSummaryService {
                 .build();
 
         // 3) FastAPI 호출
-        String url = aiBaseUrl + "/summaries/monthly";
+        String url = aiBaseUrl + "/ai/summaries/monthly";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         HttpEntity<MonthlySummaryAiRequest> entity = new HttpEntity<>(req, headers);
+        ResponseEntity<MonthlySummaryAiResponse> resp = null;
 
-        ResponseEntity<MonthlySummaryAiResponse> resp = aiRestTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                entity,
-                MonthlySummaryAiResponse.class
-        );
+        try {
+            resp = aiRestTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    entity,
+                    MonthlySummaryAiResponse.class
+            );
+        } catch(HttpClientErrorException e) {
+            log.warn(e.getMessage());
+            throw e;
+        }
 
         if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
             throw new RuntimeException("AI 요약 서버 응답이 비정상입니다. status=" + resp.getStatusCode());

@@ -39,7 +39,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/**").permitAll() // 개발 기간동안 모든 요청 허용
 //                .requestMatchers("/health", "/auth/**", "/employee/**").permitAll() // health, 인증 관련 요청만 인증 없이 허용
-                .requestMatchers("/health", "/auth/**", "/api/**").permitAll() // health, 인증, API 요청 허용 (테스트용)
+                .requestMatchers("/api/health", "/api/auth/**", "/api/**").permitAll() // health, 인증, API 요청 허용 (테스트용)
                 .anyRequest().authenticated());
 
         return http.build();
@@ -51,7 +51,11 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 특정 클라이언트만 허용 (예: 프론트엔드 주소)
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5173",
+                "http://localhost:8080",
+                "https://healthsystem.shop",
+                "http://healthsystem.shop"    ));
 
         // 허용할 HTTP 메소드 (GET, POST 등)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

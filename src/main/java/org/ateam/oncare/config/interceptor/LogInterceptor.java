@@ -31,7 +31,7 @@ public class LogInterceptor implements HandlerInterceptor {
         request.setAttribute("startTime", System.currentTimeMillis());
 
         // 요청 시작 로그 남기기
-        logger.info("[START] {} | Request incoming",clientIp);
+        logger.info("[START] {}/ [{}] {} ",clientIp,request.getMethod() ,request.getRequestURI());
 
         return true;
     }
