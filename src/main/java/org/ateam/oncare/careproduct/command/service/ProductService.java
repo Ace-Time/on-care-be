@@ -23,4 +23,6 @@ public interface ProductService {
     void expectStock(ProductStockEvent productStockEvent);
 
     List<ResponseProductStatusDTO> getProductStatus();
+
+    Slice<ResponsePlannedStockInOutDTO> getExpectedStock(RequestPlannedStockInOutDTO condition, Pageable pageable);
 }

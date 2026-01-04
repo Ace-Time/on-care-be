@@ -79,6 +79,13 @@ public class ProductServiceImpl implements ProductService {
         return responseDTOs;
     }
 
+    @Override
+    public Slice<ResponsePlannedStockInOutDTO> getExpectedStock(RequestPlannedStockInOutDTO condition, Pageable pageable) {
+        Slice<ResponsePlannedStockInOutDTO> entities = productTaskRepository.selectExpectedStock(condition, pageable);
+
+        return entities;
+    }
+
     private void canceled(ProductStockEvent productStockEvent) {
         ProductTask productTask = productTaskRepository.selectByProductId(productStockEvent.getProductId());
         productTaskRepository.delete(productTask);
