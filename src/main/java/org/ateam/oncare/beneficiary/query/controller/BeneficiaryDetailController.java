@@ -15,7 +15,7 @@ public class BeneficiaryDetailController {
 
     private final BeneficiaryDetailService beneficiaryDetailService;
 
-    // ✅ 우측 상단 상세 카드
+    // 우측 상단 상세 카드
     @GetMapping("/{beneficiaryId}")
     public BeneficiaryDetailResponse getBeneficiaryDetail(@PathVariable Long beneficiaryId) {
         return beneficiaryDetailService.getDetail(beneficiaryId);

@@ -7,12 +7,10 @@ import lombok.Setter;
 @Setter
 public class RentalContractDetailResponse {
 
-    private Long rentalProductId;
     private Long rentalContractId;
-    private String productAssetId;
+    private String productAssetId;  // 이제 EM002 같은 코드
     private String productName;
 
-    // 계약대기 / 접수 / 유지 / 계약중 / 종료 / 해지 / 만료
     private String contractStatusName;
 
     private String contractDate;

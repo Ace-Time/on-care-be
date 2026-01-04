@@ -13,7 +13,7 @@ public class BeneficiaryRentalUsageService {
 
     public RentalUsageResponse getRentalUsage(Long beneficiaryId) {
         RentalUsageResponse res = new RentalUsageResponse();
-        res.setItems(mapper.selectRentals(beneficiaryId)); // ✅ 단일 리스트
+        res.setItems(mapper.selectRentals(beneficiaryId)); // 단일 리스트
         return res;
     }
 }
