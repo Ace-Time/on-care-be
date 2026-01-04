@@ -162,7 +162,7 @@
         WITH required_cert AS (
             SELECT DISTINCT
                 c.id AS certificate_id
-            FROM riskOfMember rm
+            FROM risk_of_member rm
                      JOIN m_risk_factor rf
                           ON rf.id = rm.risk_id
                      JOIN certificate c
@@ -299,7 +299,7 @@
     <select id="selectBeneficiaryRiskFactors"
             resultType="java.lang.String">
         SELECT DISTINCT rf.name
-        FROM riskOfMember rm
+        FROM risk_of_member rm
                  JOIN m_risk_factor rf
                       ON rf.id = rm.risk_id
         WHERE rm.beneficiary_id = #{beneficiaryId}
