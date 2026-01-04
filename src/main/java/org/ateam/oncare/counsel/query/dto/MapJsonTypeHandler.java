@@ -3,16 +3,16 @@ package org.ateam.oncare.counsel.query.dto;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.ateam.oncare.counsel.command.dto.JsonUtil;
+
 import java.sql.*;
 import java.util.Map;
 
 public class MapJsonTypeHandler extends BaseTypeHandler<Map<String, Object>> {
-    private static final ObjectMapper mapper = new ObjectMapper();
-
     @Override
     public void setNonNullParameter(PreparedStatement ps, int i, Map<String, Object> parameter, JdbcType jdbcType) throws SQLException {
         try {
-            ps.setString(i, mapper.writeValueAsString(parameter));
+            ps.setString(i, JsonUtil.mapToJson(parameter));
         } catch (Exception e) {
             throw new SQLException("Error converting Map to JSON", e);
         }
@@ -35,8 +35,9 @@ public class MapJsonTypeHandler extends BaseTypeHandler<Map<String, Object>> {
 
     private Map<String, Object> parse(String json) throws SQLException {
         if (json == null) return null;
+
         try {
-            return mapper.readValue(json, Map.class);
+            return JsonUtil.jsonToMap(json);
         } catch (Exception e) {
             throw new SQLException("Error converting JSON to Map", e);
         }

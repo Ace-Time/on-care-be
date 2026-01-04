@@ -8,7 +8,14 @@ import java.util.Optional;
 
 
 public interface PotentialStageRepository extends JpaRepository<PotentialStage,Long> {
-    List<PotentialStage> findAllByPotentialCustomerId(Long potentialId);
+    /**
+     * 특정 잠재고객의 모든 단계 조회 (단계 순으로 정렬)
+     */
+    List<PotentialStage> findByPotentialCustomerIdOrderByStageAsc(Long potentialId);
 
-    Optional<PotentialStage> findByPotentialCustomerIdAndStage(long potentialCustomerId, int stage);
+    /**
+     * 특정 잠재고객의 특정 단계 조회
+     */
+    Optional<PotentialStage> findByPotentialCustomerIdAndStage(Long potentialId, Integer stage);
+
 }

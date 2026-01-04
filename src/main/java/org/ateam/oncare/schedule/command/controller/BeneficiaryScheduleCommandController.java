@@ -12,7 +12,7 @@ import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/beneficiary-schedules")
+@RequestMapping("/api/beneficiary-schedules")
 public class BeneficiaryScheduleCommandController {
 
     private final BeneficiaryScheduleCommandService service;

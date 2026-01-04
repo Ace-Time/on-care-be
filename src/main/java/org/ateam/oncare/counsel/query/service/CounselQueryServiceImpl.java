@@ -2,9 +2,8 @@ package org.ateam.oncare.counsel.query.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.ateam.oncare.counsel.query.dto.CounselDetailResponse;
-import org.ateam.oncare.counsel.query.dto.CounselListResponse;
-import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
+import org.ateam.oncare.counsel.query.dto.*;
+import org.ateam.oncare.counsel.query.mapper.BeneficiarySignificantMapper;
 import org.ateam.oncare.counsel.query.mapper.CounselQueryMapper;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +22,7 @@ import java.util.List;
 @Transactional
 public class CounselQueryServiceImpl implements CounselQueryService {
     private final CounselQueryMapper counselQueryMapper;
+    private final BeneficiarySignificantMapper beneficiarySignificantMapper;
 
     @Override
     public @Nullable List<CustomerListResponse> searchCustomers(String keyword) {
@@ -63,5 +63,27 @@ public class CounselQueryServiceImpl implements CounselQueryService {
     @Override
     public Long findPotentialIdByBeneficiaryId(Long beneficiaryId) {
         return counselQueryMapper.findPotentialIdByBeneficiaryId(beneficiaryId);
+    }
+
+    @Override
+    public List<BeneficiarySignificantResponse> findBeneficiarySignificants(
+            BigInteger beneficiaryId,
+            String categoryName
+    ) {
+        if (categoryName != null && !categoryName.isEmpty()) {
+            // 카테고리별 조회
+            return beneficiarySignificantMapper.findSignificantsByBeneficiaryIdAndCategory(
+                    beneficiaryId,
+                    categoryName
+            );
+        } else {
+            // 전체 조회
+            return beneficiarySignificantMapper.findSignificantsByBeneficiaryId(beneficiaryId);
+        }
+    }
+
+    @Override
+    public List<SignificantMasterResponse> findAllSignificants() {
+        return beneficiarySignificantMapper.findAllSignificants();
     }
 }

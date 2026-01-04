@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/confirmed-calendar")
+@RequestMapping("/api/confirmed-calendar")
 public class ConfirmedScheduleMemoCommandController {
 
     private final ConfirmedScheduleMemoCommandService confirmedScheduleMemoCommandService;

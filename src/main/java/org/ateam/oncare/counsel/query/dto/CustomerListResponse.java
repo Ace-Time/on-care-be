@@ -24,4 +24,5 @@ public class CustomerListResponse {
     private String customerType;
 
     private List<StageData> stages;
+    private Integer currentStage;
 }

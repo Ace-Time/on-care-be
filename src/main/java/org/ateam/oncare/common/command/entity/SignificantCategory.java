@@ -16,6 +16,6 @@ public class SignificantCategory {
     private Long id;
 
     @Column(name = "name", nullable = false, length = 50)
-    private String name;
+    private String name; // 1. 렌탈성사도움, 2. 문의해결도움, 3. 컴플레인해결도움, 4. 해지상담도움
 
 }
