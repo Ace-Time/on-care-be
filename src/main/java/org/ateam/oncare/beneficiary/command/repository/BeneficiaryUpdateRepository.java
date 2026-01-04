@@ -17,4 +17,6 @@ public interface BeneficiaryUpdateRepository extends JpaRepository<Beneficiary, 
     List<Beneficiary> findByName(String name);
 
     List<Beneficiary> findByNameAndStatus(String name, Boolean i);
+
+    List<Beneficiary> findByNameContainingAndStatus(String name, boolean b);
 }

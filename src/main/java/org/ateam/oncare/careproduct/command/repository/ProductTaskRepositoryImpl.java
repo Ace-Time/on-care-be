@@ -112,7 +112,9 @@ public class ProductTaskRepositoryImpl implements ProductTaskRepositoryCustom {
     }
 
     private BooleanExpression expectedDate(LocalDate startDate, LocalDate endDate) {
-        if (startDate == null || endDate == null) {
+        if (startDate != null  && endDate == null) {
+            return productTask.expectedDate.goe(startDate);
+        } else if (startDate == null && endDate == null) {
             return null;
         }
 

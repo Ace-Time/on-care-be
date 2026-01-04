@@ -46,7 +46,7 @@ public class BeneficiaryRentalContractService {
     }
 
     public List<ResponseBeneficiaryDTO> getEmployeeRental(String name) {
-        List<Beneficiary> entity = beneficiaryUpdateRepository.findByNameAndStatus(name,false);
+        List<Beneficiary> entity = beneficiaryUpdateRepository.findByNameContainingAndStatus(name,true);
 //        List<Beneficiary> entity = beneficiaryUpdateRepository.findByName(name);
 
         return entity.stream()
