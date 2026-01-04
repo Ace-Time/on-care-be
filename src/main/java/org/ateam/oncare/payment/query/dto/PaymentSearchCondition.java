@@ -12,6 +12,7 @@ public class PaymentSearchCondition {
     private String keyword; // 제목 또는 요청자 검색
     private String category; // 전체 유형 필터
     private String status; // 전체 상태 필터
+    private Boolean myRequest; // 내가 기안한 문서만 조회 여부
 
     private Integer page = 0; // 페이지 번호 (기본 0, 0-based index)
     private Integer size = 10; // 페이지 당 개수 (기본 10)

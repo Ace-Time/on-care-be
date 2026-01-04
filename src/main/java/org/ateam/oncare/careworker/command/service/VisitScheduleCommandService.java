@@ -5,6 +5,7 @@ import org.ateam.oncare.careworker.command.dto.CompleteVisitRequest;
 import org.ateam.oncare.careworker.command.dto.CreateVisitScheduleRequest;
 import org.ateam.oncare.careworker.command.dto.StartVisitRequest;
 import org.ateam.oncare.careworker.command.dto.UpdateVisitScheduleRequest;
+import org.ateam.oncare.careworker.command.mapper.CareLogCommandMapper;
 import org.ateam.oncare.careworker.command.mapper.VisitScheduleCommandMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class VisitScheduleCommandService {
 
     private final VisitScheduleCommandMapper visitScheduleCommandMapper;
+    private final CareLogCommandMapper careLogCommandMapper;
     private final BeneficiaryCostService beneficiaryCostService;
 
     @Transactional
@@ -88,6 +90,12 @@ public class VisitScheduleCommandService {
     @Transactional
     public void deleteVisitSchedule(Long vsId) {
         log.info("방문 요양 일정 삭제 시작 - vsId: {}", vsId);
+
+        // 1. 관련된 요양일지 먼저 삭제 (논리삭제)
+        int careLogsDeleted = careLogCommandMapper.deleteCareLogsByVsId(vsId);
+        log.info("관련 요양일지 삭제 완료 - vsId: {}, 삭제된 개수: {}", vsId, careLogsDeleted);
+
+        // 2. 방문 일정 삭제 (물리삭제)
         int deleted = visitScheduleCommandMapper.deleteVisitSchedule(vsId);
 
         if (deleted == 0) {

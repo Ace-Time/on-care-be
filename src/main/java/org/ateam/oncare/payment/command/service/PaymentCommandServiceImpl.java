@@ -114,6 +114,11 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             myProcess.setStatus(2); // 2: 반려
             payment.setStatus(2); // 문서 전체 반려
 
+            // [추가] 반려 시 이후 결재 단계들도 모두 '반려(2)' 처리하여 더 이상 대기 상태로 남지 않도록 함
+            allProcesses.stream()
+                    .filter(p -> p.getStepOrder() > myProcess.getStepOrder())
+                    .forEach(p -> p.setStatus(2));
+
             // 반려 알림 (기안자에게) - Template ID: 9
             try {
                 notificationCommandService.send(payment.getEmployeeId(), 9L);
