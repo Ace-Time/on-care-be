@@ -7,7 +7,7 @@ import org.ateam.oncare.schedule.query.service.ConfirmedScheduleMemoService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/confirmed-calendar")
+@RequestMapping("/api/confirmed-calendar")
 public class ConfirmedScheduleMemoController {
 
     private final ConfirmedScheduleMemoService confirmedScheduleMemoService;

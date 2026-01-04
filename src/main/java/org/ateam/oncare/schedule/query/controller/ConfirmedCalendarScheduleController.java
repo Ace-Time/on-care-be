@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/confirmed-calendar")
+@RequestMapping("/api/confirmed-calendar")
 public class ConfirmedCalendarScheduleController {
 
     private final ConfirmedCalendarScheduleService confirmedCalendarScheduleService;

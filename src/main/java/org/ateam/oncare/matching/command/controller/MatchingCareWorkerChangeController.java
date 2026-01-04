@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/change")
+@RequestMapping("/api/change")
 public class MatchingCareWorkerChangeController {
 
     private final MatchingCareWorkerChangeService matchingCareWorkerChangeService;
