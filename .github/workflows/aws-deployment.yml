@@ -8,7 +8,7 @@ permissions:
 # PR 이벤트 관련해서 워크플로우 실행
 on:
   push:
-    branches: [ "practice/github-actions-aws" ]
+    branches: [ "main" ]
 
 # 워크플로우 실행 작업 정의
 jobs:
