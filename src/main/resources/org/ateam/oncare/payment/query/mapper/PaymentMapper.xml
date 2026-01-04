@@ -37,7 +37,9 @@
     </resultMap>
 
     <resultMap id="ApproverInfoMap" type="org.ateam.oncare.payment.query.dto.PaymentDetailResponse$ApproverInfo">
+        <result property="approverId" column="approverId"/>
         <result property="approverName" column="approverName"/>
+        <result property="approverJobTitle" column="approverJobTitle"/>
         <result property="stepStatus" column="stepStatus"/>
     </resultMap>
 
@@ -106,23 +108,6 @@
             <!-- 3. 결재 상태 필터 (개인화된 목록) -->
             <if test="status != null and status != ''">
                 <choose>
-                    <when test="status == '0'">
-                        <!-- 대기중: 내가 결재해야 할 차례인 문서 -->
-                        AND ep.status = 0
-                        AND EXISTS (
-                            SELECT 1
-                            FROM electronic_payment_process pp
-                            WHERE pp.electronic_payment_id = ep.id
-                            AND pp.employee_id = #{employeeId}
-                            AND pp.status = 0
-                            AND pp.step_order = (
-                                SELECT MIN(sub_pp.step_order)
-                                FROM electronic_payment_process sub_pp
-                                WHERE sub_pp.electronic_payment_id = ep.id
-                                AND sub_pp.status = 0
-                            )
-                        )
-                    </when>
                     <when test="status == '1'">
                         <!-- 승인: 내가 승인한 문서 (내 결재 단계가 '승인' 상태인 것) -->
                         AND EXISTS (
@@ -133,14 +118,27 @@
                             AND pp.status = 1
                         )
                     </when>
-                    <when test="status == '2'">
-                        <!-- 반려: 문서 자체가 반려된 것 -->
-                        AND ep.status = 2
-                    </when>
                     <otherwise>
                         AND ep.status = #{status}
                     </otherwise>
                 </choose>
+            </if>
+            <if test="myTurn != null and myTurn == true">
+                <!-- 대기중: 내가 결재해야 할 차례인 문서 -->
+                AND ep.status = 0
+                AND EXISTS (
+                    SELECT 1
+                    FROM electronic_payment_process pp
+                    WHERE pp.electronic_payment_id = ep.id
+                    AND pp.employee_id = #{employeeId}
+                    AND pp.status = 0
+                    AND pp.step_order = (
+                        SELECT MIN(sub_pp.step_order)
+                        FROM electronic_payment_process sub_pp
+                        WHERE sub_pp.electronic_payment_id = ep.id
+                        AND sub_pp.status = 0
+                    )
+                )
             </if>
             <if test="category != null and category != ''">
                 AND c.name = #{category}
@@ -202,23 +200,6 @@
             <!-- 3. 결재 상태 필터 (개인화된 목록) -->
             <if test="status != null and status != ''">
                 <choose>
-                    <when test="status == '0'">
-                        <!-- 대기중: 내가 결재해야 할 차례인 문서 -->
-                        AND ep.status = 0
-                        AND EXISTS (
-                            SELECT 1
-                            FROM electronic_payment_process pp
-                            WHERE pp.electronic_payment_id = ep.id
-                            AND pp.employee_id = #{employeeId}
-                            AND pp.status = 0
-                            AND pp.step_order = (
-                                SELECT MIN(sub_pp.step_order)
-                                FROM electronic_payment_process sub_pp
-                                WHERE sub_pp.electronic_payment_id = ep.id
-                                AND sub_pp.status = 0
-                            )
-                        )
-                    </when>
                     <when test="status == '1'">
                         <!-- 승인: 내가 승인한 문서 (내 결재 단계가 '승인' 상태인 것) -->
                         AND EXISTS (
@@ -229,14 +210,27 @@
                             AND pp.status = 1
                         )
                     </when>
-                    <when test="status == '2'">
-                        <!-- 반려: 문서 자체가 반려된 것 -->
-                        AND ep.status = 2
-                    </when>
                     <otherwise>
                         AND ep.status = #{status}
                     </otherwise>
                 </choose>
+            </if>
+            <if test="myTurn != null and myTurn == true">
+                <!-- 대기중: 내가 결재해야 할 차례인 문서 -->
+                AND ep.status = 0
+                AND EXISTS (
+                    SELECT 1
+                    FROM electronic_payment_process pp
+                    WHERE pp.electronic_payment_id = ep.id
+                    AND pp.employee_id = #{employeeId}
+                    AND pp.status = 0
+                    AND pp.step_order = (
+                        SELECT MIN(sub_pp.step_order)
+                        FROM electronic_payment_process sub_pp
+                        WHERE sub_pp.electronic_payment_id = ep.id
+                        AND sub_pp.status = 0
+                    )
+                )
             </if>
             
             <!-- 4. 카테고리 필터 -->
@@ -277,7 +271,9 @@
 
     <select id="selectApproverList" resultMap="ApproverInfoMap">
         SELECT
+        e.id AS approverId,
         e.name AS approverName,
+        IFNULL(j.name, '사원') AS approverJobTitle,
         CASE
             WHEN pp.status = 0 THEN '대기중'
             WHEN pp.status = 1 THEN '승인'
@@ -285,6 +281,7 @@
         END AS stepStatus
         FROM electronic_payment_process pp
         JOIN employee e ON pp.employee_id = e.id
+        LEFT JOIN m_job j ON e.job_code = j.id
         WHERE pp.electronic_payment_id = #{paymentId}
         ORDER BY pp.step_order ASC
     </select>

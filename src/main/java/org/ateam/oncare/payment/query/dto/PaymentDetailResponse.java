@@ -32,7 +32,9 @@ public class PaymentDetailResponse {
     @NoArgsConstructor
     @ToString
     public static class ApproverInfo {
+        private Long approverId;
         private String approverName;
+        private String approverJobTitle;
         private String stepStatus; // 대기중, 승인 등
     }
 }
