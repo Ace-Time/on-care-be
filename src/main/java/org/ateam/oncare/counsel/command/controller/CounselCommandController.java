@@ -85,7 +85,12 @@ public class CounselCommandController {
 
     // 수급자 특이사항 추가
     @PostMapping("/beneficiaries/{beneficiaryId}/significants/{significantId}")
-
+    public ResponseEntity<Void> addBeneficiarySignificant(
+            @PathVariable BigInteger beneficiaryId,
+            @PathVariable Integer significantId) {
+        customerFacadeService.addBeneficiarySignificant(beneficiaryId, significantId);
+        return ResponseEntity.ok().build();
+    }
 
 
     // 수급자 특이사항 삭제

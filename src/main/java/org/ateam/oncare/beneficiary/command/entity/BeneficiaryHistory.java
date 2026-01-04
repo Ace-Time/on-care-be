@@ -25,5 +25,5 @@ public class BeneficiaryHistory {
     private LocalDateTime terminateDate;
 
     @Column(name = "beneficiary_id", nullable = false)
-    private Long beneficiaryID;
+    private Long beneficiaryId;
 }

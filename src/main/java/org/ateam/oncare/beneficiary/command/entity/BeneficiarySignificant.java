@@ -19,7 +19,7 @@ public class BeneficiarySignificant {
     private Long id;
 
     @Column(name = "beneficiary_id", nullable = false)
-    private Long beneficiaryId; // 1:월 ~ 7:일
+    private Long beneficiaryId;
 
     @Column(name = "significant_id", nullable = false)
     private Long significantId;
