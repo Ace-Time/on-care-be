@@ -12,7 +12,7 @@ public class BeneficiaryRentalUsageController {
 
     private final BeneficiaryRentalUsageService service;
 
-    // ✅ 렌탈 탭 조회 (단일 리스트)
+    // 렌탈 탭 조회 (단일 리스트)
     @GetMapping("/{beneficiaryId}/rentals")
     public RentalUsageResponse getRentals(@PathVariable Long beneficiaryId) {
         return service.getRentalUsage(beneficiaryId);

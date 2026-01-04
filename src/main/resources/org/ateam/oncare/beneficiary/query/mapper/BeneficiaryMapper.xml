@@ -17,11 +17,11 @@
         <result property="careLevel"     column="care_level"/>
         <result property="riskLevel"     column="risk_level"/>
 
-        <!-- ✅ 수급자당 요양보호사 1명 => Long 유지 가능 -->
+        <!-- 수급자당 요양보호사 1명 => Long 유지 가능 -->
         <result property="careWorkerId"  column="care_worker_id"/>
         <result property="managerName"   column="care_worker_name"/>
 
-        <!-- ✅ 서비스유형은 여러 개 가능 => 문자열로 묶어서 -->
+        <!-- 서비스유형은 여러 개 가능 => 문자열로 묶어서 -->
         <result property="serviceType"   column="service_types"/>
 
         <result property="status"        column="service_status"/>
@@ -32,46 +32,50 @@
          SQL FRAGMENTS
          ===================================================== -->
 
-    <!-- ✅ 위험요소 점수 합산 (수급자별) -->
+    <!-- 위험요소 점수 합산 (수급자별) -->
     <sql id="RiskSumJoin">
         LEFT JOIN (
         SELECT
         rom.beneficiary_id,
         SUM(rf.score) AS risk_total
-        FROM riskOfMember rom
+        FROM risk_of_member rom
         JOIN m_risk_factor rf ON rf.id = rom.risk_id
         GROUP BY rom.beneficiary_id
         ) rsum ON rsum.beneficiary_id = b.id
     </sql>
 
-    <!-- ✅ DONE 기준: (1) 요양보호사 1명(대표: 최신 DONE) + (2) 서비스유형 여러개 집계 -->
+    <!-- DONE 기준: (1) 요양보호사 1명(대표) + (2) 서비스유형 여러개 집계 -->
     <sql id="DoneAggJoin">
 
-        <!-- (1) 최신 DONE 1건의 요양보호사 -->
-        LEFT JOIN visit_schedule vs_done
-        ON vs_done.vs_id = (
-        SELECT vs2.vs_id
-        FROM visit_schedule vs2
-        WHERE vs2.beneficiary_id = b.id
-<!--        AND vs2.visit_status = 'DONE'-->
-        ORDER BY vs2.start_dt DESC
+        <!-- (1) 현재 매칭(Y) 1건의 요양보호사 (수급자당 1명 가정) -->
+        LEFT JOIN matching m_done
+        ON m_done.id = (
+        SELECT m2.id
+        FROM matching m2
+        WHERE m2.beneficiary_id = b.id
+        AND m2.status = 'Y'
+        ORDER BY m2.start_date DESC, m2.id DESC
         LIMIT 1
         )
 
         LEFT JOIN care_worker cw
-        ON cw.id = vs_done.care_worker_id
+        ON cw.id = m_done.care_worker_id
 
         LEFT JOIN employee ce
         ON ce.id = cw.employee_id
 
-        <!-- (2) DONE 방문에서 서비스유형은 여러개 가능 => 집계해서 1행으로 -->
+        <!-- (2) 요양보호사 기준 서비스유형 여러개 가능 => 집계해서 1행으로 -->
         LEFT JOIN (
         SELECT
-        vs.beneficiary_id,
+        m.beneficiary_id,
         GROUP_CONCAT(DISTINCT mst.name ORDER BY mst.name SEPARATOR ', ') AS service_types
-        FROM visit_schedule vs
-        JOIN m_service_type mst ON mst.id = vs.service_type_id
-        GROUP BY vs.beneficiary_id
+        FROM matching m
+        JOIN care_worker_service_type cwst
+        ON cwst.care_worker_id = m.care_worker_id
+        JOIN m_service_type mst
+        ON mst.id = cwst.m_service_type_id
+        WHERE m.status = 'Y'
+        GROUP BY m.beneficiary_id
         ) st ON st.beneficiary_id = b.id
 
     </sql>

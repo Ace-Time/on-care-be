@@ -46,12 +46,12 @@
 
     <!-- 4) 위험요소 동기화 -->
     <delete id="deleteRiskFactors">
-        DELETE FROM riskOfMember
+        DELETE FROM risk_of_member
         WHERE beneficiary_id = #{beneficiaryId}
     </delete>
 
     <insert id="insertRiskFactors">
-        INSERT INTO riskOfMember (beneficiary_id, risk_id)
+        INSERT INTO risk_of_member (beneficiary_id, risk_id)
         VALUES
         <foreach collection="riskIds" item="rid" separator=",">
             (#{beneficiaryId}, #{rid})
@@ -64,7 +64,7 @@
         LEFT JOIN (
         SELECT rom.beneficiary_id,
         SUM(rf.score) AS risk_total
-        FROM riskOfMember rom
+        FROM risk_of_member rom
         JOIN m_risk_factor rf ON rf.id = rom.risk_id
         WHERE rom.beneficiary_id = #{beneficiaryId}
         GROUP BY rom.beneficiary_id

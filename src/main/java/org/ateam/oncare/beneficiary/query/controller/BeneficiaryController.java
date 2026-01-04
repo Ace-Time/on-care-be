@@ -34,7 +34,7 @@ public class BeneficiaryController {
             @RequestParam(required = false) Integer riskLevelId,
             @RequestParam(required = false) Integer careLevelId,
 
-            // ✅ 추가
+
             @RequestParam(required = false) String keyword,
 
             @RequestParam(defaultValue = "NAME") String sort,
@@ -49,13 +49,13 @@ public class BeneficiaryController {
         req.setRiskLevelId(riskLevelId);
         req.setCareLevelId(careLevelId);
 
-        // ✅ 추가
+
         req.setKeyword(keyword);
 
         req.setSort(sort);
         req.setDirection(direction);
 
-        // ✅ 요양보호사 필터링: JWT 토큰에서 employeeId를 가져와서 careWorkerId 조회
+        //  요양보호사 필터링: JWT 토큰에서 employeeId를 가져와서 careWorkerId 조회
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             Claims claims = jwtTokenProvider.getClaimsFromAT(token);

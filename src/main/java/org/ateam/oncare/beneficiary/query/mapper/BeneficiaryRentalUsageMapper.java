@@ -10,7 +10,7 @@ import java.util.List;
 @Mapper
 public interface BeneficiaryRentalUsageMapper {
 
-    // ✅ 단일 리스트
+    // 단일 리스트
     List<RentalUsageResponse.RentalItem> selectRentals(@Param("beneficiaryId") Long beneficiaryId);
 
     RentalContractDetailResponse selectRentalContractDetail(

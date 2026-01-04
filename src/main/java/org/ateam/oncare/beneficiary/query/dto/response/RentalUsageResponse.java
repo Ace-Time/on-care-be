@@ -9,24 +9,21 @@ import java.util.List;
 @Setter
 public class RentalUsageResponse {
 
-    // ✅ 단일 리스트(현재/과거 구분 없음)
     private List<RentalItem> items;
 
     @Getter
     @Setter
     public static class RentalItem {
-        private Long rentalProductId;     // rp.id (카드 유니크키)
-        private Long rentalContractId;    // rc.id (계약 ID)
-        private String productAssetId;    // care_product.id (예: EM001-001)
-        private String productName;       // m_care_product.name (예: 휠체어)
+        private Long rentalContractId;
+        private String productAssetId;     // 이제 EM002 같은 코드
+        private String productName;
 
-        private String contractStatusName; // cs.name
-//        private String rentalStatusName;   // rps.name (용품 상태)
+        private String contractStatusName;
 
-        private String startDate;          // rc.start_date (yyyy-MM-dd)
-        private String endDate;            // rc.end_date   (yyyy-MM-dd, nullable)
+        private String startDate;
+        private String endDate;
 
-        private Integer monthlyAmount;     // cp.rental_amount
-        private Integer durationMonths;    // 계산
+        private Integer monthlyAmount;
+        private Integer durationMonths;
     }
 }
