@@ -6,12 +6,15 @@ import org.ateam.oncare.beneficiary.command.service.BeneficiaryRegistService;
 import org.ateam.oncare.beneficiary.query.service.BeneficiaryDetailService;
 import org.ateam.oncare.counsel.command.dto.*;
 import org.ateam.oncare.counsel.command.entity.CounselHistory;
+import org.ateam.oncare.counsel.command.repository.PotentialCustomerRepository;
 import org.ateam.oncare.counsel.query.service.CounselQueryService;
+import org.ateam.oncare.employee.command.repository.BeneficiaryRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -23,6 +26,8 @@ public class CounselFacadeService {
     private final PotentialCustomerService potentialCustomerService;
     private final CounselQueryService counselQueryService;
     private final BeneficiaryRegistService beneficiaryRegistService;
+    private final BeneficiaryRepository beneficiaryRepository;
+    private final PotentialCustomerRepository potentialCustomerRepository;
 
     @Transactional
     public ResponseEntity<NewSubscriptionResponse> registNewSubscription(Subscription request) {
@@ -114,6 +119,16 @@ public class CounselFacadeService {
 
     // 잠재 고객만 등록
     public ResponseEntity<PotentialCustomerResponse> registPotentialCustomer(RegistPotentialCustomer request) {
+        // 전화번호 중복 체크
+        String normalizedPhone = request.getPhone().replace("-", "");
+        // beneficiary 체크
+        if (beneficiaryRepository.existsByPhoneNormalized(normalizedPhone)) {
+            throw new IllegalArgumentException("이미 등록된 기존고객입니다.");
+        }
+        // potential_customer 체크
+        if (potentialCustomerRepository.existsByPhoneNormalized(normalizedPhone)) {
+            throw new IllegalArgumentException("이미 등록된 잠재고객입니다.");
+        }
         BigInteger potentialId = potentialCustomerService.registPotentialCustomer(request.getName(), request.getPhone());
         PotentialCustomerResponse response = new PotentialCustomerResponse();
         response.setCustomerId(potentialId.longValue());
@@ -172,4 +187,32 @@ public class CounselFacadeService {
         return response;
     }
 
+    public Map<String, Object> checkDuplicateCustomer(String phone) {
+        Map<String, Object> result = new HashMap<>();
+
+        // 전화번호 정규화 (하이픈 제거)
+        String normalizedPhone = phone.replace("-", "");
+
+        // 1. beneficiary 테이블에서 먼저 확인 (기존고객 우선)
+        boolean existsInBeneficiary = beneficiaryRepository.existsByPhoneNormalized(normalizedPhone);
+
+        if (existsInBeneficiary) {
+            result.put("exists", true);
+            result.put("type", "beneficiary");
+            return result;
+        }
+
+        // 2. potential_customer 테이블에서 확인
+        boolean existsInPotential = potentialCustomerRepository.existsByPhoneNormalized(normalizedPhone);
+
+        if (existsInPotential) {
+            result.put("exists", true);
+            result.put("type", "potential");
+            return result;
+        }
+
+        // 3. 중복 없음
+        result.put("exists", false);
+        return result;
+    }
 }

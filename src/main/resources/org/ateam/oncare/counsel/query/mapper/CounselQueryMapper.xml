@@ -24,6 +24,7 @@
         <result property="guardianPhone" column="guardian_phone"/>
         <result property="customerType" column="customer_type"/>
         <result property="currentStage" column="current_stage"/>
+        <result property="potentialCustomerId" column="potential_customer_id"/>
         <collection property="stages"
                     column="real_potential_id"
                     javaType="java.util.List"
@@ -43,61 +44,75 @@
         ORDER BY stage ASC
     </select>
 
+    <!-- 전체 고객 목록 조회 (잠재고객이 기존고객으로 전환된 경우 기존고객만 표시) -->
     <select id="findAllCustomers" resultMap="customerListResponse">
         SELECT
-            customer_id,
-            name,
-            phone,
-            customer_category,
-            last_counsel_date,
-            consult_count,
-            guardian_name,
-            guardian_phone,
-            customer_type,
-            real_potential_id,
-            current_stage  FROM (
-                                    SELECT
-                                        b.id AS customer_id,
-                                        b.name,
-                                        b.phone,
-                                        CASE
-                                            WHEN b.status = 0 THEN '이탈고객'
-                                            ELSE '기존고객'
-                                            END AS customer_category,
-                                        b.last_counsel_date,
-                                        (SELECT COUNT(*) FROM counsel_history WHERE beneficiary_id = b.id) AS consult_count,
-                                        g.name AS guardian_name,
-                                        g.phone AS guardian_phone,
-                                        'beneficiary' AS customer_type,
-                                        b.potential_customer_id AS real_potential_id,
-                                        NULL AS current_stage FROM beneficiary b
-                                                                       LEFT JOIN guardian g ON b.id = g.beneficiary_id AND g.is_primary = 'Y'
+        customer_id,
+        name,
+        phone,
+        customer_category,
+        last_counsel_date,
+        consult_count,
+        guardian_name,
+        guardian_phone,
+        customer_type,
+        real_potential_id,
+        current_stage,
+        potential_customer_id
+        FROM (
+        <!-- 기존고객 (beneficiary) -->
+        SELECT
+        b.id AS customer_id,
+        b.name,
+        b.phone,
+        CASE
+        WHEN b.status = 0 THEN '이탈고객'
+        ELSE '기존고객'
+        END AS customer_category,
+        b.last_counsel_date,
+        (SELECT COUNT(*) FROM counsel_history WHERE beneficiary_id = b.id)
+        + (SELECT COUNT(*) FROM counsel_history WHERE potential_id = b.potential_customer_id) AS consult_count,
+        g.name AS guardian_name,
+        g.phone AS guardian_phone,
+        'beneficiary' AS customer_type,
+        b.potential_customer_id AS real_potential_id,
+        NULL AS current_stage,
+        b.potential_customer_id
+        FROM beneficiary b
+        LEFT JOIN guardian g ON b.id = g.beneficiary_id AND g.is_primary = 'Y'
 
-                                    UNION ALL
+        UNION ALL
 
-                                    SELECT
-                                        p.id AS customer_id,
-                                        p.name,
-                                        p.phone,
-                                        CASE
-                                            WHEN p.willingness = 'N' THEN '이탈고객'
-                                            WHEN p.current_stage = 1 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 3 DAY) THEN '이탈고객'
-                                            WHEN p.current_stage = 2 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 70 DAY) THEN '이탈고객'
-                                            WHEN p.current_stage = 3 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 20 DAY) THEN '이탈고객'
-                                            ELSE '잠재고객'
-                                            END AS customer_category,
-                                        p.last_counsel_date,
-                                        (SELECT COUNT(*) FROM counsel_history WHERE potential_id = p.id) AS consult_count,
-                                        NULL AS guardian_name,
-                                        NULL AS guardian_phone,
-                                        'potential' AS customer_type,
-                                        p.id AS real_potential_id,
-                                        p.current_stage FROM potential_customer p
-                                    WHERE p.current_stage &lt; 4
-                                ) AS total_list
+        <!-- 잠재고객 (potential_customer) - 아직 기존고객으로 전환되지 않은 경우만 -->
+        SELECT
+        p.id AS customer_id,
+        p.name,
+        p.phone,
+        CASE
+        WHEN p.willingness = 'N' THEN '이탈고객'
+        WHEN p.current_stage = 1 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 3 DAY) THEN '이탈고객'
+        WHEN p.current_stage = 2 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 70 DAY) THEN '이탈고객'
+        WHEN p.current_stage = 3 AND p.last_counsel_date &lt; DATE_SUB(NOW(), INTERVAL 20 DAY) THEN '이탈고객'
+        ELSE '잠재고객'
+        END AS customer_category,
+        p.last_counsel_date,
+        (SELECT COUNT(*) FROM counsel_history WHERE potential_id = p.id) AS consult_count,
+        NULL AS guardian_name,
+        NULL AS guardian_phone,
+        'potential' AS customer_type,
+        p.id AS real_potential_id,
+        p.current_stage,
+        NULL AS potential_customer_id
+        FROM potential_customer p
+        WHERE p.current_stage &lt; 4
+        AND NOT EXISTS (
+        SELECT 1 FROM beneficiary b WHERE b.potential_customer_id = p.id
+        )
+        ) AS total_list
         ORDER BY last_counsel_date DESC
     </select>
 
+    <!-- 전화번호로 검색 -->
     <select id="searchCustomersByPhone" resultMap="customerListResponse">
         SELECT
             customer_id,
@@ -110,7 +125,8 @@
             guardian_phone,
             customer_type,
             real_potential_id,
-            current_stage
+            current_stage,
+            potential_customer_id
         FROM (
                  SELECT
                      b.id AS customer_id,
@@ -118,12 +134,14 @@
                      b.phone,
                      CASE WHEN b.status = 0 THEN '이탈고객' ELSE '기존고객' END AS customer_category,
                      b.last_counsel_date,
-                     (SELECT COUNT(*) FROM counsel_history WHERE beneficiary_id = b.id) AS consult_count,
+                     (SELECT COUNT(*) FROM counsel_history WHERE beneficiary_id = b.id)
+                         + (SELECT COUNT(*) FROM counsel_history WHERE potential_id = b.potential_customer_id) AS consult_count,
                      g.name AS guardian_name,
                      g.phone AS guardian_phone,
                      'beneficiary' AS customer_type,
                      b.potential_customer_id AS real_potential_id,
-                     NULL AS current_stage
+                     NULL AS current_stage,
+                     b.potential_customer_id
                  FROM beneficiary b
                           LEFT JOIN guardian g ON b.id = g.beneficiary_id AND g.is_primary = 'Y'
                  WHERE REPLACE(b.phone, '-', '') LIKE CONCAT('%', #{keyword}, '%')
@@ -148,14 +166,19 @@
                      NULL AS guardian_phone,
                      'potential' AS customer_type,
                      p.id AS real_potential_id,
-                     p.current_stage
+                     p.current_stage,
+                     NULL AS potential_customer_id
                  FROM potential_customer p
                  WHERE p.current_stage &lt; 4
                    AND REPLACE(p.phone, '-', '') LIKE CONCAT('%', #{keyword}, '%')
+                   AND NOT EXISTS (
+                     SELECT 1 FROM beneficiary b WHERE b.potential_customer_id = p.id
+                 )
              ) AS total_list
         ORDER BY last_counsel_date DESC
     </select>
 
+    <!-- 이름으로 검색 -->
     <select id="searchCustomersByName" resultMap="customerListResponse">
         SELECT
             customer_id,
@@ -168,7 +191,8 @@
             guardian_phone,
             customer_type,
             real_potential_id,
-            current_stage
+            current_stage,
+            potential_customer_id
         FROM (
                  SELECT
                      b.id AS customer_id,
@@ -176,12 +200,14 @@
                      b.phone,
                      CASE WHEN b.status = 0 THEN '이탈고객' ELSE '기존고객' END AS customer_category,
                      b.last_counsel_date,
-                     (SELECT COUNT(*) FROM counsel_history WHERE beneficiary_id = b.id) AS consult_count,
+                     (SELECT COUNT(*) FROM counsel_history WHERE beneficiary_id = b.id)
+                         + (SELECT COUNT(*) FROM counsel_history WHERE potential_id = b.potential_customer_id) AS consult_count,
                      g.name AS guardian_name,
                      g.phone AS guardian_phone,
                      'beneficiary' AS customer_type,
                      b.potential_customer_id AS real_potential_id,
-                     NULL AS current_stage
+                     NULL AS current_stage,
+                     b.potential_customer_id
                  FROM beneficiary b
                           LEFT JOIN guardian g ON b.id = g.beneficiary_id AND g.is_primary = 'Y'
                  WHERE b.name LIKE CONCAT('%', #{keyword}, '%')
@@ -206,13 +232,18 @@
                      NULL AS guardian_phone,
                      'potential' AS customer_type,
                      p.id AS real_potential_id,
-                     p.current_stage
+                     p.current_stage,
+                     NULL AS potential_customer_id
                  FROM potential_customer p
                  WHERE p.current_stage &lt; 4
                    AND p.name LIKE CONCAT('%', #{keyword}, '%')
+                   AND NOT EXISTS (
+                     SELECT 1 FROM beneficiary b WHERE b.potential_customer_id = p.id
+                 )
              ) AS total_list
         ORDER BY last_counsel_date DESC
     </select>
+
     <resultMap id="counselListResponse" type="org.ateam.oncare.counsel.query.dto.CounselListResponse">
         <id property="counselHistoryId" column="counsel_history_id"/>
         <result property="detail" column="detail"/>
@@ -221,6 +252,8 @@
         <result property="counselorName" column="counselor_name"/>
         <result property="counselCategoryName" column="m_counsel_category_name"/>
     </resultMap>
+
+    <!-- 고객별 상담 내역 조회 (기존고객인 경우 잠재고객 시절 상담도 포함) -->
     <select id="findCounselsByCustomerId" resultMap="counselListResponse">
         SELECT
         ch.id                                    AS counsel_history_id,
@@ -229,28 +262,32 @@
         DATE_FORMAT(ch.consult_date, '%H:%i')    AS consult_time,
         e.name                                   AS counselor_name,
         mcc.name                                 AS m_counsel_category_name
-
         FROM counsel_history ch
         LEFT JOIN employee e ON ch.counselor_id = e.id
         LEFT JOIN m_counsel_category mcc ON ch.counsel_category_id = mcc.id
-
         <where>
             <choose>
                 <when test='customerType.equals("potential")'>
                     AND ch.potential_id = #{customerId}
                 </when>
                 <otherwise>
-                    AND ch.beneficiary_id = #{customerId}
+                    <!-- 기존고객: beneficiary_id로 조회 + 잠재고객 시절 상담(potential_id)도 포함 -->
+                    AND (
+                    ch.beneficiary_id = #{customerId}
+                    OR ch.potential_id = (
+                    SELECT potential_customer_id FROM beneficiary WHERE id = #{customerId}
+                    )
+                    )
                 </otherwise>
             </choose>
             <if test="counselCategoryName != null and counselCategoryName != ''">
                 AND mcc.name = #{counselCategoryName}
             </if>
         </where>
-
         ORDER BY ch.consult_date DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
+
     <resultMap id="counselDetailResponse" type="org.ateam.oncare.counsel.query.dto.CounselDetailResponse">
         <id property="counselHistoryId" column="counsel_history_id"/>
         <result property="counselCategoryName" column="m_counsel_category_name"/>
@@ -263,6 +300,7 @@
         <result property="counselorName" column="counselor_name"/>
         <result property="consultDate" column="consult_date"/>
     </resultMap>
+
     <select id="findCounselDetailById" parameterType="java.math.BigInteger" resultMap="counselDetailResponse">
         SELECT
             ch.id                   AS counsel_history_id,

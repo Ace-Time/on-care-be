@@ -13,12 +13,8 @@
         b.gender,
         b.birthdate,
         b.address,
-        CONCAT(cl.id, '등급') AS careLevel,
-        bcl.end_date AS careLevelEndDate,
-        rl.level AS riskLevel,
-        CASE WHEN b.status = 1 THEN '서비스 중' ELSE '서비스 해지' END AS status,
         b.last_counsel_date AS lastCounselDate,
-        e.name AS managerName,
+        CASE WHEN b.status = 1 THEN '서비스 중' ELSE '서비스 해지' END AS status,
 
         /* 카테고리 플래그 계산 */
         CASE WHEN b.last_counsel_date IS NULL OR DATEDIFF(NOW(), b.last_counsel_date) > 30 THEN TRUE ELSE FALSE END AS isChurnRisk,
@@ -35,9 +31,20 @@
         AND ch.consult_date >= DATE_SUB(NOW(), INTERVAL 90 DAY)
         ) THEN TRUE ELSE FALSE END AS hasTermination,
 
-        CASE WHEN bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90 THEN TRUE ELSE FALSE END AS isCareLevelExpiring,
+        CASE WHEN EXISTS (
+        SELECT 1 FROM beneficiary_care_level bcl
+        WHERE bcl.beneficiary_id = b.id
+        AND bcl.end_date IS NOT NULL
+        AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90
+        ) THEN TRUE ELSE FALSE END AS isCareLevelExpiring,
 
-        CASE WHEN c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30 THEN TRUE ELSE FALSE END AS isContractExpiring,
+        CASE WHEN EXISTS (
+        SELECT 1 FROM contract c
+        WHERE c.beneficiary_id = b.id
+        AND c.contract_status = '진행중'
+        AND c.end_date IS NOT NULL
+        AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30
+        ) THEN TRUE ELSE FALSE END AS isContractExpiring,
 
         CASE WHEN EXISTS (
         SELECT 1 FROM counsel_history ch
@@ -46,15 +53,6 @@
         ) THEN TRUE ELSE FALSE END AS hasRentalCounsel
 
         FROM beneficiary b
-        LEFT JOIN beneficiary_care_level bcl ON b.id = bcl.beneficiary_id
-        AND bcl.id = (SELECT MAX(bcl2.id) FROM beneficiary_care_level bcl2 WHERE bcl2.beneficiary_id = b.id)
-        LEFT JOIN m_care_level cl ON bcl.id IS NOT NULL
-        LEFT JOIN m_risk_level rl ON b.risk_id = rl.id
-        LEFT JOIN contract c ON b.id = c.beneficiary_id AND c.contract_status = '진행중'
-        LEFT JOIN matching m ON b.id = m.beneficiary_id AND m.status = 'Y'
-        LEFT JOIN care_worker cw ON m.care_worker_id = cw.id
-        LEFT JOIN employee e ON cw.employee_id = e.id
-
         WHERE b.status = 1
 
         <if test="keyword != null and keyword != ''">
@@ -95,15 +93,26 @@
         <if test="category == 'EXPIRATION_RISK'">
             <choose>
                 <when test="subCategory == 'CARE_LEVEL'">
-                    AND bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90
+                    AND EXISTS (
+                    SELECT 1 FROM beneficiary_care_level bcl
+                    WHERE bcl.beneficiary_id = b.id
+                    AND bcl.end_date IS NOT NULL
+                    AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90
+                    )
                 </when>
                 <when test="subCategory == 'CONTRACT'">
-                    AND c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30
+                    AND EXISTS (
+                    SELECT 1 FROM contract c
+                    WHERE c.beneficiary_id = b.id
+                    AND c.contract_status = '진행중'
+                    AND c.end_date IS NOT NULL
+                    AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30
+                    )
                 </when>
                 <otherwise>
                     AND (
-                    (bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90)
-                    OR (c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30)
+                    EXISTS (SELECT 1 FROM beneficiary_care_level bcl WHERE bcl.beneficiary_id = b.id AND bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90)
+                    OR EXISTS (SELECT 1 FROM contract c WHERE c.beneficiary_id = b.id AND c.contract_status = '진행중' AND c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30)
                     )
                 </otherwise>
             </choose>
@@ -123,12 +132,8 @@
 
     <!-- 수급자 목록 총 개수 -->
     <select id="countBeneficiaryList" resultType="long">
-        SELECT COUNT(DISTINCT b.id)
+        SELECT COUNT(*)
         FROM beneficiary b
-        LEFT JOIN beneficiary_care_level bcl ON b.id = bcl.beneficiary_id
-        AND bcl.id = (SELECT MAX(bcl2.id) FROM beneficiary_care_level bcl2 WHERE bcl2.beneficiary_id = b.id)
-        LEFT JOIN contract c ON b.id = c.beneficiary_id AND c.contract_status = '진행중'
-
         WHERE b.status = 1
 
         <if test="keyword != null and keyword != ''">
@@ -160,15 +165,15 @@
         <if test="category == 'EXPIRATION_RISK'">
             <choose>
                 <when test="subCategory == 'CARE_LEVEL'">
-                    AND bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90
+                    AND EXISTS (SELECT 1 FROM beneficiary_care_level bcl WHERE bcl.beneficiary_id = b.id AND bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90)
                 </when>
                 <when test="subCategory == 'CONTRACT'">
-                    AND c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30
+                    AND EXISTS (SELECT 1 FROM contract c WHERE c.beneficiary_id = b.id AND c.contract_status = '진행중' AND c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30)
                 </when>
                 <otherwise>
                     AND (
-                    (bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90)
-                    OR (c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30)
+                    EXISTS (SELECT 1 FROM beneficiary_care_level bcl WHERE bcl.beneficiary_id = b.id AND bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90)
+                    OR EXISTS (SELECT 1 FROM contract c WHERE c.beneficiary_id = b.id AND c.contract_status = '진행중' AND c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30)
                     )
                 </otherwise>
             </choose>
@@ -192,13 +197,13 @@
                                                                INNER JOIN beneficiary b ON ch.beneficiary_id = b.id AND b.status = 1
              WHERE ch.counsel_category_id = 5 AND ch.consult_date >= DATE_SUB(NOW(), INTERVAL 90 DAY)) AS terminationCount,
 
-            (SELECT COUNT(*) FROM beneficiary b
-                                      INNER JOIN beneficiary_care_level bcl ON b.id = bcl.beneficiary_id
-             WHERE b.status = 1 AND bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90) AS careLevelExpiringCount,
+            (SELECT COUNT(DISTINCT bcl.beneficiary_id) FROM beneficiary_care_level bcl
+                                                                INNER JOIN beneficiary b ON bcl.beneficiary_id = b.id AND b.status = 1
+             WHERE bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90) AS careLevelExpiringCount,
 
-            (SELECT COUNT(*) FROM beneficiary b
-                                      INNER JOIN contract c ON b.id = c.beneficiary_id
-             WHERE b.status = 1 AND c.contract_status = '진행중' AND c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30) AS contractExpiringCount,
+            (SELECT COUNT(DISTINCT c.beneficiary_id) FROM contract c
+                                                              INNER JOIN beneficiary b ON c.beneficiary_id = b.id AND b.status = 1
+             WHERE c.contract_status = '진행중' AND c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30) AS contractExpiringCount,
 
             (SELECT COUNT(DISTINCT ch.beneficiary_id) FROM counsel_history ch
                                                                INNER JOIN beneficiary b ON ch.beneficiary_id = b.id AND b.status = 1
@@ -218,30 +223,26 @@
 
             CASE WHEN EXISTS (SELECT 1 FROM counsel_history ch WHERE ch.beneficiary_id = b.id AND ch.counsel_category_id = 5 AND ch.consult_date >= DATE_SUB(NOW(), INTERVAL 90 DAY)) THEN TRUE ELSE FALSE END AS hasTermination,
 
-            bh.terminate_date AS plannedTerminationDate,
+            (SELECT bh.terminate_date FROM beneficiary_history bh WHERE bh.beneficiary_id = b.id LIMIT 1) AS plannedTerminationDate,
 
-            bcl.end_date AS careLevelEndDate,
-            DATEDIFF(bcl.end_date, NOW()) AS daysUntilCareLevelExpiry,
-            CASE WHEN bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90 THEN TRUE ELSE FALSE END AS isCareLevelExpiring,
+            (SELECT bcl.end_date FROM beneficiary_care_level bcl WHERE bcl.beneficiary_id = b.id ORDER BY bcl.id DESC LIMIT 1) AS careLevelEndDate,
+            (SELECT DATEDIFF(bcl.end_date, NOW()) FROM beneficiary_care_level bcl WHERE bcl.beneficiary_id = b.id ORDER BY bcl.id DESC LIMIT 1) AS daysUntilCareLevelExpiry,
+            CASE WHEN EXISTS (
+                SELECT 1 FROM beneficiary_care_level bcl WHERE bcl.beneficiary_id = b.id AND bcl.end_date IS NOT NULL AND DATEDIFF(bcl.end_date, NOW()) BETWEEN 0 AND 90
+            ) THEN TRUE ELSE FALSE END AS isCareLevelExpiring,
 
-            c.end_date AS contractEndDate,
-            DATEDIFF(c.end_date, NOW()) AS daysUntilContractExpiry,
-            CASE WHEN c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30 THEN TRUE ELSE FALSE END AS isContractExpiring,
+            (SELECT c.end_date FROM contract c WHERE c.beneficiary_id = b.id AND c.contract_status = '진행중' ORDER BY c.id DESC LIMIT 1) AS contractEndDate,
+            (SELECT DATEDIFF(c.end_date, NOW()) FROM contract c WHERE c.beneficiary_id = b.id AND c.contract_status = '진행중' ORDER BY c.id DESC LIMIT 1) AS daysUntilContractExpiry,
+            CASE WHEN EXISTS (
+                SELECT 1 FROM contract c WHERE c.beneficiary_id = b.id AND c.contract_status = '진행중' AND c.end_date IS NOT NULL AND DATEDIFF(c.end_date, NOW()) BETWEEN 0 AND 30
+            ) THEN TRUE ELSE FALSE END AS isContractExpiring,
 
             CASE WHEN EXISTS (SELECT 1 FROM counsel_history ch WHERE ch.beneficiary_id = b.id AND ch.counsel_category_id = 2 AND ch.consult_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)) THEN TRUE ELSE FALSE END AS hasRentalCounsel,
 
-            cw.id AS careWorkerId,
-            e.name AS careWorkerName
+            (SELECT cw.employee_id FROM matching m INNER JOIN care_worker cw ON m.care_worker_id = cw.id WHERE m.beneficiary_id = b.id AND m.status = 'Y' ORDER BY m.id DESC LIMIT 1) AS careWorkerId,
+            (SELECT e.name FROM matching m INNER JOIN care_worker cw ON m.care_worker_id = cw.id INNER JOIN employee e ON cw.employee_id = e.id WHERE m.beneficiary_id = b.id AND m.status = 'Y' ORDER BY m.id DESC LIMIT 1) AS careWorkerName
 
         FROM beneficiary b
-                 LEFT JOIN beneficiary_care_level bcl ON b.id = bcl.beneficiary_id
-            AND bcl.id = (SELECT MAX(bcl2.id) FROM beneficiary_care_level bcl2 WHERE bcl2.beneficiary_id = b.id)
-                 LEFT JOIN contract c ON b.id = c.beneficiary_id AND c.contract_status = '진행중'
-                 LEFT JOIN beneficiary_history bh ON b.id = bh.beneficiary_id
-                 LEFT JOIN matching m ON b.id = m.beneficiary_id AND m.status = 'Y'
-                 LEFT JOIN care_worker cw ON m.care_worker_id = cw.id
-                 LEFT JOIN employee e ON cw.employee_id = e.id
-
         WHERE b.id = #{beneficiaryId}
     </select>
 
@@ -312,6 +313,7 @@
                  INNER JOIN care_worker cw ON m.care_worker_id = cw.id
         WHERE m.beneficiary_id = #{beneficiaryId}
           AND m.status = 'Y'
+        ORDER BY m.id DESC
             LIMIT 1
     </select>
 

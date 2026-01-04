@@ -13,4 +13,9 @@ public interface PotentialCustomerRepository extends JpaRepository<PotentialCust
     @Modifying(clearAutomatically = true) // ★ 필수: UPDATE/DELETE 쿼리임을 명시
     @Query("UPDATE PotentialCustomer p SET p.lastCounselDate = :date WHERE p.id = :id")
     void updateLastCounselDate(@Param("id") Long id, @Param("date") LocalDateTime date);
+
+
+    @Query("SELECT COUNT(p) > 0 FROM PotentialCustomer p " +
+            "WHERE REPLACE(p.phone, '-', '') = :phone")
+    boolean existsByPhoneNormalized(@Param("phone") String phone);
 }
