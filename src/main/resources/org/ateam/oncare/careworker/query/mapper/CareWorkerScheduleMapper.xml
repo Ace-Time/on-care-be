@@ -134,7 +134,7 @@
                  LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
                  LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
                  LEFT JOIN guardian g ON b.id = g.beneficiary_id AND g.is_primary = 'Y'
-                 LEFT JOIN riskOfMember rom ON b.id = rom.beneficiary_id
+                 LEFT JOIN risk_of_member rom ON b.id = rom.beneficiary_id
                  LEFT JOIN m_risk_factor mrf ON rom.risk_id = mrf.id
                  LEFT JOIN tag_of_beneficiary tob ON b.id = tob.beneficiary_id
                  LEFT JOIN personal_tag pt ON tob.tag_id = pt.id
