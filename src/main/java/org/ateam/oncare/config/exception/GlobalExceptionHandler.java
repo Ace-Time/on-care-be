@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.io.IOException;
@@ -97,5 +98,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST) // 400
                 .body(e.getMessage());
+    }
+
+    /**
+     * 7. [SSE 타임아웃] 비동기 요청 시간 초과
+     * 정상적인 재연결 과정이므로 에러 로그를 남기지 않습니다.
+     */
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public ResponseEntity<String> handleAsyncTimeout(AsyncRequestTimeoutException e) {
+        return ResponseEntity.status(HttpStatus.OK).body("timeout");
     }
 }
