@@ -136,7 +136,7 @@
     <!-- 수급자 위험요소 목록 -->
     <select id="selectRiskFactors" resultType="string">
         SELECT mrf.name
-        FROM riskOfMember rom
+        FROM risk_of_member rom
                  JOIN m_risk_factor mrf ON rom.risk_id = mrf.id
         WHERE rom.beneficiary_id = #{beneficiaryId}
         ORDER BY mrf.name

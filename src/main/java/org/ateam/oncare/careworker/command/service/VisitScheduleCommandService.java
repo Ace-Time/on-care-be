@@ -1,6 +1,6 @@
 package org.ateam.oncare.careworker.command.service;
 
-import org.ateam.oncare.beneficiary.command.service.BeneficiaryCostService;
+//import org.ateam.oncare.beneficiary.command.service.BeneficiaryCostService;
 import org.ateam.oncare.careworker.command.dto.CompleteVisitRequest;
 import org.ateam.oncare.careworker.command.dto.CreateVisitScheduleRequest;
 import org.ateam.oncare.careworker.command.dto.StartVisitRequest;
@@ -19,7 +19,7 @@ public class VisitScheduleCommandService {
 
     private final VisitScheduleCommandMapper visitScheduleCommandMapper;
     private final CareLogCommandMapper careLogCommandMapper;
-    private final BeneficiaryCostService beneficiaryCostService;
+//    private final BeneficiaryCostService beneficiaryCostService;
 
     @Transactional
     public void startVisit(Long vsId) {
@@ -44,13 +44,13 @@ public class VisitScheduleCommandService {
 
         log.info("서비스 종료 완료 - vsId: {} (현재 시간 자동 기록)", vsId);
 
-        // RFID 출퇴근 완료 후 서비스 비용 계산 및 월별 누적
-        try {
-            beneficiaryCostService.accumulateCostForCompletedVisit(vsId);
-        } catch (Exception e) {
-            log.error("비용 계산 중 오류 발생 - vsId: {}", vsId, e);
-            // 비용 계산 실패해도 서비스 완료는 성공으로 처리 (보상 트랜잭션 필요 시 추가)
-        }
+//        // RFID 출퇴근 완료 후 서비스 비용 계산 및 월별 누적
+//        try {
+//            beneficiaryCostService.accumulateCostForCompletedVisit(vsId);
+//        } catch (Exception e) {
+//            log.error("비용 계산 중 오류 발생 - vsId: {}", vsId, e);
+//            // 비용 계산 실패해도 서비스 완료는 성공으로 처리 (보상 트랜잭션 필요 시 추가)
+//        }
     }
 
     @Transactional
