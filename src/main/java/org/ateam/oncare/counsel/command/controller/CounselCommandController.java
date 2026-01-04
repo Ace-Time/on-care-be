@@ -50,6 +50,13 @@ public class CounselCommandController {
         return counselFacadeService.registGeneralCounsel(request);
     }
 
+    @PostMapping("/potentialCustomer")
+    public ResponseEntity<PotentialCustomerResponse> registPotentialCustomer(
+            @RequestBody RegistPotentialCustomer request
+    ) {
+        return counselFacadeService.registPotentialCustomer(request);
+    }
+
     // 가입 상담 단계별 저장
     @PostMapping("/potentialStage/{stage}/{customerId}")
     public ResponseEntity<SaveStageDataResponse> saveStageData(
@@ -70,9 +77,25 @@ public class CounselCommandController {
         return counselFacadeService.getStageData(customerId.longValue());
     }
 
+    // 신규 수급자 등록
     @PostMapping("/regist/newBeneficiary")
     public ResponseEntity<RegistNewBeneficiaryResponse> registNewBeneficiary(@RequestBody RegistNewBeneficiary request) {
         return customerFacadeService.registNewBeneficiary(request);
+    }
+
+    // 수급자 특이사항 추가
+    @PostMapping("/beneficiaries/{beneficiaryId}/significants/{significantId}")
+
+
+
+    // 수급자 특이사항 삭제
+    @DeleteMapping("/beneficiaries/{beneficiaryId}/significants/{significantId}")
+    public ResponseEntity<Void> deleteBeneficiarySignificant(
+            @PathVariable BigInteger beneficiaryId,
+            @PathVariable Integer significantId
+    ) {
+        customerFacadeService.deleteBeneficiarySignificant(beneficiaryId, significantId);
+        return ResponseEntity.noContent().build();
     }
 
 }

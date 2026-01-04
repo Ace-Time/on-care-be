@@ -12,7 +12,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "riskOfMember")
+@Table(name = "`riskOfMember`")
 public class RiskOfMember {
 
     @EmbeddedId

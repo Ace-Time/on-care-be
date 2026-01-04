@@ -112,6 +112,18 @@ public class CounselFacadeService {
     }
 
 
+    // 잠재 고객만 등록
+    public ResponseEntity<PotentialCustomerResponse> registPotentialCustomer(RegistPotentialCustomer request) {
+        BigInteger potentialId = potentialCustomerService.registPotentialCustomer(request.getName(), request.getPhone());
+        PotentialCustomerResponse response = new PotentialCustomerResponse();
+        response.setCustomerId(potentialId.longValue());
+        response.setCustomerType("POTENTIAL");
+        response.setName(request.getName());
+        response.setPhone(request.getPhone());
+        return ResponseEntity.ok(response);
+    }
+
+
 
     private NewSubscriptionResponse buildNewSubscriptionResponse(CounselHistory counselHistory) {
         NewSubscriptionResponse response = new NewSubscriptionResponse();
