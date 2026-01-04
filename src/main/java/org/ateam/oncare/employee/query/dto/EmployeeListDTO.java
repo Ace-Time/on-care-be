@@ -17,4 +17,5 @@ public class EmployeeListDTO {
     private String statusField; // 상태명
     private String certificateNames; // 자격증 목록 (쉼표 구분)
     private String serviceTypeNames; // 서비스 유형 목록 (쉼표 구분)
+    private Integer beneficiaryCount; // 담당 수급자 수
 }
