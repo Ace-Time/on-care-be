@@ -1,5 +1,6 @@
 package org.ateam.oncare.careproduct.mapper;
 
+import org.ateam.oncare.careproduct.command.dto.ResponsePlannedStockInOutDTO;
 import org.ateam.oncare.careproduct.command.entity.ProductTask;
 import org.ateam.oncare.global.enums.StockType;
 import org.ateam.oncare.global.eventType.ProductStockEvent;
@@ -16,4 +17,6 @@ public interface ProductTaskMapStruct {
     default Integer toInteger(StockType value) {
         return value.ordinal();
     }
+
+    ResponsePlannedStockInOutDTO toDTO(ProductTask productTask);
 }

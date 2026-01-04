@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/api/product")
 @RequiredArgsConstructor
 @Slf4j
 public class ProductController {
@@ -107,6 +107,17 @@ public class ProductController {
         return ResponseEntity.ok()
                 .body(response);
 
+    }
+
+    @GetMapping("/stock")
+    public ResponseEntity<Slice<ResponsePlannedStockInOutDTO>> getExpectedStock(
+            RequestPlannedStockInOutDTO condition,
+            @PageableDefault(size = 10) Pageable pageable) {
+        Slice<ResponsePlannedStockInOutDTO> response =
+                productService.getExpectedStock(condition, pageable);
+
+        return ResponseEntity.ok()
+                .body(response);
     }
 
 
