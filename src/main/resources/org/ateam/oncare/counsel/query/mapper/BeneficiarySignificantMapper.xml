@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.counsel.query.mapper.BeneficiarySignificantMapper">
+
+    <!-- 특정 수급자의 특이사항 조회 -->
+    <select id="findSignificantsByBeneficiaryId" resultType="org.ateam.oncare.counsel.query.dto.BeneficiarySignificantResponse">
+        SELECT
+            bs.beneficiary_id,
+            bs.significant_id,
+            ms.name AS significant_name,
+            msc.name AS significant_category_name,
+            msc.id AS significant_category_id
+        FROM beneficiary_significant bs
+                 INNER JOIN m_significant ms ON bs.significant_id = ms.id
+                 INNER JOIN m_significant_category msc ON ms.significant_category_id = msc.id
+        WHERE bs.beneficiary_id = #{beneficiaryId}
+        ORDER BY msc.id, ms.id
+    </select>
+
+    <!-- 특정 카테고리의 특이사항만 조회 -->
+    <select id="findSignificantsByBeneficiaryIdAndCategory" resultType="org.ateam.oncare.counsel.query.dto.BeneficiarySignificantResponse">
+        SELECT
+            bs.beneficiary_id,
+            bs.significant_id,
+            ms.name AS significant_name,
+            msc.name AS significant_category_name,
+            msc.id AS significant_category_id
+        FROM beneficiary_significant bs
+                 INNER JOIN m_significant ms ON bs.significant_id = ms.id
+                 INNER JOIN m_significant_category msc ON ms.significant_category_id = msc.id
+        WHERE bs.beneficiary_id = #{beneficiaryId}
+          AND msc.name = #{categoryName}
+        ORDER BY ms.id
+    </select>
+
+    <!-- 모든 특이사항 마스터 조회 (추가용) -->
+    <select id="findAllSignificants" resultType="org.ateam.oncare.counsel.query.dto.SignificantMasterResponse">
+        SELECT
+            ms.id AS significant_id,
+            ms.name AS significant_name,
+            msc.id AS category_id,
+            msc.name AS category_name
+        FROM m_significant ms
+                 INNER JOIN m_significant_category msc ON ms.significant_category_id = msc.id
+        ORDER BY msc.id, ms.id
+    </select>
+
+</mapper>

@@ -1,9 +1,7 @@
 package org.ateam.oncare.counsel.query.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.counsel.query.dto.CounselDetailResponse;
-import org.ateam.oncare.counsel.query.dto.CounselListResponse;
-import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
+import org.ateam.oncare.counsel.query.dto.*;
 import org.ateam.oncare.counsel.query.service.CounselQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -45,13 +43,18 @@ public class CounselQueryController {
         return ResponseEntity.ok(counselQueryService.findCounselDetailById(counselHistoryId));
     }
 
-    // 해당 고객의 가입상담 프로세스 제공 정보
-//    @GetMapping("/subscription/{customerId}")
-//    public ResponseEntity<>
+    @GetMapping("/beneficiaries/{beneficiaryId}/significants")
+    public ResponseEntity<List<BeneficiarySignificantResponse>> getBeneficiarySignificants(
+            @PathVariable("beneficiaryId") BigInteger beneficiaryId,
+            @RequestParam(value = "category", required = false) String category
+    ) {
+        return ResponseEntity.ok(counselQueryService.findBeneficiarySignificants(beneficiaryId, category));
+    }
 
-    // 잠재고객의 통합상담 시 제공 정보
+    @GetMapping("/significants/master")
+    public ResponseEntity<List<SignificantMasterResponse>> getAllSignificants() {
+        return ResponseEntity.ok(counselQueryService.findAllSignificants());
+    }
 
-
-    // 기존 + 가입 = 재가입
 
 }

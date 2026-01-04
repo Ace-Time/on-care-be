@@ -2,6 +2,7 @@ package org.ateam.oncare.counsel.command.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.ateam.oncare.counsel.command.converter.JsonToMapConverter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -35,8 +36,8 @@ public class PotentialStage {
     private LocalDateTime createdAt;
 
     // Map -> JSON 변환 위해 @JdbcTypeCode 사용
-    @Column(name = "stage_data", columnDefinition = "json")
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = JsonToMapConverter.class)
+    @Column(columnDefinition = "longtext")
     private Map<String, Object> stageData;
 
     @Column(name = "potential_customer_id", nullable = false)

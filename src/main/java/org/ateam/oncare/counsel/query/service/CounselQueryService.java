@@ -4,6 +4,8 @@ package org.ateam.oncare.counsel.query.service;
 import org.ateam.oncare.counsel.query.dto.CounselDetailResponse;
 import org.ateam.oncare.counsel.query.dto.CounselListResponse;
 import org.ateam.oncare.counsel.query.dto.CustomerListResponse;
+import org.ateam.oncare.counsel.query.dto.SignificantMasterResponse;
+import org.ateam.oncare.counsel.query.dto.BeneficiarySignificantResponse;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -20,4 +22,8 @@ public interface CounselQueryService {
     @Nullable CounselDetailResponse findCounselDetailById(BigInteger counselHistoryId);
 
     Long findPotentialIdByBeneficiaryId(Long beneficiaryId);
+
+    List<BeneficiarySignificantResponse> findBeneficiarySignificants(BigInteger beneficiaryId, String category);
+
+    List<SignificantMasterResponse> findAllSignificants();
 }
