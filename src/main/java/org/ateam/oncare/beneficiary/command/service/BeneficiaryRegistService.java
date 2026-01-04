@@ -271,7 +271,7 @@ public class BeneficiaryRegistService {
         log.info("히스토리 등록 시작 - 수급자 ID: {}", beneficiaryId);
 
         BeneficiaryHistory history = BeneficiaryHistory.builder()
-                .beneficiaryID(beneficiaryId.longValue())
+                .beneficiaryId(beneficiaryId.longValue())
                 .joinDate(request.getContractStartDate().atStartOfDay())
                 .terminateDate(request.getContractEndDate().atStartOfDay())
                 .build();
