@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.rental.query.mapper.RentalContractMapper">
+
+    <resultMap id="ContractRental" type="org.ateam.oncare.rental.command.dto.ResponseContractRentalDTO">
+        <id property="id" column="id"/>
+        <result property="productName" column="productName"/>
+        <result property="beneficiary" column="beneficiary"/>
+        <result property="employee" column="employee"/>
+        <result property="startDate" column="startDate"/>
+        <result property="wantedDate" column="wanted_date"/>
+        <result property="endDate" column="endDate"/>
+        <result property="expectedEndDate" column="expectedEndDate"/>
+        <result property="cumulativeRevenue" column="cumulativeRevenue"/>
+        <result property="statusCode" column="statusCode"/>
+        <result property="statusName" column="statusName"/>
+        <result property="rentalAmount" column="rental_amount"/>
+    </resultMap>
+
+    <resultMap id="targetContract" type="org.ateam.oncare.rental.command.dto.RentalContractForCalculationDTO">
+        <id property="id" column="id"/>
+        <result property="productCd" column="product_cd"/>
+        <result property="usedMonthly" column="used_monthly"/>
+        <result property="usedDays" column="used_days"/>
+        <result property="calculationDate" column="calculation_date"/>
+    </resultMap>
+
+    <select id="selectRentalContract" resultMap="ContractRental">
+        <bind name="limitSize" value="page.pageSize + 1" />
+        select
+        a.id
+        , d.name as productName
+        , c.name as beneficiary
+        , b.name as employee
+        , a.wanted_date
+        , a.start_date as startDate
+        , a.end_date as endDate
+        , a.expected_date as expectedEndDate
+        , a.cumulative_revenue as cumulativeRevenue
+        , d.rental_amount
+        , e.id as statusCode
+        , e.name as statusName
+        from rental_contract a
+        join employee b on a.emp_id = b.id
+        join beneficiary c on a.beneficiary_id = c.id
+        join m_care_product d on a.product_cd = d.id
+        join contract_status e on a.contract_status_cd = e.id
+        where 1=1
+        <if test="cond.contractStatus != 0">
+            and a.contract_status_cd = #{cond.contractStatus}
+        </if>
+        <if test="cond.beneficiaryOrEmployee != null and cond.beneficiaryOrEmployee != ''">
+            and (b.name like concat('%', #{cond.beneficiaryOrEmployee} ,'%')
+            or c.name like concat('%', #{cond.beneficiaryOrEmployee} ,'%'))
+        </if>
+        order by a.contract_status_cd asc
+        limit #{limitSize}  offset #{page.offset}
+    </select>
+
+    <select id="selectRentalContractForCalculation" resultMap="targetContract">
+        with  target_date as(
+            select datediff(last_day(#{calcDate}), date_format(#{calcDate}, '%Y-%m-01')) + 1 as days_in_month
+                    , date_format(#{calcDate}, '%Y-%m-01') as target_month
+        ),
+        calc_contract as (
+            select a.id
+                , a.start_date
+                , a.end_date
+                , a.calc_date
+                , a.product_cd
+                , b.target_month
+                , b.days_in_month
+                , greatest(a.start_date, b.target_month ) as calc_start_date
+                , least(ifnull(a.end_date, last_day(b.target_month)), last_day(b.target_month) ) as calc_end_date
+            from rental_contract a
+            join target_date b on 1=1
+            <![CDATA[
+            where a.start_date < date_add(#{calcDate}, interval 1 month)
+            and   ifnull(a.calc_date, 1) < #{calcDate}
+            and   a.contract_status_cd = 2
+            ]]>
+        )
+        select
+        id
+        , product_cd
+        , case when datediff(calc_end_date, calc_start_date) + 1 = days_in_month then 1 else 0 end as used_monthly
+        , datediff(calc_end_date, calc_start_date) + 1 as used_days
+        , #{calcDate} as calculation_date
+        from calc_contract
+    </select>
+
+
+</mapper>

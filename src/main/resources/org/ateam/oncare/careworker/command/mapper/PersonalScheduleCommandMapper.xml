@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.careworker.command.mapper.PersonalScheduleCommandMapper">
+
+    <!-- 개인 일정 작성 -->
+    <insert id="insertPersonalSchedule">
+        INSERT INTO personal_schedule (
+            care_worker_id,
+            personal_type_id,
+            custom_type,
+            title,
+            start_dt,
+            end_dt,
+            location,
+            notes,
+            schedule_status
+        ) VALUES (
+            (SELECT id FROM care_worker WHERE employee_id = #{employeeId} LIMIT 1),
+            #{request.personalTypeId},
+            #{request.customType},
+            #{request.title},
+            #{request.startDt},
+            #{request.endDt},
+            #{request.location},
+            #{request.notes},
+            #{request.scheduleStatus}
+        )
+    </insert>
+
+    <!-- 개인 일정 수정 -->
+    <update id="updatePersonalSchedule">
+        UPDATE personal_schedule
+        <set>
+            <if test="request.personalTypeId != null">personal_type_id = #{request.personalTypeId},</if>
+            <if test="request.customType != null">custom_type = #{request.customType},</if>
+            <if test="request.title != null">title = #{request.title},</if>
+            <if test="request.startDt != null">start_dt = #{request.startDt},</if>
+            <if test="request.endDt != null">end_dt = #{request.endDt},</if>
+            <if test="request.location != null">location = #{request.location},</if>
+            <if test="request.notes != null">notes = #{request.notes},</if>
+            <if test="request.scheduleStatus != null">schedule_status = #{request.scheduleStatus},</if>
+        </set>
+        WHERE ps_id = #{psId}
+    </update>
+
+    <!-- 개인 일정 삭제 -->
+    <delete id="deletePersonalSchedule">
+        DELETE FROM personal_schedule
+        WHERE ps_id = #{psId}
+    </delete>
+
+</mapper>

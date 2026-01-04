@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BasicEvaluationQueryMapper">
+
+    <!-- =========================
+         1) FALL 최신 헤더(낙상위험)
+         ========================= -->
+    <select id="selectFallLatestHeader"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.FallEvaluationLatestResponse">
+
+        SELECT
+        be.eval_id AS evalId,
+        DATE_FORMAT(be.eval_date, '%Y-%m-%d') AS evalDate,
+
+        b.id AS beneficiaryId,
+        b.name AS beneficiaryName,
+
+        cw.id AS careWorkerId,
+        e.name AS careWorkerName,
+
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.total_score')) AS SIGNED) AS totalScore,
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.result.grade')) AS grade
+
+        FROM basic_evaluations be
+        JOIN beneficiary b ON b.id = be.beneficiary_id
+        JOIN care_worker cw ON cw.id = be.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+
+        WHERE be.beneficiary_id = #{beneficiaryId}
+        AND be.eval_type = 'FALL'
+
+        ORDER BY be.eval_date DESC, be.eval_id DESC
+        LIMIT 1
+    </select>
+
+    <!-- FALL answers[] 펼치기 -->
+    <select id="selectFallAnswersByEvalId"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.FallEvaluationLatestResponse$AnswerItem">
+
+        SELECT
+        jt.questionLabel AS questionLabel,
+        jt.selectedLabel AS selectedLabel,
+        jt.selectedScore AS selectedScore
+        FROM basic_evaluations be
+        JOIN JSON_TABLE(
+        be.eval_data,
+        '$.answers[*]'
+        COLUMNS (
+        questionLabel VARCHAR(200) PATH '$.label',
+        selectedLabel VARCHAR(200) PATH '$.selected.label',
+        selectedScore INT          PATH '$.selected.score'
+        )
+        ) jt
+        WHERE be.eval_id = #{evalId}
+        ORDER BY jt.questionLabel
+    </select>
+
+    <!-- =========================
+         2) BEDSORE 최신 헤더(욕창위험)
+         ========================= -->
+    <select id="selectBedsoreLatestHeader"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.BedsoreEvaluationLatestResponse">
+
+        SELECT
+        be.eval_id AS evalId,
+        DATE_FORMAT(be.eval_date, '%Y-%m-%d') AS evalDate,
+
+        b.id AS beneficiaryId,
+        b.name AS beneficiaryName,
+
+        cw.id AS careWorkerId,
+        e.name AS careWorkerName,
+
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.total_score')) AS SIGNED) AS totalScore,
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.grade')) AS grade,
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.comment')) AS comment
+
+        FROM basic_evaluations be
+        JOIN beneficiary b ON b.id = be.beneficiary_id
+        JOIN care_worker cw ON cw.id = be.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+
+        WHERE be.beneficiary_id = #{beneficiaryId}
+        AND be.eval_type = 'BEDSORE'
+
+        ORDER BY be.eval_date DESC, be.eval_id DESC
+        LIMIT 1
+    </select>
+
+    <!-- BEDSORE answers[] 펼치기 -->
+    <select id="selectBedsoreAnswersByEvalId"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.BedsoreEvaluationLatestResponse$AnswerItem">
+
+        SELECT
+        jt.code AS code,
+        jt.label AS label,
+        jt.score AS score
+        FROM basic_evaluations be
+        JOIN JSON_TABLE(
+        be.eval_data,
+        '$.answers[*]'
+        COLUMNS (
+        code  VARCHAR(50)  PATH '$.code',
+        label VARCHAR(200) PATH '$.label',
+        score INT          PATH '$.score'
+        )
+        ) jt
+        WHERE be.eval_id = #{evalId}
+        ORDER BY jt.code
+    </select>
+
+    <!-- =========================
+         3) COGNITIVE 최신 1건(인지평가)
+         ========================= -->
+    <select id="selectCognitiveLatest"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.CognitiveEvaluationLatestResponse">
+
+        SELECT
+        be.eval_id AS evalId,
+        DATE_FORMAT(be.eval_date, '%Y-%m-%d') AS evalDate,
+
+        b.id AS beneficiaryId,
+        b.name AS beneficiaryName,
+
+        cw.id AS careWorkerId,
+        e.name AS careWorkerName,
+
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.education_level.label')) AS educationLabel,
+
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.A.title')) AS aTitle,
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.A.section_score')) AS SIGNED) AS aScore,
+
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.C.title')) AS cTitle,
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.C.section_score')) AS SIGNED) AS cScore,
+
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.D.title')) AS dTitle,
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.D.section_score')) AS SIGNED) AS dScore,
+
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.E.title')) AS eTitle,
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.E.section_score')) AS SIGNED) AS eScore,
+
+        /* F 영역 */
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.F.title')) AS fTitle,
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.F.raw_total')) AS SIGNED) AS fRawTotal,
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.F.converted_total')) AS SIGNED) AS fConvertedTotal,
+
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.G.title')) AS gTitle,
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.sections.G.section_score')) AS SIGNED) AS gScore,
+
+        CAST(JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.total_score')) AS SIGNED) AS totalScore,
+
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.result')) AS interpretationResult,
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.interpretation.comment')) AS interpretationComment
+
+        FROM basic_evaluations be
+        JOIN beneficiary b ON b.id = be.beneficiary_id
+        JOIN care_worker cw ON cw.id = be.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+
+        WHERE be.beneficiary_id = #{beneficiaryId}
+        AND be.eval_type = 'COGNITIVE'
+
+        ORDER BY be.eval_date DESC, be.eval_id DESC
+        LIMIT 1
+    </select>
+
+    <!-- =========================
+         4) NEEDS 최신 1건(욕구사정)
+         ========================= -->
+    <select id="selectNeedsLatest"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.NeedsEvaluationLatestResponse">
+
+        SELECT
+        be.eval_id AS evalId,
+        DATE_FORMAT(be.eval_date, '%Y-%m-%d') AS evalDate,
+
+        b.id AS beneficiaryId,
+        b.name AS beneficiaryName,
+
+        cw.id AS careWorkerId,
+        e.name AS careWorkerName,
+
+
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.answers."8".subjective_need')) AS subjectiveNeed,
+        JSON_UNQUOTE(JSON_EXTRACT(be.eval_data, '$.answers."9".summary')) AS summary
+
+        FROM basic_evaluations be
+        JOIN beneficiary b ON b.id = be.beneficiary_id
+        JOIN care_worker cw ON cw.id = be.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+
+        WHERE be.beneficiary_id = #{beneficiaryId}
+        AND be.eval_type = 'NEEDS'
+
+        ORDER BY be.eval_date DESC, be.eval_id DESC
+        LIMIT 1
+    </select>
+
+</mapper>

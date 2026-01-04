@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.schedule.query.mapper.ScheduleMapper">
+
+    <resultMap id="ScheduleMonthCountMap" type="org.ateam.oncare.schedule.query.dto.ScheduleMonthCountDto">
+        <result property="date" column="schedule_date"/>
+        <result property="careCount" column="care_count"/>
+        <result property="bathCount" column="bath_count"/>
+        <result property="nurseCount" column="nurse_count"/>
+    </resultMap>
+
+    <select id="selectRangeCounts" resultMap="ScheduleMonthCountMap">
+        WITH RECURSIVE dates AS (
+        SELECT #{startDate} AS d
+        UNION ALL
+        SELECT DATE_ADD(d, INTERVAL 1 DAY)
+        FROM dates
+        WHERE d &lt;= #{endDate}
+        ),
+        valid_matching AS (
+        SELECT
+        m.id AS matching_id,
+        m.beneficiary_id,
+        m.care_worker_id,
+        dates.d AS schedule_date,
+        m.start_date,
+        m.end_date,
+        m.status,
+        ROW_NUMBER() OVER (
+        PARTITION BY m.beneficiary_id, dates.d
+        ORDER BY m.start_date DESC
+        ) AS rn
+        FROM matching m
+        JOIN dates
+        ON dates.d &gt;= DATE(m.start_date)
+        AND (
+        (m.status = 'Y' AND (m.end_date IS NULL OR dates.d &lt;= DATE(m.end_date)))
+        OR (m.status = 'N' AND m.end_date IS NOT NULL AND dates.d &lt;= DATE(m.end_date))
+        )
+        <where>
+            <if test="beneficiaryId != null">
+                AND m.beneficiary_id = #{beneficiaryId}
+            </if>
+            <if test="careWorkerId != null">
+                AND m.care_worker_id = #{careWorkerId}
+            </if>
+        </where>
+        )
+
+        SELECT
+        dates.d AS schedule_date,
+        SUM(CASE WHEN bs.service_type_id = 1 THEN 1 ELSE 0 END) AS care_count,
+        SUM(CASE WHEN bs.service_type_id = 2 THEN 1 ELSE 0 END) AS bath_count,
+        SUM(CASE WHEN bs.service_type_id = 3 THEN 1 ELSE 0 END) AS nurse_count
+        FROM dates
+        JOIN valid_matching vm
+        ON vm.schedule_date = dates.d
+        AND vm.rn = 1
+        JOIN beneficiary_schedule bs
+        ON bs.beneficiary_id = vm.beneficiary_id
+        AND bs.day = (
+        CASE DAYOFWEEK(dates.d)
+        WHEN 1 THEN 7
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 4
+        WHEN 6 THEN 5
+        WHEN 7 THEN 6
+        END
+        )
+        JOIN m_service_type st
+        ON st.id = bs.service_type_id
+        LEFT JOIN beneficiary b
+        ON b.id = vm.beneficiary_id
+        LEFT JOIN care_worker cw
+        ON cw.id = vm.care_worker_id
+        LEFT JOIN employee e
+        ON e.id = cw.employee_id
+
+        <where>
+            <if test="serviceTypeId != null">
+                AND bs.service_type_id = #{serviceTypeId}
+            </if>
+
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchField == 'BENEFICIARY'">
+                        AND REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <when test="searchField == 'CAREWORKER'">
+                        AND REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <when test="searchField == 'SERVICE'">
+                        AND REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <otherwise>
+                        AND (
+                        REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        OR REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        OR REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+
+        GROUP BY dates.d
+        ORDER BY dates.d
+    </select>
+
+
+    <resultMap id="ScheduleDayItemMap" type="org.ateam.oncare.schedule.query.dto.ScheduleDayItemDto">
+        <result property="matchingId" column="matching_id"/>
+        <result property="date" column="schedule_date"/>
+        <result property="beneficiaryId" column="beneficiary_id"/>
+        <result property="beneficiaryName" column="beneficiary_name"/>
+        <result property="careWorkerId" column="care_worker_id"/>
+        <result property="careWorkerName" column="care_worker_name"/>
+        <result property="serviceTypeId" column="service_type_id"/>
+        <result property="serviceTypeName" column="service_type_name"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="durationMinutes" column="duration_minutes"/>
+    </resultMap>
+
+    <!-- ✅ 기존: 전체 리스트 (유지) -->
+    <select id="selectDaySchedules" resultMap="ScheduleDayItemMap">
+        WITH valid_matching AS (
+        SELECT
+        m.id AS matching_id,
+        m.beneficiary_id,
+        m.care_worker_id,
+        #{date} AS schedule_date,
+        ROW_NUMBER() OVER (
+        PARTITION BY m.beneficiary_id
+        ORDER BY m.start_date DESC
+        ) AS rn
+        FROM matching m
+        WHERE #{date} &gt;= DATE(m.start_date)
+        AND (
+        (m.status = 'Y' AND (m.end_date IS NULL OR #{date} &lt;= DATE(m.end_date)))
+        OR (m.status = 'N' AND m.end_date IS NOT NULL AND #{date} &lt;= DATE(m.end_date))
+        )
+        <if test="beneficiaryId != null">
+            AND m.beneficiary_id = #{beneficiaryId}
+        </if>
+        <if test="careWorkerId != null">
+            AND m.care_worker_id = #{careWorkerId}
+        </if>
+        )
+
+        SELECT
+        vm.matching_id AS matching_id,
+        vm.schedule_date AS schedule_date,
+        vm.beneficiary_id AS beneficiary_id,
+        b.name AS beneficiary_name,
+        vm.care_worker_id AS care_worker_id,
+        e.name AS care_worker_name,
+        bs.service_type_id AS service_type_id,
+        st.name AS service_type_name,
+
+        bs.start_time AS start_time,
+        bs.end_time   AS end_time,
+
+        (TIME_TO_SEC(bs.end_time) - TIME_TO_SEC(bs.start_time)) / 60 AS duration_minutes
+        FROM valid_matching vm
+        JOIN beneficiary_schedule bs
+        ON bs.beneficiary_id = vm.beneficiary_id
+        AND bs.day = (
+        CASE DAYOFWEEK(vm.schedule_date)
+        WHEN 1 THEN 7
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 4
+        WHEN 6 THEN 5
+        WHEN 7 THEN 6
+        END
+        )
+        JOIN m_service_type st
+        ON st.id = bs.service_type_id
+        JOIN beneficiary b
+        ON b.id = vm.beneficiary_id
+        JOIN care_worker cw
+        ON cw.id = vm.care_worker_id
+        JOIN employee e
+        ON e.id = cw.employee_id
+
+        <where>
+            vm.rn = 1
+            <if test="serviceTypeId != null">
+                AND bs.service_type_id = #{serviceTypeId}
+            </if>
+
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchField == 'BENEFICIARY'">
+                        AND REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <when test="searchField == 'CAREWORKER'">
+                        AND REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <when test="searchField == 'SERVICE'">
+                        AND REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <otherwise>
+                        AND (
+                        REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        OR REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        OR REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+
+        ORDER BY
+        CASE bs.service_type_id
+        WHEN 1 THEN 1
+        WHEN 2 THEN 2
+        WHEN 3 THEN 3
+        ELSE 99
+        END,
+        bs.start_time
+    </select>
+
+    <!-- ✅ 추가: day 리스트 페이징 (LIMIT/OFFSET) -->
+    <select id="selectDaySchedulesPaged" resultMap="ScheduleDayItemMap">
+        WITH valid_matching AS (
+        SELECT
+        m.id AS matching_id,
+        m.beneficiary_id,
+        m.care_worker_id,
+        #{date} AS schedule_date,
+        ROW_NUMBER() OVER (
+        PARTITION BY m.beneficiary_id
+        ORDER BY m.start_date DESC
+        ) AS rn
+        FROM matching m
+        WHERE #{date} &gt;= DATE(m.start_date)
+        AND (
+        (m.status = 'Y' AND (m.end_date IS NULL OR #{date} &lt;= DATE(m.end_date)))
+        OR (m.status = 'N' AND m.end_date IS NOT NULL AND #{date} &lt;= DATE(m.end_date))
+        )
+        <if test="beneficiaryId != null">
+            AND m.beneficiary_id = #{beneficiaryId}
+        </if>
+        <if test="careWorkerId != null">
+            AND m.care_worker_id = #{careWorkerId}
+        </if>
+        )
+
+        SELECT
+        vm.matching_id AS matching_id,
+        vm.schedule_date AS schedule_date,
+        vm.beneficiary_id AS beneficiary_id,
+        b.name AS beneficiary_name,
+        vm.care_worker_id AS care_worker_id,
+        e.name AS care_worker_name,
+        bs.service_type_id AS service_type_id,
+        st.name AS service_type_name,
+
+        bs.start_time AS start_time,
+        bs.end_time   AS end_time,
+
+        (TIME_TO_SEC(bs.end_time) - TIME_TO_SEC(bs.start_time)) / 60 AS duration_minutes
+        FROM valid_matching vm
+        JOIN beneficiary_schedule bs
+        ON bs.beneficiary_id = vm.beneficiary_id
+        AND bs.day = (
+        CASE DAYOFWEEK(vm.schedule_date)
+        WHEN 1 THEN 7
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 4
+        WHEN 6 THEN 5
+        WHEN 7 THEN 6
+        END
+        )
+        JOIN m_service_type st
+        ON st.id = bs.service_type_id
+        JOIN beneficiary b
+        ON b.id = vm.beneficiary_id
+        JOIN care_worker cw
+        ON cw.id = vm.care_worker_id
+        JOIN employee e
+        ON e.id = cw.employee_id
+
+        <where>
+            vm.rn = 1
+            <if test="serviceTypeId != null">
+                AND bs.service_type_id = #{serviceTypeId}
+            </if>
+
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchField == 'BENEFICIARY'">
+                        AND REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <when test="searchField == 'CAREWORKER'">
+                        AND REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <when test="searchField == 'SERVICE'">
+                        AND REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <otherwise>
+                        AND (
+                        REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        OR REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        OR REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+
+        ORDER BY
+        CASE bs.service_type_id
+        WHEN 1 THEN 1
+        WHEN 2 THEN 2
+        WHEN 3 THEN 3
+        ELSE 99
+        END,
+        bs.start_time
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- ✅ 추가: day 리스트 total count -->
+    <select id="countDaySchedules" resultType="long">
+        WITH valid_matching AS (
+        SELECT
+        m.beneficiary_id,
+        m.care_worker_id,
+        #{date} AS schedule_date,
+        ROW_NUMBER() OVER (
+        PARTITION BY m.beneficiary_id
+        ORDER BY m.start_date DESC
+        ) AS rn
+        FROM matching m
+        WHERE #{date} &gt;= DATE(m.start_date)
+        AND (
+        (m.status = 'Y' AND (m.end_date IS NULL OR #{date} &lt;= DATE(m.end_date)))
+        OR (m.status = 'N' AND m.end_date IS NOT NULL AND #{date} &lt;= DATE(m.end_date))
+        )
+        <if test="beneficiaryId != null">
+            AND m.beneficiary_id = #{beneficiaryId}
+        </if>
+        <if test="careWorkerId != null">
+            AND m.care_worker_id = #{careWorkerId}
+        </if>
+        )
+        SELECT COUNT(*)
+        FROM valid_matching vm
+        JOIN beneficiary_schedule bs
+        ON bs.beneficiary_id = vm.beneficiary_id
+        AND bs.day = (
+        CASE DAYOFWEEK(vm.schedule_date)
+        WHEN 1 THEN 7
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 4
+        WHEN 6 THEN 5
+        WHEN 7 THEN 6
+        END
+        )
+        JOIN m_service_type st
+        ON st.id = bs.service_type_id
+        JOIN beneficiary b
+        ON b.id = vm.beneficiary_id
+        JOIN care_worker cw
+        ON cw.id = vm.care_worker_id
+        JOIN employee e
+        ON e.id = cw.employee_id
+        <where>
+            vm.rn = 1
+            <if test="serviceTypeId != null">
+                AND bs.service_type_id = #{serviceTypeId}
+            </if>
+
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchField == 'BENEFICIARY'">
+                        AND REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <when test="searchField == 'CAREWORKER'">
+                        AND REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <when test="searchField == 'SERVICE'">
+                        AND REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    </when>
+                    <otherwise>
+                        AND (
+                        REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        OR REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        OR REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectScheduleDetail" resultMap="ScheduleDayItemMap">
+        SELECT
+        m.id AS matching_id,
+        #{date} AS schedule_date,
+        b.id AS beneficiary_id,
+        b.name AS beneficiary_name,
+        cw.id AS care_worker_id,
+        e.name AS care_worker_name,
+        bs.service_type_id AS service_type_id,
+        st.name AS service_type_name,
+
+        bs.start_time AS start_time,
+        bs.end_time   AS end_time,
+
+        (TIME_TO_SEC(bs.end_time) - TIME_TO_SEC(bs.start_time)) / 60 AS duration_minutes
+        FROM matching m
+        JOIN beneficiary b ON b.id = m.beneficiary_id
+        JOIN care_worker cw ON cw.id = m.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+        JOIN beneficiary_schedule bs
+        ON bs.beneficiary_id = m.beneficiary_id
+        AND bs.day = (
+        CASE DAYOFWEEK(#{date})
+        WHEN 1 THEN 7
+        WHEN 2 THEN 1
+        WHEN 3 THEN 2
+        WHEN 4 THEN 3
+        WHEN 5 THEN 4
+        WHEN 6 THEN 5
+        WHEN 7 THEN 6
+        END
+        )
+        JOIN m_service_type st ON st.id = bs.service_type_id
+        WHERE m.id = #{matchingId}
+        AND #{date} &gt;= DATE(m.start_date)
+        AND (
+        (m.status = 'Y' AND (m.end_date IS NULL OR #{date} &lt;= DATE(m.end_date)))
+        OR (m.status = 'N' AND m.end_date IS NOT NULL AND #{date} &lt;= DATE(m.end_date))
+        )
+
+        <if test="serviceTypeId != null">
+            AND bs.service_type_id = #{serviceTypeId}
+        </if>
+        <if test="startTime != null">
+            AND bs.start_time = #{startTime}
+        </if>
+
+        LIMIT 1
+    </select>
+
+</mapper>

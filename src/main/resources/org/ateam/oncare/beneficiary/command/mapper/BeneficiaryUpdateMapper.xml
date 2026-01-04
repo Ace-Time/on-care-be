@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.command.mapper.BeneficiaryUpdateMapper">
+
+    <!-- 1) 수급자 기본정보 UPDATE -->
+    <update id="updateBeneficiary">
+        UPDATE beneficiary
+        SET
+        name = #{req.name},
+        gender = #{req.gender},
+        birthdate = #{req.birthdate},
+        phone = #{req.phone},
+        address = #{req.address},
+        status = #{req.status}
+        WHERE id = #{beneficiaryId}
+    </update>
+
+    <!-- 2) 보호자 UPSERT (수급자당 1명 구조)
+         전제: guardian.beneficiary_id에 UNIQUE KEY가 있어야 함 -->
+    <update id="upsertGuardian">
+        INSERT INTO guardian (beneficiary_id, name, relation, phone, is_primary)
+        VALUES (#{beneficiaryId}, #{req.guardianName}, #{req.guardianRelation}, #{req.guardianPhone}, 'Y')
+        ON DUPLICATE KEY UPDATE
+        name = VALUES(name),
+        relation = VALUES(relation),
+        phone = VALUES(phone),
+        is_primary = 'Y'
+    </update>
+
+    <!-- 3) 태그 동기화 -->
+    <delete id="deleteBeneficiaryTags">
+        DELETE FROM tag_of_beneficiary
+        WHERE beneficiary_id = #{beneficiaryId}
+    </delete>
+
+    <insert id="insertBeneficiaryTags">
+        INSERT INTO tag_of_beneficiary (beneficiary_id, tag_id)
+        VALUES
+        <foreach collection="tagIds" item="tagId" separator=",">
+            (#{beneficiaryId}, #{tagId})
+        </foreach>
+    </insert>
+
+    <!-- 4) 위험요소 동기화 -->
+    <delete id="deleteRiskFactors">
+        DELETE FROM risk_of_member
+        WHERE beneficiary_id = #{beneficiaryId}
+    </delete>
+
+    <insert id="insertRiskFactors">
+        INSERT INTO risk_of_member (beneficiary_id, risk_id)
+        VALUES
+        <foreach collection="riskIds" item="rid" separator=",">
+            (#{beneficiaryId}, #{rid})
+        </foreach>
+    </insert>
+
+    <!-- ✅ 4-1) 위험요소 점수 합으로 beneficiary.risk_id(=m_risk_level) 갱신 -->
+    <update id="updateRiskLevelByFactors">
+        UPDATE beneficiary b
+        LEFT JOIN (
+        SELECT rom.beneficiary_id,
+        SUM(rf.score) AS risk_total
+        FROM risk_of_member rom
+        JOIN m_risk_factor rf ON rf.id = rom.risk_id
+        WHERE rom.beneficiary_id = #{beneficiaryId}
+        GROUP BY rom.beneficiary_id
+        ) rsum ON rsum.beneficiary_id = b.id
+        SET b.risk_id =
+        CASE
+        WHEN IFNULL(rsum.risk_total, 0) &lt; 10 THEN 1
+        WHEN IFNULL(rsum.risk_total, 0) &lt; 15 THEN 2
+        ELSE 3
+        END
+        WHERE b.id = #{beneficiaryId}
+    </update>
+
+    <!-- ✅ 5) care level 정보 수정(만료일/인정번호/장기요양등급) -->
+    <update id="updateCareLevelInfo">
+        <!-- (1) beneficiary_care_level: end_date / number 업데이트 -->
+        UPDATE beneficiary_care_level
+        <set>
+            <if test="req.careLevelEndDate != null and req.careLevelEndDate != ''">
+                end_date = #{req.careLevelEndDate},
+            </if>
+            <if test="req.careLevelNumber != null">
+                number = #{req.careLevelNumber},
+            </if>
+        </set>
+        WHERE beneficiary_id = #{beneficiaryId}
+    </update>
+
+    <!-- ✅ 5-1) 장기요양등급 변경: beneficiary_count.m_care_level_id 업데이트 -->
+    <update id="updateCareLevelGrade">
+        UPDATE beneficiary_count bc
+        JOIN beneficiary_care_level bcl ON bcl.id = bc.beneficiary_care_level_id
+        SET bc.m_care_level_id = #{careLevelId}
+        WHERE bcl.beneficiary_id = #{beneficiaryId}
+    </update>
+
+</mapper>

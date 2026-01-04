@@ -1,43 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration debug="false">
     <!-- 로그 파일이 저장될 경로를 지정 -->
     <property name="LOG_PATH" value="./logs"/>
-    
-    <!-- Console Appender: 로그를 콘솔에 출력하기 위한 설정 -->
-    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <!-- 로그 출력 형식을 지정
-                 %d: 날짜시간
-                 %thread: 스레드 이름
-                 %-5level: 로그 레벨
-                 %logger{36}: 로거 이름(최대 36자)
-                 %msg: 로그 메시지
-                 %n: 줄바꿈 -->
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-    
-    <!-- File Appender: 로그를 파일에 저장하기 위한 설정 -->
-    <appender name="File" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <encoder>
-            <!-- Console Appender와 동일한 출력 형식을 사용 -->
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-        <!-- 로그 파일 롤링 정책을 설정 -->
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 날짜별로 로그 파일을 생성 -->
-            <fileNamePattern>${LOG_PATH}/client-requests.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <!-- 최대 30일간의 로그 파일을 보관 -->
-            <maxHistory>30</maxHistory>
-            <!-- 전체 로그 파일 크기를 최대 3GB로 제한 -->
-            <totalSizeCap>3GB</totalSizeCap>
-        </rollingPolicy>
-    </appender>
-    
-    <!-- Root Logger: 전체 로그 레벨과 사용할 Appender를 지정 -->
-    <root level="info">
+    <!-- 공통 패턴 -->
+    <!-- 로그 출력 형식을 지정
+                 %X{traceId}: MDC에 있는 uuid(요청 ~ 반환 키값) %d: 날짜시간, %-5level: 로그 레벨, %thread: 스레드 이름,
+                 %logger{36}: 로거 이름(최대 36자),%msg: 로그 메시지, %n: 줄바꿈 -->
+    <property name="PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{traceId}] %-5level [%thread] %logger{36} - %msg%n" />
+    <property name="DATE_DIR_PATTERN" value="%d{yyyy/MM, aux}"/>
+    <property name="DATE_FILE_PATTERN" value="%d{yyyy-MM-dd}"/>
+
+    <!-- 분린된 설정 파일 추가 -->
+    <include resource="logback/request-logger.xml" />
+    <include resource="logback/performance-logger.xml" />
+
+
+    <!--  info 레벨 이상의 로그 기록 시스템 설정 포함(jpa, spring 로그등)  -->
+    <root level="INFO">
         <!-- 콘솔과 파일 모두에 로그를 출력 -->
         <appender-ref ref="Console"/>
-        <appender-ref ref="File"/>
+        <appender-ref ref="SYSTEM_ALL" />
     </root>
-</configuration> 
+
+
+    <!-- 애플리케이션 전용 로거: app 패키지에서 찍힌 로그는 APP_ALL로도 가며
+         additivity 기본값(true) 이므로 root로 전파되어 SYSTEM_ALL에도 들어감
+         additivity="false"를 주면 APP_ALL의 로그가 system까지 올라가지 않음
+         -->
+    <logger name="org.ateam.oncare" level="DEBUG">
+        <appender-ref ref="APP_ALL"/>
+        <appender-ref ref="DEBUG_FILE" />
+        <appender-ref ref="INFO_FILE" />
+        <appender-ref ref="WARN_FILE" />
+        <appender-ref ref="ERROR_FILE" />
+    </logger>
+
+
+    <!-- 응답까지 오래걸리는 요청만 기록 현재(1초 이상) -->
+    <logger name="PERFORMANCE_WARN" level="WARN">
+        <appender-ref ref="PERFORMANCE_WARN"/>
+    </logger>
+
+</configuration>

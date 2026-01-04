@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.schedule.query.mapper.ConfirmedCalendarScheduleMapper">
+
+    <!-- 키워드 검색 (BENEFICIARY/CAREWORKER/SERVICE/ALL) -->
+    <sql id="KeywordFilter">
+        <if test="keyword != null and keyword.trim() != ''">
+            <choose>
+                <when test="searchField == 'BENEFICIARY'">
+                    AND REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                </when>
+                <when test="searchField == 'CAREWORKER'">
+                    AND REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                </when>
+                <when test="searchField == 'SERVICE'">
+                    AND REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                </when>
+                <otherwise>
+                    AND (
+                    REPLACE(b.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    OR REPLACE(e.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    OR REPLACE(st.name,' ','') LIKE CONCAT('%', REPLACE(#{keyword},' ',''), '%')
+                    )
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <!-- 1) 달력 뱃지용: 날짜별 건수 -->
+    <select id="selectRangeCounts"
+            resultType="org.ateam.oncare.schedule.query.dto.ConfirmedCalendarMonthCountDto">
+        SELECT
+        DATE(vs.start_dt) AS date,
+        SUM(CASE WHEN vs.service_type_id = 1 THEN 1 ELSE 0 END) AS careCount,
+        SUM(CASE WHEN vs.service_type_id = 2 THEN 1 ELSE 0 END) AS bathCount,
+        SUM(CASE WHEN vs.service_type_id = 3 THEN 1 ELSE 0 END) AS nurseCount
+        FROM visit_schedule vs
+        JOIN beneficiary b ON b.id = vs.beneficiary_id
+        JOIN care_worker cw ON cw.id = vs.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+        JOIN m_service_type st ON st.id = vs.service_type_id
+        WHERE 1=1
+        <![CDATA[
+            AND vs.start_dt >= #{start}
+            AND vs.start_dt < DATE_ADD(#{end}, INTERVAL 1 DAY)
+        ]]>
+
+        <if test="beneficiaryId != null">
+            AND vs.beneficiary_id = #{beneficiaryId}
+        </if>
+        <if test="careWorkerId != null">
+            AND vs.care_worker_id = #{careWorkerId}
+        </if>
+        <if test="serviceTypeId != null">
+            AND vs.service_type_id = #{serviceTypeId}
+        </if>
+
+        <include refid="KeywordFilter"/>
+
+        GROUP BY DATE(vs.start_dt)
+        ORDER BY date
+    </select>
+
+    <!-- 2) 날짜 클릭 리스트용 (기존 유지) -->
+    <select id="selectDayList"
+            resultType="org.ateam.oncare.schedule.query.dto.ConfirmedCalendarDayItemDto">
+        SELECT
+        vs.vs_id AS vsId,
+        DATE(vs.start_dt) AS date,
+        DATE_FORMAT(vs.start_dt, '%H:%i') AS startTime,
+        DATE_FORMAT(vs.end_dt, '%H:%i')   AS endTime,
+        TIMESTAMPDIFF(MINUTE, vs.start_dt, vs.end_dt) AS durationMinutes,
+
+        e.name AS careWorkerName,
+        b.name AS beneficiaryName,
+
+        vs.service_type_id AS serviceTypeId,
+        st.name AS serviceTypeName,
+
+        vs.visit_status AS status
+        FROM visit_schedule vs
+        JOIN beneficiary b ON b.id = vs.beneficiary_id
+        JOIN care_worker cw ON cw.id = vs.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+        JOIN m_service_type st ON st.id = vs.service_type_id
+        WHERE 1=1
+        <![CDATA[
+            AND vs.start_dt >= #{date}
+            AND vs.start_dt < DATE_ADD(#{date}, INTERVAL 1 DAY)
+        ]]>
+
+        <if test="beneficiaryId != null">
+            AND vs.beneficiary_id = #{beneficiaryId}
+        </if>
+        <if test="careWorkerId != null">
+            AND vs.care_worker_id = #{careWorkerId}
+        </if>
+        <if test="serviceTypeId != null">
+            AND vs.service_type_id = #{serviceTypeId}
+        </if>
+
+        <include refid="KeywordFilter"/>
+
+        ORDER BY vs.start_dt
+    </select>
+
+    <!-- ✅ 2-1) 날짜 클릭 리스트 페이징: 5개씩 (offset/limit) -->
+    <select id="selectDayListPaged"
+            resultType="org.ateam.oncare.schedule.query.dto.ConfirmedCalendarDayItemDto">
+        SELECT
+        vs.vs_id AS vsId,
+        DATE(vs.start_dt) AS date,
+        DATE_FORMAT(vs.start_dt, '%H:%i') AS startTime,
+        DATE_FORMAT(vs.end_dt, '%H:%i')   AS endTime,
+        TIMESTAMPDIFF(MINUTE, vs.start_dt, vs.end_dt) AS durationMinutes,
+
+        e.name AS careWorkerName,
+        b.name AS beneficiaryName,
+
+        vs.service_type_id AS serviceTypeId,
+        st.name AS serviceTypeName,
+
+        vs.visit_status AS status
+        FROM visit_schedule vs
+        JOIN beneficiary b ON b.id = vs.beneficiary_id
+        JOIN care_worker cw ON cw.id = vs.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+        JOIN m_service_type st ON st.id = vs.service_type_id
+        WHERE 1=1
+        <![CDATA[
+            AND vs.start_dt >= #{date}
+            AND vs.start_dt < DATE_ADD(#{date}, INTERVAL 1 DAY)
+        ]]>
+
+        <if test="beneficiaryId != null">
+            AND vs.beneficiary_id = #{beneficiaryId}
+        </if>
+        <if test="careWorkerId != null">
+            AND vs.care_worker_id = #{careWorkerId}
+        </if>
+        <if test="serviceTypeId != null">
+            AND vs.service_type_id = #{serviceTypeId}
+        </if>
+
+        <include refid="KeywordFilter"/>
+
+        ORDER BY vs.start_dt
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- ✅ 2-2) 날짜 클릭 리스트 total count -->
+    <select id="countDayList" resultType="long">
+        SELECT COUNT(*)
+        FROM visit_schedule vs
+        JOIN beneficiary b ON b.id = vs.beneficiary_id
+        JOIN care_worker cw ON cw.id = vs.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+        JOIN m_service_type st ON st.id = vs.service_type_id
+        WHERE 1=1
+        <![CDATA[
+            AND vs.start_dt >= #{date}
+            AND vs.start_dt < DATE_ADD(#{date}, INTERVAL 1 DAY)
+        ]]>
+
+        <if test="beneficiaryId != null">
+            AND vs.beneficiary_id = #{beneficiaryId}
+        </if>
+        <if test="careWorkerId != null">
+            AND vs.care_worker_id = #{careWorkerId}
+        </if>
+        <if test="serviceTypeId != null">
+            AND vs.service_type_id = #{serviceTypeId}
+        </if>
+
+        <include refid="KeywordFilter"/>
+    </select>
+
+    <!-- 3) 상세 조회: vsId 기준 -->
+    <select id="selectDetailByVsId"
+            resultType="org.ateam.oncare.schedule.query.dto.ConfirmedCalendarScheduleDetailDto">
+        SELECT
+            vs.vs_id                                      AS vsId,
+            vs.service_type_id                             AS serviceTypeId,
+            st.name                                        AS serviceTypeName,
+
+            DATE(vs.start_dt)                              AS date,
+            DATE_FORMAT(vs.start_dt, '%H:%i:%s')           AS startTime,
+            DATE_FORMAT(vs.end_dt, '%H:%i:%s')             AS endTime,
+            TIMESTAMPDIFF(MINUTE, vs.start_dt, vs.end_dt)  AS durationMinutes,
+
+            b.id                                           AS beneficiaryId,
+            b.name                                         AS beneficiaryName,
+
+            cw.id                                          AS careWorkerId,
+            e.name                                         AS careWorkerName,
+
+            vs.visit_status                                AS status
+        FROM visit_schedule vs
+            JOIN beneficiary b     ON b.id = vs.beneficiary_id
+            JOIN care_worker cw    ON cw.id = vs.care_worker_id
+            JOIN employee e        ON e.id = cw.employee_id
+            JOIN m_service_type st ON st.id = vs.service_type_id
+        WHERE vs.vs_id = #{vsId}
+    </select>
+
+</mapper>

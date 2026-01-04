@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.employee.query.mapper.EmployeeMapper">
+
+    <select id="selectProductTasksByEmployeeId" resultMap="ProductTaskMap">
+        SELECT
+        pt.id,
+        pt.status,
+        pt.expected_date,
+        pt.is_confirmed,
+        CONCAT('Product-', pt.product_id) AS product_name,
+        b.name AS beneficiary_name
+        FROM product_tasks_for_worker pt
+        INNER JOIN beneficiary b ON pt.beneficiary_id = b.id
+        INNER JOIN care_worker cw ON pt.care_worker_id = cw.id
+        WHERE cw.employee_id = #{employeeId}
+        ORDER BY pt.expected_date ASC
+    </select>
+
+    <resultMap id="EmployeeListMap" type="org.ateam.oncare.employee.query.dto.EmployeeListDTO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
+        <result property="deptName" column="deptName"/>
+        <result property="jobName" column="jobName"/>
+        <result property="certificateNames" column="certificate_names_str"/>
+        <result property="serviceTypeNames" column="service_type_names_str"/>
+        <result property="statusField" column="statusField"/>
+        <result property="beneficiaryCount" column="beneficiaryCount"/>
+    </resultMap>
+
+    <resultMap id="EmployeeDetailMap" type="org.ateam.oncare.employee.query.dto.EmployeeDetailDTO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="phone" column="phone"/>
+        <result property="gender" column="gender"/>
+        <result property="birth" column="birth"/>
+        <result property="email" column="email"/>
+        <result property="address" column="address"/>
+        <result property="emergencyNumber" column="emergency_number"/>
+        <result property="hireDate" column="hire_date"/>
+
+        <result property="deptName" column="deptName"/>       <result property="jobName" column="jobName"/>
+        <result property="statusField" column="statusField"/> </resultMap>
+
+    <resultMap id="CareerMap" type="org.ateam.oncare.employee.query.dto.EmployeeDetailDTO$CareerDTO">
+        <result property="companyName" column="company_name"/>
+        <result property="workPeriod" column="work_period"/>
+        <result property="task" column="task"/>
+    </resultMap>
+
+    <resultMap id="CertificateViewMap" type="org.ateam.oncare.employee.query.dto.CertificateViewDTO">
+        <id property="id" column="id"/>
+        <result property="employeeName" column="employee_name"/>
+        <result property="certificateName" column="certificate_name"/>
+        <result property="organization" column="organization"/>
+        <result property="licenseNo" column="license_no"/>
+        <result property="issueDate" column="issue_date"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <resultMap id="VisitScheduleMap" type="org.ateam.oncare.employee.query.dto.VisitScheduleVO">
+        <id property="vsId" column="vs_id"/>
+        <result property="startDt" column="start_dt"/>
+        <result property="endDt" column="end_dt"/>
+        <result property="visitStatus" column="visit_status"/>
+        <result property="serviceTypeId" column="service_type_id"/>
+        <result property="beneficiaryName" column="beneficiary_name"/>
+    </resultMap>
+
+    <resultMap id="EducationAlertMap" type="org.ateam.oncare.employee.query.dto.EducationAlertDTO">
+        <id property="employeeId" column="employee_id"/>
+        <result property="name" column="name"/>
+        <result property="nextEduDate" column="next_edu_date"/>
+        <result property="dDay" column="d_day"/>
+    </resultMap>
+
+    <select id="selectEducationAlerts" resultMap="EducationAlertMap">
+        SELECT 
+            e.id AS employee_id,
+            e.name,
+            MIN(edu.next_edu_date) AS next_edu_date,
+            DATEDIFF(MIN(edu.next_edu_date), CURDATE()) AS d_day
+        FROM employee e
+        JOIN care_worker cw ON e.id = cw.employee_id
+        JOIN care_worker_certificate cwc ON cw.id = cwc.care_worker_id
+        JOIN education edu ON cwc.id = edu.care_worker_certificate_id
+        /* 가장 최근 교육 기록 중, 다음 예정일이 90일 이내로 남았거나 지난 경우 */
+        GROUP BY e.id, e.name
+        HAVING d_day &lt;= 30
+        ORDER BY d_day ASC
+    </select>
+
+    <resultMap id="ProductTaskMap" type="org.ateam.oncare.employee.query.dto.ProductTaskVO">
+        <id property="id" column="id"/>
+        <result property="status" column="status"/>
+        <result property="expectedDate" column="expected_date"/>
+        <result property="isConfirmed" column="is_confirmed"/>
+        <result property="productName" column="product_name"/> <result property="beneficiaryName" column="beneficiary_name"/>
+    </resultMap>
+
+    <select id="selectSchedulesByEmployeeId" resultMap="VisitScheduleMap">
+        SELECT
+        vs.vs_id,
+        vs.start_dt,
+        vs.end_dt,
+        vs.visit_status,
+        vs.service_type_id,
+        b.name AS beneficiary_name
+        FROM visit_schedule vs
+        INNER JOIN beneficiary b ON vs.beneficiary_id = b.id
+        INNER JOIN care_worker cw ON vs.care_worker_id = cw.id
+        WHERE cw.employee_id = #{employeeId}
+        ORDER BY vs.start_dt ASC
+    </select>
+
+    <resultMap id="ServiceTypeMap" type="org.ateam.oncare.employee.query.dto.ServiceTypeDTO">
+        <result property="id" column="m_service_type_id"/>
+        <result property="name" column="service_name"/>
+    </resultMap>
+
+    <resultMap id="EducationMap" type="org.ateam.oncare.employee.query.dto.EducationDTO">
+        <result property="eduName" column="edu_name"/>
+        <result property="institution" column="institution"/>
+        <result property="eduDate" column="edu_date"/>
+        <result property="nextEduDate" column="next_edu_date"/>
+        <result property="isOverdue" column="is_overdue"/>
+        <result property="status" column="status"/>
+        <result property="relatedLicenseName" column="license_name"/> </resultMap>
+
+    <select id="selectEmployeeList" resultMap="EmployeeListMap">
+        SELECT DISTINCT
+        e.id,
+        e.name,
+        e.phone,
+        d.dept_name as deptName,   -- 부서명
+        j.name as jobName,         -- 직책명
+        s.`field` as statusField,    -- 상태명
+        (
+            SELECT GROUP_CONCAT(sub_c.certificate_name SEPARATOR ', ')
+            FROM care_worker sub_cw
+            JOIN care_worker_certificate sub_cwc ON sub_cw.id = sub_cwc.care_worker_id
+            JOIN certificate sub_c ON sub_cwc.certificate_id = sub_c.id
+            WHERE sub_cw.employee_id = e.id
+        ) AS certificate_names_str,
+        (
+            SELECT GROUP_CONCAT(sub_mst.name SEPARATOR ', ')
+            FROM care_worker sub_cw
+            JOIN care_worker_service_type sub_cwst ON sub_cw.id = sub_cwst.care_worker_id
+            JOIN m_service_type sub_mst ON sub_cwst.m_service_type_id = sub_mst.id
+            WHERE sub_cw.employee_id = e.id
+        ) AS service_type_names_str,
+        (
+            SELECT COUNT(*)
+            FROM matching m
+            WHERE m.care_worker_id = cw.id
+            AND m.status = 'Y'
+        ) AS beneficiaryCount
+        FROM employee e
+        LEFT JOIN m_department d ON e.dept_code = d.id      -- 부서 조인
+        LEFT JOIN m_job j ON e.job_code = j.id              -- 직책 조인
+        LEFT JOIN m_status s ON e.status_id = s.`status`      -- 상태 조인
+        
+        LEFT JOIN care_worker cw ON e.id = cw.employee_id
+        LEFT JOIN care_worker_certificate cwc ON cw.id = cwc.care_worker_id
+        LEFT JOIN care_worker_service_type cwst ON cw.id = cwst.care_worker_id
+
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (e.name LIKE CONCAT('%', #{keyword}, '%')
+                OR e.phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="jobCode != null">
+                AND e.job_code = #{jobCode}
+            </if>
+            <if test="statusId != null">
+                AND e.status_id = #{statusId}
+            </if>
+            <if test="certificateId != null">
+                AND cwc.certificate_id = #{certificateId}
+            </if>
+            <if test="serviceTypeId != null">
+                AND cwst.m_service_type_id = #{serviceTypeId}
+            </if>
+        </where>
+        ORDER BY beneficiaryCount DESC, e.id DESC
+    </select>
+
+    <select id="selectEmployeeDetail" resultMap="EmployeeDetailMap">
+        SELECT
+        e.id,
+        e.name,
+        e.phone,
+        e.gender,
+        e.birth,
+        e.email,
+        e.address,
+        e.emergency_number,
+        e.hire_date,
+        d.dept_name as deptName,    -- 부서명
+        j.name as jobName,          -- 직책명
+        s.`field` as statusField      -- 상태명
+        FROM employee e
+        LEFT JOIN m_department d ON e.dept_code = d.id      -- 부서 조인
+        LEFT JOIN m_job j ON e.job_code = j.id              -- 직책 조인
+        LEFT JOIN m_status s ON e.status_id = s.`status`      -- 상태 조인
+        WHERE e.id = #{id}
+    </select>
+
+    <select id="selectEmployeeCareers" resultMap="CareerMap">
+        SELECT
+        company_name,
+        work_period,
+        task
+        FROM employee_career
+        WHERE employee_id = #{employeeId}
+        ORDER BY id ASC
+    </select>
+
+    <select id="selectEmployeeCertificates" resultMap="CertificateViewMap">
+        SELECT
+        cwc.id,                -- 자격증 보유 ID (PK)
+        e.name AS employee_name, -- 직원 이름
+        c.certificate_name,
+        c.organization,
+        cwc.license_no,
+        cwc.issue_date,
+        cwc.expire_date,
+        cwc.`status`
+        FROM care_worker_certificate cwc
+
+        /* 1. 자격증 보유 현황(cwc) -> 요양보호사(cw) 조인 */
+        JOIN care_worker cw ON cwc.care_worker_id = cw.id
+
+        /* 2. 요양보호사(cw) -> 직원(e) 조인 (이름 조회용) */
+        JOIN employee e ON cw.employee_id = e.id
+
+        /* 3. 자격증 보유 현황(cwc) -> 자격증 마스터(c) 조인 */
+        JOIN certificate c ON cwc.certificate_id = c.id
+
+        /* 4. 조건: 요양보호사 테이블의 employee_id가 파라미터와 일치하는지 확인 */
+        WHERE cw.employee_id = #{employeeId}
+
+        ORDER BY cwc.issue_date DESC
+    </select>
+
+    <select id="selectServiceTypes" resultMap="ServiceTypeMap">
+        SELECT
+        mst.id AS m_service_type_id,
+        mst.name AS service_name
+        FROM care_worker_service_type cwst
+        JOIN care_worker cw ON cwst.care_worker_id = cw.id
+        JOIN m_service_type mst ON cwst.m_service_type_id = mst.id
+        WHERE cw.employee_id = #{employeeId}
+    </select>
+
+    <select id="selectEducations" resultMap="EducationMap">
+        SELECT
+        e.edu_name,
+        e.institution,
+        e.edu_date,
+        e.next_edu_date,
+        e.is_overdue,
+        e.`status`,
+        cert.certificate_name as license_name -- 자격증 이름도 같이 보여주기
+        FROM education e
+        JOIN care_worker_certificate cwc ON e.care_worker_certificate_id = cwc.id
+        JOIN certificate cert ON cwc.certificate_id = cert.id
+        JOIN care_worker cw ON cwc.care_worker_id = cw.id
+        WHERE cw.employee_id = #{employeeId}
+        ORDER BY e.edu_date DESC
+    </select>
+
+    <resultMap id="AssignedBeneficiaryMap" type="org.ateam.oncare.employee.command.dto.AssignedBeneficiaryDTO">
+        <id property="matchingId" column="matching_id"/>
+        <result property="beneficiaryId" column="beneficiary_id"/>
+        <result property="name" column="beneficiary_name"/>
+        <result property="birthDate" column="birth_date"/>
+        <result property="gender" column="gender"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="status" column="status"/>
+        <result property="employeeName" column="employee_name"/>
+    </resultMap>
+
+    <select id="selectAssignedBeneficiaries" resultMap="AssignedBeneficiaryMap">
+        SELECT
+        m.id AS matching_id,
+        b.id AS beneficiary_id,
+        b.name AS beneficiary_name,
+        b.birthdate AS birth_date,
+        b.gender,
+        m.start_date,
+        m.end_date,
+        m.`status`,
+        e.name AS employee_name
+        FROM matching m
+        INNER JOIN beneficiary b ON m.beneficiary_id = b.id
+        INNER JOIN care_worker cw ON m.care_worker_id = cw.id
+        INNER JOIN employee e ON cw.employee_id = e.id
+        WHERE cw.employee_id = #{careWorkerId}
+        AND m.`status` = 'Y'
+    </select>
+
+    <insert id="insertEmployee" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO employee (
+        name, phone, dept_code, job_code, status_id, hire_date
+        ) VALUES (
+        #{name}, #{phone}, #{deptCode}, #{jobCode}, #{statusId}, #{hireDate}
+        )
+    </insert>
+
+    <insert id="insertCareWorker">
+        INSERT INTO care_worker (
+        employee_id
+        ) VALUES (
+        #{employeeId}
+        )
+    </insert>
+
+    <resultMap id="FilterOptionMap" type="org.ateam.oncare.employee.query.dto.FilterOptionDTO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+    </resultMap>
+
+    <select id="selectJobFilters" resultMap="FilterOptionMap">
+        SELECT id, name FROM m_job ORDER BY id ASC
+    </select>
+
+    <select id="selectCertificateFilters" resultMap="FilterOptionMap">
+        SELECT id, certificate_name AS name FROM certificate ORDER BY id ASC
+    </select>
+
+    <select id="selectServiceTypeFilters" resultMap="FilterOptionMap">
+        SELECT id, name FROM m_service_type ORDER BY id ASC
+    </select>
+
+    <select id="countActiveEmployees" resultType="int">
+        SELECT COUNT(e.id)
+        FROM employee e
+        JOIN m_status s ON e.status_id = s.status
+        WHERE s.field = '재직'
+    </select>
+
+    <select id="countOnLeaveEmployees" resultType="int">
+        SELECT COUNT(e.id)
+        FROM employee e
+        JOIN m_status s ON e.status_id = s.status
+        WHERE s.field = '휴직'
+    </select>
+
+    <select id="countEmployeesByJob" resultType="org.ateam.oncare.employee.query.dto.EmployeeCountByJobDTO">
+        SELECT
+            j.name AS jobName,
+            COUNT(e.id) AS count
+        FROM employee e
+        LEFT JOIN m_job j ON e.job_code = j.id
+        LEFT JOIN m_status s ON e.status_id = s.status
+        WHERE s.field = '재직'
+        GROUP BY j.id, j.name
+        ORDER BY j.id ASC
+    </select>
+
+</mapper>

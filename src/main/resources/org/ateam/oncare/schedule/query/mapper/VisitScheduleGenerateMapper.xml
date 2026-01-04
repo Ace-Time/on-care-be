@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.schedule.query.mapper.VisitScheduleGenerateMapper">
+
+    <insert id="insertNextMonthVisitSchedules">
+        INSERT INTO visit_schedule (
+            start_dt,
+            end_dt,
+            visit_status,
+            rfid_start_time,
+            rfid_end_time,
+            is_log_written,
+            beneficiary_id,
+            care_worker_id,
+            service_type_id,
+            note
+        )
+        SELECT
+            TIMESTAMP(ds.d, bs.start_time) AS start_dt,
+            TIMESTAMP(ds.d, bs.end_time)   AS end_dt,
+            'SCHEDULED'                    AS visit_status,
+            NULL                           AS rfid_start_time,
+            NULL                           AS rfid_end_time,
+            0                              AS is_log_written,
+            bs.beneficiary_id              AS beneficiary_id,
+            am.care_worker_id              AS care_worker_id,
+            bs.service_type_id             AS service_type_id,
+            NULL                           AS note
+        FROM (
+            WITH RECURSIVE date_seq AS (
+            SELECT #{startDate} AS d
+            UNION ALL
+            SELECT DATE_ADD(d, INTERVAL 1 DAY)
+            FROM date_seq
+            WHERE d &lt; #{endDate}
+            )
+            SELECT d
+            FROM date_seq
+            ) ds
+            JOIN beneficiary_schedule bs
+        ON (CASE WHEN bs.day = 7 THEN 1 ELSE bs.day + 1 END) = DAYOFWEEK(ds.d)
+            JOIN (
+            SELECT beneficiary_id, care_worker_id
+            FROM (
+            SELECT
+            m.beneficiary_id,
+            m.care_worker_id,
+            ROW_NUMBER() OVER (PARTITION BY m.beneficiary_id ORDER BY m.id DESC) AS rn
+            FROM matching m
+            WHERE m.status = 'Y'
+            AND (m.start_date IS NULL OR m.start_date &lt;= #{endDate})
+            AND (m.end_date   IS NULL OR m.end_date   &gt;= #{startDate})
+            ) t
+            WHERE rn = 1
+            ) am
+            ON am.beneficiary_id = bs.beneficiary_id
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM visit_schedule vs
+            WHERE vs.beneficiary_id = bs.beneficiary_id
+          AND vs.service_type_id = bs.service_type_id
+          AND vs.start_dt = TIMESTAMP(ds.d, bs.start_time)
+            );
+    </insert>
+
+</mapper>

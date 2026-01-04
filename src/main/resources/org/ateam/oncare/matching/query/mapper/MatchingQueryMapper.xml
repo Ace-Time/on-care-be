@@ -1,0 +1,722 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.matching.query.mapper.MatchingQueryMapper">
+
+    <resultMap id="BeneficiaryDetailMap"
+               type="org.ateam.oncare.matching.query.dto.BeneficiaryDetailDto">
+        <id property="beneficiaryId" column="beneficiaryId"/>
+
+        <result property="name"      column="name"/>
+        <result property="gender"    column="gender"/>
+        <result property="riskLevel" column="riskLevel"/>
+        <result property="address"   column="address"/>
+        <result property="phone"     column="phone"/>
+
+        <association property="assignedCareWorker"
+                     javaType="org.ateam.oncare.matching.query.dto.AssignedCareWorkerDto"
+                     column="beneficiaryId"
+                     select="selectAssignedCareWorker"/>
+
+        <collection property="serviceTypes"
+                    ofType="java.lang.String"
+                    column="beneficiaryId"
+                    select="selectBeneficiaryServiceTypes"/>
+
+        <collection property="tags"
+                    ofType="java.lang.String"
+                    column="beneficiaryId"
+                    select="selectBeneficiaryTags"/>
+
+        <collection property="riskFactors"
+                    ofType="java.lang.String"
+                    column="beneficiaryId"
+                    select="selectBeneficiaryRiskFactors"/>
+
+        <collection property="schedules"
+                    ofType="org.ateam.oncare.matching.query.dto.BeneficiaryScheduleViewDto"
+                    column="beneficiaryId"
+                    select="selectBeneficiaryScheduleViews"/>
+    </resultMap>
+
+    <resultMap id="CareWorkerCardMap"
+               type="org.ateam.oncare.matching.query.dto.CareWorkerCardDto">
+        <id property="careWorkerId" column="careWorkerId"/>
+        <result property="name"     column="name"/>
+        <result property="gender"   column="gender"/>
+
+        <collection property="tags"
+                    ofType="java.lang.String"
+                    column="careWorkerId"
+                    select="selectCareWorkerTags"/>
+    </resultMap>
+
+    <resultMap id="CareWorkerDetailMap"
+               type="org.ateam.oncare.matching.query.dto.CareWorkerDetailDto">
+        <id property="careWorkerId" column="careWorkerId"/>
+
+        <result property="name"    column="name"/>
+        <result property="gender"  column="gender"/>
+        <result property="address" column="address"/>
+        <result property="phone"   column="phone"/>
+
+        <collection property="serviceTypes"
+                    ofType="java.lang.String"
+                    column="careWorkerId"
+                    select="selectCareWorkerServiceTypes"/>
+
+        <collection property="tags"
+                    ofType="java.lang.String"
+                    column="careWorkerId"
+                    select="selectCareWorkerTags"/>
+
+        <collection property="certificates"
+                    ofType="java.lang.String"
+                    column="careWorkerId"
+                    select="selectCareWorkerCertificateNames"/>
+
+        <collection property="workingTimes"
+                    ofType="org.ateam.oncare.matching.query.dto.WorkingTimeDto"
+                    column="careWorkerId"
+                    select="selectCareWorkerWorkingTimes"/>
+    </resultMap>
+
+    <!-- ========================================================= -->
+    <!-- beneficiary schedules -->
+    <!-- ========================================================= -->
+
+    <select id="selectBeneficiarySchedules"
+            resultType="org.ateam.oncare.matching.query.dto.BeneficiaryScheduleDto">
+        SELECT
+            id,
+            day,
+            start_time      AS startTime,
+            end_time        AS endTime,
+            beneficiary_id  AS beneficiaryId,
+            service_type_id AS serviceTypeId
+        FROM beneficiary_schedule
+        WHERE beneficiary_id = #{beneficiaryId}
+        ORDER BY day, start_time
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- (케이스1) 수급자 기준 추천: 시간 충돌 없는 요양보호사 ID -->
+    <!-- ========================================================= -->
+
+    <select id="selectAvailableCareWorkerIds"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT
+            cw.id AS careWorkerId
+        FROM care_worker cw
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE e.status_id = 1
+          AND NOT EXISTS (
+            SELECT 1
+            FROM matching m
+                     JOIN beneficiary_schedule bs_other
+                          ON bs_other.beneficiary_id = m.beneficiary_id
+            WHERE m.status = 'Y'
+              AND m.care_worker_id = cw.id
+              AND m.beneficiary_id &lt;&gt; #{targetBeneficiaryId}
+              AND bs_other.day = #{day}
+              AND bs_other.start_time &lt; #{endTime}
+              AND bs_other.end_time   &gt; #{startTime}
+        )
+        ORDER BY cw.id
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- (케이스1) 서비스 유형 충족 요양보호사 ID -->
+    <!-- ========================================================= -->
+
+    <select id="selectCareWorkerIdsByServiceType"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT
+            cws.care_worker_id AS careWorkerId
+        FROM care_worker_service_type cws
+                 JOIN care_worker cw ON cw.id = cws.care_worker_id
+                 JOIN employee e ON e.id = cw.employee_id
+                 JOIN (
+            SELECT DISTINCT service_type_id
+            FROM beneficiary_schedule
+            WHERE beneficiary_id = #{beneficiaryId}
+        ) req
+                      ON req.service_type_id = cws.m_service_type_id
+        WHERE e.status_id = 1
+        GROUP BY cws.care_worker_id
+        HAVING COUNT(DISTINCT req.service_type_id) = (
+            SELECT COUNT(DISTINCT service_type_id)
+            FROM beneficiary_schedule
+            WHERE beneficiary_id = #{beneficiaryId}
+        )
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- (케이스1) 위험요인 기반 자격증 충족 요양보호사 ID -->
+    <!-- ========================================================= -->
+
+    <select id="selectCareWorkerIdsByRiskCertificates"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        WITH required_cert AS (
+            SELECT DISTINCT
+                c.id AS certificate_id
+            FROM risk_of_member rm
+                     JOIN m_risk_factor rf
+                          ON rf.id = rm.risk_id
+                     JOIN certificate c
+                          ON c.certificate_name = CASE
+                                                      WHEN rf.name = '욕창' THEN '감염관리·위생 안전교육 이수증'
+                                                      WHEN rf.name = '치매' THEN '치매전문교육 이수증'
+                                                      WHEN rf.name IN ('고혈압', '뇌졸증') THEN '응급처치 및 심폐소생술 자격증'
+                                                      ELSE NULL
+                              END
+            WHERE rm.beneficiary_id = #{beneficiaryId}
+        )
+        SELECT cw.id AS careWorkerId
+        FROM care_worker cw
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE e.status_id = 1
+          AND NOT EXISTS (SELECT 1 FROM required_cert)
+
+        UNION
+
+        SELECT cw.id AS careWorkerId
+        FROM care_worker cw
+                 JOIN employee e ON e.id = cw.employee_id
+                 JOIN required_cert rc ON 1 = 1
+                 LEFT JOIN care_worker_certificate cwc
+                           ON cwc.care_worker_id  = cw.id
+                               AND cwc.certificate_id  = rc.certificate_id
+                               AND cwc.status          = 2
+        WHERE e.status_id = 1
+        GROUP BY cw.id
+        HAVING COUNT(DISTINCT rc.certificate_id) = COUNT(DISTINCT cwc.certificate_id)
+
+        ORDER BY careWorkerId
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- beneficiaries list/detail -->
+    <!-- ========================================================= -->
+
+    <select id="selectBeneficiariesSummary"
+            resultType="org.ateam.oncare.matching.query.dto.BeneficiarySummaryDto">
+        SELECT
+        b.id   AS beneficiaryId,
+        b.name AS name,
+        CASE
+        WHEN b.gender = 'M' THEN '남자'
+        WHEN b.gender = 'F' THEN '여자'
+        ELSE b.gender
+        END AS gender,
+        CASE
+        WHEN rl.level = 1 THEN '저위험'
+        WHEN rl.level = 2 THEN '중위험'
+        WHEN rl.level = 3 THEN '고위험'
+        ELSE CONCAT(rl.level, '등급')
+        END AS riskLevel,
+        CASE
+        WHEN EXISTS (
+        SELECT 1
+        FROM matching m
+        WHERE m.beneficiary_id = b.id
+        AND m.status = 'Y'
+        ) THEN TRUE
+        ELSE FALSE
+        END AS assigned
+        FROM beneficiary b
+        LEFT JOIN m_risk_level rl ON rl.id = b.risk_id
+
+        <where>
+            b.status = 1
+
+            <if test="keyword != null and keyword != ''">
+                AND b.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+
+            <if test="assignedFilter != null and assignedFilter == &quot;Y&quot;">
+                AND EXISTS (
+                SELECT 1
+                FROM matching m
+                WHERE m.beneficiary_id = b.id
+                AND m.status = 'Y'
+                )
+            </if>
+
+            <if test="assignedFilter != null and assignedFilter == &quot;N&quot;">
+                AND NOT EXISTS (
+                SELECT 1
+                FROM matching m
+                WHERE m.beneficiary_id = b.id
+                AND m.status = 'Y'
+                )
+            </if>
+        </where>
+
+        ORDER BY assigned ASC, b.id ASC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+
+    <select id="countBeneficiaries" resultType="long">
+        SELECT COUNT(*)
+        FROM beneficiary b
+        <where>
+            b.status = 1
+
+            <if test="keyword != null and keyword != ''">
+                AND b.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+
+            <if test="assignedFilter != null and assignedFilter == &quot;Y&quot;">
+                AND EXISTS (
+                SELECT 1
+                FROM matching m
+                WHERE m.beneficiary_id = b.id
+                AND m.status = 'Y'
+                )
+            </if>
+
+            <if test="assignedFilter != null and assignedFilter == &quot;N&quot;">
+                AND NOT EXISTS (
+                SELECT 1
+                FROM matching m
+                WHERE m.beneficiary_id = b.id
+                AND m.status = 'Y'
+                )
+            </if>
+        </where>
+    </select>
+
+    <select id="selectBeneficiaryDetail"
+            resultMap="BeneficiaryDetailMap">
+        SELECT
+            b.id      AS beneficiaryId,
+            b.name    AS name,
+            CASE
+                WHEN b.gender = 'M' THEN '남자'
+                WHEN b.gender = 'F' THEN '여자'
+                ELSE b.gender
+                END AS gender,
+            b.phone   AS phone,
+            b.address AS address,
+            CASE
+                WHEN rl.level = 1 THEN '저위험'
+                WHEN rl.level = 2 THEN '중위험'
+                WHEN rl.level = 3 THEN '고위험'
+                ELSE CONCAT(rl.level, '등급')
+                END AS riskLevel
+        FROM beneficiary b
+                 LEFT JOIN m_risk_level rl
+                           ON rl.id = b.risk_id
+        WHERE b.id = #{beneficiaryId}
+    </select>
+
+    <select id="selectBeneficiaryServiceTypes"
+            resultType="java.lang.String">
+        SELECT DISTINCT mst.name
+        FROM beneficiary_schedule bs
+                 JOIN m_service_type mst
+                      ON mst.id = bs.service_type_id
+        WHERE bs.beneficiary_id = #{beneficiaryId}
+        ORDER BY mst.name
+    </select>
+
+    <select id="selectBeneficiaryTags"
+            resultType="java.lang.String">
+        SELECT DISTINCT pt.tag
+        FROM tag_of_beneficiary tob
+                 JOIN personal_tag pt ON pt.id = tob.tag_id
+        WHERE tob.beneficiary_id = #{beneficiaryId}
+        ORDER BY pt.tag
+    </select>
+
+    <select id="selectBeneficiaryRiskFactors"
+            resultType="java.lang.String">
+        SELECT DISTINCT rf.name
+        FROM risk_of_member rm
+                 JOIN m_risk_factor rf
+                      ON rf.id = rm.risk_id
+        WHERE rm.beneficiary_id = #{beneficiaryId}
+        ORDER BY rf.name
+    </select>
+
+    <select id="selectBeneficiaryScheduleViews"
+            resultType="org.ateam.oncare.matching.query.dto.BeneficiaryScheduleViewDto">
+        SELECT
+            bs.id AS id,
+            bs.day AS day,
+            CASE bs.day
+                WHEN 1 THEN '월'
+                WHEN 2 THEN '화'
+                WHEN 3 THEN '수'
+                WHEN 4 THEN '목'
+                WHEN 5 THEN '금'
+                WHEN 6 THEN '토'
+                WHEN 7 THEN '일'
+        END AS dayName,
+            DATE_FORMAT(bs.start_time, '%H:%i') AS startTime,
+            DATE_FORMAT(bs.end_time,   '%H:%i') AS endTime,
+            bs.service_type_id AS serviceTypeId,
+            mst.name AS serviceTypeName
+        FROM beneficiary_schedule bs
+                 LEFT JOIN m_service_type mst
+                           ON mst.id = bs.service_type_id
+        WHERE bs.beneficiary_id = #{beneficiaryId}
+        ORDER BY bs.day, bs.start_time
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- assigned care worker (주의: 퇴사자 배정도 보여줄지 정책에 따라) -->
+    <!-- 여기서는 '재직만' 보여주도록 필터 적용 -->
+    <!-- ========================================================= -->
+
+    <select id="selectAssignedCareWorker"
+            resultType="org.ateam.oncare.matching.query.dto.AssignedCareWorkerDto">
+        SELECT
+            cw.id AS careWorkerId,
+            e.name AS name,
+            CASE
+                WHEN e.gender = 'M' THEN '남자'
+                WHEN e.gender = 'F' THEN '여자'
+                ELSE e.gender
+                END AS gender,
+            DATE_FORMAT(m.start_date, '%Y-%m-%d') AS startDate
+        FROM matching m
+                 JOIN care_worker cw
+                      ON cw.id = m.care_worker_id
+                 JOIN employee e
+                      ON e.id = cw.employee_id
+        WHERE m.beneficiary_id = #{beneficiaryId}
+          AND m.status = 'Y'
+          AND e.status_id = 1
+        ORDER BY m.start_date DESC
+            LIMIT 1
+    </select>
+
+    <select id="selectAssignedCareWorkerId" resultType="long">
+        SELECT m.care_worker_id
+        FROM matching m
+                 JOIN care_worker cw ON cw.id = m.care_worker_id
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE m.beneficiary_id = #{beneficiaryId}
+          AND m.status = 'Y'
+          AND e.status_id = 1
+        ORDER BY m.start_date DESC
+            LIMIT 1
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- care worker cards/detail -->
+    <!-- ========================================================= -->
+
+    <select id="selectCareWorkerCardsByIds"
+            resultMap="CareWorkerCardMap">
+        SELECT
+        cw.id AS careWorkerId,
+        e.name AS name,
+        CASE
+        WHEN e.gender = 'M' THEN '남자'
+        WHEN e.gender = 'F' THEN '여자'
+        ELSE e.gender
+        END AS gender
+        FROM care_worker cw
+        JOIN employee e ON e.id = cw.employee_id
+        WHERE e.status_id = 1
+        AND cw.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY cw.id
+    </select>
+
+    <select id="selectCareWorkerTags" resultType="java.lang.String">
+        SELECT DISTINCT pt.tag
+        FROM tag_of_care_worker tcw
+                 JOIN personal_tag pt ON pt.id = tcw.tag_id
+        WHERE tcw.care_worker_id = #{careWorkerId}
+        ORDER BY pt.tag
+    </select>
+
+    <select id="selectCareWorkerDetail"
+            resultMap="CareWorkerDetailMap">
+        SELECT
+            cw.id AS careWorkerId,
+            e.name AS name,
+            CASE
+                WHEN e.gender = 'M' THEN '남자'
+                WHEN e.gender = 'F' THEN '여자'
+                ELSE e.gender
+                END AS gender,
+            e.address AS address,
+            e.phone AS phone
+        FROM care_worker cw
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE cw.id = #{careWorkerId}
+          AND e.status_id = 1
+    </select>
+
+    <select id="selectCareWorkerServiceTypes"
+            resultType="java.lang.String">
+        SELECT DISTINCT mst.name
+        FROM care_worker_service_type cws
+                 JOIN m_service_type mst
+                      ON mst.id = cws.m_service_type_id
+                 JOIN care_worker cw ON cw.id = cws.care_worker_id
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE cws.care_worker_id = #{careWorkerId}
+          AND e.status_id = 1
+        ORDER BY mst.name
+    </select>
+
+    <select id="selectCareWorkerCertificateNames"
+            resultType="java.lang.String">
+        SELECT DISTINCT c.certificate_name
+        FROM care_worker_certificate cwc
+                 JOIN certificate c ON c.id = cwc.certificate_id
+                 JOIN care_worker cw ON cw.id = cwc.care_worker_id
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE cwc.care_worker_id = #{careWorkerId}
+          AND cwc.status = 2
+          AND e.status_id = 1
+        ORDER BY c.certificate_name
+    </select>
+
+    <select id="selectCareWorkerWorkingTimes"
+            resultType="org.ateam.oncare.matching.query.dto.WorkingTimeDto">
+        SELECT
+            bs.day AS day,
+            CASE bs.day
+                WHEN 1 THEN '월'
+                WHEN 2 THEN '화'
+                WHEN 3 THEN '수'
+                WHEN 4 THEN '목'
+                WHEN 5 THEN '금'
+                WHEN 6 THEN '토'
+                WHEN 7 THEN '일'
+        END AS dayName,
+            DATE_FORMAT(bs.start_time, '%H:%i') AS startTime,
+            DATE_FORMAT(bs.end_time,   '%H:%i') AS endTime,
+            mst.name AS serviceTypeName
+        FROM matching m
+                 JOIN beneficiary_schedule bs
+                      ON bs.beneficiary_id = m.beneficiary_id
+                 JOIN m_service_type mst
+                      ON mst.id = bs.service_type_id
+                 JOIN care_worker cw ON cw.id = m.care_worker_id
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE m.care_worker_id = #{careWorkerId}
+        AND m.status = 'Y'
+        AND e.status_id = 1
+        ORDER BY bs.day, bs.start_time
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- (케이스2/3) 방문일정 기준 -->
+    <!-- ========================================================= -->
+
+    <select id="selectAvailableCareWorkerIdsByVisitSchedule"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT cw.id AS careWorkerId
+        FROM care_worker cw
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE e.status_id = 1
+          AND NOT EXISTS (
+            SELECT 1
+            FROM visit_schedule vs
+            WHERE vs.care_worker_id = cw.id
+              AND vs.vs_id &lt;&gt; #{vsId}
+              AND vs.start_dt &lt; #{endDt}
+              AND vs.end_dt   &gt; #{startDt}
+        )
+        ORDER BY cw.id
+    </select>
+
+    <select id="selectCareWorkerIdsByVisitServiceType"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT cws.care_worker_id AS careWorkerId
+        FROM care_worker_service_type cws
+                 JOIN care_worker cw ON cw.id = cws.care_worker_id
+                 JOIN employee e ON e.id = cw.employee_id
+                 JOIN visit_schedule vs
+                      ON vs.vs_id = #{vsId}
+                          AND cws.m_service_type_id = vs.service_type_id
+        WHERE e.status_id = 1
+        GROUP BY cws.care_worker_id
+    </select>
+
+    <select id="selectCareWorkerIdByVisitScheduleId" resultType="long">
+        SELECT care_worker_id
+        FROM visit_schedule
+        WHERE vs_id = #{vsId}
+    </select>
+
+    <select id="selectVisitScheduleBeneficiaryId" resultType="long">
+        SELECT beneficiary_id
+        FROM visit_schedule
+        WHERE vs_id = #{vsId}
+    </select>
+
+    <select id="selectAvailableCareWorkerIdsByVisitTime"
+            parameterType="map"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT
+            cw.id AS careWorkerId
+        FROM care_worker cw
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE e.status_id = 1
+          AND NOT EXISTS (
+            SELECT 1
+            FROM visit_schedule vs
+            WHERE vs.care_worker_id = cw.id
+              AND vs.visit_status IN ('SCHEDULED', 'IN_PROGRESS')
+              AND vs.start_dt &lt; #{endDt}
+              AND vs.end_dt   &gt; #{startDt}
+        )
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- service type id 단일 필터 -->
+    <!-- ========================================================= -->
+
+    <select id="selectCareWorkerIdsByServiceTypeId"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerIdDto">
+        SELECT
+            cws.care_worker_id AS careWorkerId
+        FROM care_worker_service_type cws
+                 JOIN care_worker cw ON cw.id = cws.care_worker_id
+                 JOIN employee e ON e.id = cw.employee_id
+        WHERE cws.m_service_type_id = #{serviceTypeId}
+          AND e.status_id = 1
+        GROUP BY cws.care_worker_id
+    </select>
+
+    <!-- ========================================================= -->
+    <!-- geo / overlap -->
+    <!-- ========================================================= -->
+
+    <select id="selectBeneficiaryLatLng"
+            resultType="org.ateam.oncare.matching.query.dto.LatLngDto">
+        SELECT lat, lng
+        FROM beneficiary
+        WHERE id = #{beneficiaryId}
+    </select>
+
+    <select id="selectCareWorkerLatLngByIds"
+            resultType="org.ateam.oncare.matching.query.dto.CareWorkerLatLngDto">
+        SELECT
+        cw.id AS careWorkerId,
+        e.lat AS lat,
+        e.lng AS lng
+        FROM care_worker cw
+        JOIN employee e ON e.id = cw.employee_id
+        WHERE e.status_id = 1
+        AND cw.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectTagOverlapCounts"
+            resultType="org.ateam.oncare.matching.query.dto.TagOverlapCountDto">
+        SELECT
+        tcw.care_worker_id AS careWorkerId,
+        COUNT(*) AS overlapCount
+        FROM tag_of_care_worker tcw
+        JOIN tag_of_beneficiary tob
+        ON tob.tag_id = tcw.tag_id
+        AND tob.beneficiary_id = #{beneficiaryId}
+        JOIN care_worker cw ON cw.id = tcw.care_worker_id
+        JOIN employee e ON e.id = cw.employee_id
+        WHERE e.status_id = 1
+        AND tcw.care_worker_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY tcw.care_worker_id
+    </select>
+
+    <!-- ========== beneficiary geo ========== -->
+    <select id="selectBeneficiaryGeoForUpdate" resultType="org.ateam.oncare.matching.query.dto.BeneficiaryGeoDto">
+        SELECT
+            address,
+            lat,
+            lng,
+            geo_ready AS geoReady
+        FROM beneficiary
+        WHERE id = #{beneficiaryId}
+    </select>
+
+    <update id="updateBeneficiaryGeo">
+        UPDATE beneficiary
+        SET lat = #{lat},
+            lng = #{lng},
+            geo_ready = 1
+        WHERE id = #{beneficiaryId}
+    </update>
+
+    <update id="updateBeneficiaryGeoReadyOnly">
+        UPDATE beneficiary
+        SET geo_ready = 1
+        WHERE id = #{beneficiaryId}
+    </update>
+
+    <!-- ========== careworker(employee) geo ========== -->
+    <select id="selectCareWorkerGeoForUpdateByIds" resultType="org.ateam.oncare.matching.query.dto.CareWorkerGeoDto">
+        SELECT
+        cw.id AS careWorkerId,
+        e.address AS address,
+        e.lat AS lat,
+        e.lng AS lng,
+        e.geo_ready AS geoReady
+        FROM care_worker cw
+        JOIN employee e ON e.id = cw.employee_id
+        WHERE e.status_id = 1
+        AND cw.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="updateCareWorkerEmployeeGeo">
+        UPDATE employee e
+            JOIN care_worker cw ON cw.employee_id = e.id
+            SET e.lat = #{lat},
+                e.lng = #{lng},
+                e.geo_ready = 1
+        WHERE cw.id = #{careWorkerId}
+    </update>
+
+    <update id="updateCareWorkerEmployeeGeoReadyOnly">
+        UPDATE employee e
+            JOIN care_worker cw ON cw.employee_id = e.id
+            SET e.geo_ready = 1
+        WHERE cw.id = #{careWorkerId}
+    </update>
+
+    <select id="selectBeneficiaryPrimaryServiceType"
+            resultType="org.ateam.oncare.matching.query.dto.ServiceTypePairDto">
+        SELECT
+            bs.service_type_id AS serviceTypeId,
+            mst.name           AS serviceTypeName
+        FROM beneficiary_schedule bs
+                 JOIN m_service_type mst ON mst.id = bs.service_type_id
+        WHERE bs.beneficiary_id = #{beneficiaryId}
+        ORDER BY bs.day, bs.start_time
+            LIMIT 1
+    </select>
+
+    <select id="existsBeneficiaryVisitConflict" resultType="int">
+        SELECT CASE WHEN EXISTS (
+            SELECT 1
+            FROM visit_schedule vs
+            WHERE vs.beneficiary_id = #{beneficiaryId}
+              AND vs.visit_status IN ('SCHEDULED', 'IN_PROGRESS')
+              AND vs.start_dt &lt; #{endDt}
+              AND vs.end_dt   &gt; #{startDt}
+        ) THEN 1 ELSE 0 END
+    </select>
+
+</mapper>

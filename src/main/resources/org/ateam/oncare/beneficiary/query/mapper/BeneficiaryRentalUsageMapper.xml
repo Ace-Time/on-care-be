@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BeneficiaryRentalUsageMapper">
+
+    <!-- 렌탈 목록: 계약(rc) 기준 단일 리스트 -->
+    <select id="selectRentals"
+            parameterType="long"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.RentalUsageResponse$RentalItem">
+
+        SELECT
+        rc.id AS rentalContractId,
+
+        /* EM002-002 대신 EM002 */
+        rc.product_cd AS productAssetId,
+
+        /* 용품명: 마스터 기준 */
+        mcp.name AS productName,
+
+        /* 상태: 계약 상태 */
+        cs.name AS contractStatusName,
+
+        DATE_FORMAT(rc.start_date, '%Y-%m-%d') AS startDate,
+        DATE_FORMAT(rc.end_date,   '%Y-%m-%d') AS endDate,
+
+        /* 월 임대료: 마스터 기준 */
+        CAST(mcp.rental_amount AS SIGNED) AS monthlyAmount,
+
+        CASE
+        WHEN rc.end_date IS NULL THEN NULL
+        ELSE TIMESTAMPDIFF(MONTH, rc.start_date, rc.end_date) + 1
+        END AS durationMonths
+
+        FROM rental_contract rc
+        JOIN contract_status cs ON cs.id = rc.contract_status_cd
+        JOIN m_care_product mcp ON mcp.id = rc.product_cd
+
+        WHERE rc.beneficiary_id = #{beneficiaryId}
+
+        ORDER BY
+        CASE WHEN cs.name = '종료' THEN 1 ELSE 0 END ASC,
+        CASE WHEN cs.name = '종료' THEN rc.end_date ELSE rc.start_date END DESC,
+        rc.id DESC
+    </select>
+
+
+    <!-- 렌탈 모달 상세 조회: 계약 1건 -->
+    <select id="selectRentalContractDetail"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.RentalContractDetailResponse">
+
+        SELECT
+        rc.id AS rentalContractId,
+
+        /* EM002-002 대신 EM002 */
+        rc.product_cd AS productAssetId,
+
+        mcp.name AS productName,
+        cs.name AS contractStatusName,
+
+        DATE_FORMAT(rc.start_date, '%Y-%m-%d') AS contractDate,
+        DATE_FORMAT(rc.start_date, '%Y-%m-%d') AS startDate,
+        DATE_FORMAT(rc.end_date,   '%Y-%m-%d') AS endDate,
+
+        CAST(mcp.rental_amount AS SIGNED) AS monthlyAmount,
+
+        CASE
+        WHEN rc.end_date IS NULL THEN NULL
+        ELSE TIMESTAMPDIFF(MONTH, rc.start_date, rc.end_date) + 1
+        END AS durationMonths,
+
+        CASE
+        WHEN rc.end_date IS NULL THEN NULL
+        ELSE CAST(mcp.rental_amount AS SIGNED)
+        * (TIMESTAMPDIFF(MONTH, rc.start_date, rc.end_date) + 1)
+        END AS totalCost
+
+        FROM rental_contract rc
+        JOIN contract_status cs ON cs.id = rc.contract_status_cd
+        JOIN m_care_product mcp ON mcp.id = rc.product_cd
+
+        WHERE rc.beneficiary_id = #{beneficiaryId}
+        AND rc.id = #{rentalContractId}
+        AND rc.product_cd = #{productAssetId}
+
+        LIMIT 1
+    </select>
+
+</mapper>

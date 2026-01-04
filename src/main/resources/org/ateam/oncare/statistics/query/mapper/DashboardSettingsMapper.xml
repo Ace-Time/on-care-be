@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.statistics.query.mapper.DashboardSettingsMapper">
+
+    <resultMap id="DashboardSettingMap" type="org.ateam.oncare.statistics.query.dto.DashboardSettingsDTO">
+        <id property="id" column="id" />
+        <result property="employeeId" column="employee_id" />
+        <result property="jsonConfig" column="widget_config" />
+    </resultMap>
+
+    <select id="selectSettingsByEmployeeId" resultMap="DashboardSettingMap">
+        SELECT id, employee_id, widget_config
+        FROM dashboard_settings
+        WHERE employee_id = #{employeeId}
+    </select>
+
+    <insert id="upsertDashboardSettings">
+        INSERT INTO dashboard_settings (employee_id, widget_config, updated_at)
+        VALUES (#{employeeId}, #{configJson}, #{updatedAt})
+        ON DUPLICATE KEY UPDATE
+        widget_config = #{configJson},
+        updated_at = #{updatedAt}
+    </insert>
+
+</mapper>

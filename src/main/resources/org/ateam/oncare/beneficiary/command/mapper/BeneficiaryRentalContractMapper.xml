@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.command.mapper.BeneficiaryRentalContractMapper">
+
+    <!-- 계약중(유지/계약중/접수/계약대기)인 경우에만 계약완료(종료)로 변경 -->
+    <update id="completeRentalContract">
+        UPDATE rental_contract rc
+        SET
+        rc.contract_status_cd = (
+        SELECT cs.id
+        FROM contract_status cs
+        WHERE cs.name = '종료'
+        LIMIT 1
+        ),
+        rc.end_date = CASE
+        WHEN rc.end_date IS NULL OR rc.end_date > CURDATE() THEN CURDATE()
+        ELSE rc.end_date
+        END
+        WHERE rc.id = #{rentalContractId}
+        AND rc.beneficiary_id = #{beneficiaryId}
+        AND rc.contract_status_cd IN (
+        SELECT cs2.id
+        FROM contract_status cs2
+        WHERE cs2.name IN ('유지', '계약중', '접수','계약대기')
+        )
+    </update>
+
+</mapper>

@@ -1,0 +1,124 @@
+package org.ateam.oncare.careproduct.command.controller;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.ateam.oncare.careproduct.command.dto.*;
+import org.ateam.oncare.careproduct.command.service.ProductMasterService;
+import org.ateam.oncare.careproduct.command.service.ProductService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/product")
+@RequiredArgsConstructor
+@Slf4j
+public class ProductController {
+
+    private final ProductMasterService productMasterService;
+    private final ProductService productService;
+
+    @GetMapping("/master-category")
+    public ResponseEntity<List<ResponseMasterCategoryDTO>> getMasterCategory() {
+        List<ResponseMasterCategoryDTO> response = productMasterService.getMasterCategory();
+        return ResponseEntity.ok()
+                .body(response);
+    }
+
+    @GetMapping("/master")
+    public ResponseEntity<Slice<ResponseProductMasterDTO>> getProductMaster(
+            RequestProductMasterForSelectDTO condition,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        Slice<ResponseProductMasterDTO> response
+                = productMasterService.getProductMaster(condition, pageable);
+
+        return ResponseEntity.ok()
+                .body(response);
+    }
+
+
+    @PatchMapping("/master")
+    public ResponseEntity<Integer> updateProductMaster(@RequestBody RequestProductMasterDTO requestProductMasterDTO) {
+        int count = productMasterService.updateProductMaster(requestProductMasterDTO);
+        return ResponseEntity.ok(count);
+    }
+
+    @PostMapping("/master")
+    public ResponseEntity<Integer> registerProductMaster(@RequestBody RequestProductMasterDTO requestProductMasterDTO) {
+        int count = productMasterService.registerProductMaster(requestProductMasterDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(count);
+    }
+
+
+    @GetMapping("/product-status")
+    public ResponseEntity<List<ResponseProductStatusDTO>> getProductStatus() {
+        List<ResponseProductStatusDTO> responseDTO
+                = productService.getProductStatus();
+
+        return ResponseEntity.ok()
+                .body(responseDTO);
+    }
+
+    /**
+     * 관리용품 탭에 정보로 실 제품의 총재고, 가용, 렌탈 중인 데이터를 포함한 조회
+     *
+     * @param condition
+     * @param pageable
+     * @return
+     */
+    @GetMapping("/master-detail")
+    public ResponseEntity<Slice<ResponseProductMasterDetailDTO>> getProductMasterDetail(
+            RequestProductMasterForSelectDTO condition,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        Slice<ResponseProductMasterDetailDTO> response
+                = productMasterService.getProductMasterDetail(condition, pageable);
+
+        return ResponseEntity.ok()
+                .body(response);
+    }
+
+
+    @GetMapping("/product")
+    public ResponseEntity<Slice<ResponseProductDTO>> getProduct(
+            RequestProductForSelectDTO condition,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        Slice<ResponseProductDTO> response =
+                productService.getProduct(condition,pageable );
+        return ResponseEntity.ok()
+                .body(response);
+    }
+
+    @GetMapping("/product-history")
+    public ResponseEntity<Slice<ResponseProductHistoryDTO>> getProductHistory(
+            RequestProductHistoryDTO condition,
+            @PageableDefault(size = 10) Pageable pageable) {
+
+        Slice<ResponseProductHistoryDTO> response =
+                productService.getProductHistory(condition,pageable);
+
+        return ResponseEntity.ok()
+                .body(response);
+
+    }
+
+    @GetMapping("/stock")
+    public ResponseEntity<Slice<ResponsePlannedStockInOutDTO>> getExpectedStock(
+            RequestPlannedStockInOutDTO condition,
+            @PageableDefault(size = 10) Pageable pageable) {
+        Slice<ResponsePlannedStockInOutDTO> response =
+                productService.getExpectedStock(condition, pageable);
+
+        return ResponseEntity.ok()
+                .body(response);
+    }
+
+
+}

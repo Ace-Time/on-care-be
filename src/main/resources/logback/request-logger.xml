@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+    <!-- Console Appender: 로그를 콘솔에 출력하기 위한 설정 -->
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- SYSTEM_ALL Log -->
+    <appender name="SYSTEM_ALL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/current/system_all.log</file>
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+
+        <!-- 로그 파일 롤링 정책을 설정 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 날짜별로 로그 파일을 생성 -->
+            <fileNamePattern>${LOG_PATH}/${DATE_DIR_PATTERN}/requests/${DATE_FILE_PATTERN}-system_all.log</fileNamePattern>
+            <!-- 최대 30일간의 로그 파일을 보관 -->
+            <maxHistory>30</maxHistory>
+            <!-- 전체 로그 파일 크기를 최대 3GB로 제한 -->
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+
+    <!-- APP_ALL Log -->
+    <appender name="APP_ALL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/current/app_all.log</file>
+
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${DATE_DIR_PATTERN}/requests/${DATE_FILE_PATTERN}-app_all.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- INFO 전용 -->
+    <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/current/info.log</file>
+
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${DATE_DIR_PATTERN}/requests/${DATE_FILE_PATTERN}-info.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+
+    <!-- WARN 전용 -->
+    <appender name="WARN_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/current/warn.log</file>
+
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${DATE_DIR_PATTERN}/requests/${DATE_FILE_PATTERN}-warn.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+
+    <!-- ERROR 전용 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/current/error.log</file>
+
+        <encoder>
+            <!-- ERROR appender의 encoder에 %ex{full} 같이 추가하면 exception stacktrace를 더 자세히 남길 수 있음 -->
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${DATE_DIR_PATTERN}/requests/${DATE_FILE_PATTERN}-error.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+
+    <!-- WARN 전용 -->
+    <appender name="DEBUG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/current/debug.log</file>
+
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${DATE_DIR_PATTERN}/requests/${DATE_FILE_PATTERN}-debug.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+</included>

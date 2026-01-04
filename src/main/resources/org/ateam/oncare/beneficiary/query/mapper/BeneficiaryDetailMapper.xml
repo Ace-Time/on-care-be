@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.beneficiary.query.mapper.BeneficiaryDetailMapper">
+
+    <!--
+       수급자 상세 조회 ResultMap
+      - tags, riskFactors 는 "추가 조회(select)"로 컬렉션 매핑
+      - serviceType 은 여러개 가능해서 GROUP_CONCAT 문자열로 받음
+      - careWorkerId 는 수급자당 1명 전제라 Long 1개로 받음
+    -->
+    <resultMap id="BeneficiaryDetailMap"
+               type="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse">
+
+        <id property="beneficiaryId" column="beneficiary_id"/>
+
+        <result property="name" column="name"/>
+        <result property="gender" column="gender"/>
+        <result property="birthdate" column="birthdate"/>
+        <result property="phone" column="phone"/>
+        <result property="address" column="address"/>
+        <result property="status" column="status"/>
+
+        <result property="careLevel" column="care_level"/>
+        <result property="careLevelEndDate" column="care_level_end_date"/>
+        <result property="riskLevel" column="risk_level"/>
+
+        <!--  수급자당 요양보호사 1명 => Long 유지 -->
+        <result property="careWorkerId" column="care_worker_id"/>
+        <result property="managerName" column="care_worker_name"/>
+
+        <!--  서비스유형은 여러개 가능 => 문자열로 묶어서 -->
+        <result property="serviceType" column="service_types"/>
+
+        <result property="guardianName" column="guardian_name"/>
+        <result property="guardianRelation" column="guardian_relation"/>
+        <result property="guardianPhone" column="guardian_phone"/>
+
+        <result property="monthlyLimit" column="monthly_limit"/>
+        <result property="usedAmount" column="used_amount"/>
+        <result property="remainingAmount" column="remaining_amount"/>
+        <result property="usedRate" column="used_rate"/>
+
+        <!--  태그 목록: 수급자 id로 별도 조회 -->
+        <collection property="tags"
+                    ofType="string"
+                    select="selectBeneficiaryTags"
+                    column="beneficiary_id"/>
+
+        <!--  위험요소 목록: 수급자 id로 별도 조회 -->
+        <collection property="riskFactors"
+                    ofType="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse$RiskFactorItem"
+                    select="selectBeneficiaryRiskFactors"
+                    column="beneficiary_id"/>
+    </resultMap>
+
+    <!--
+       수급자 상세조회
+      - 중복되던 used_amount/remaining_amount/used_rate 계산을 CTE로 1회 계산 후 재사용
+      - MySQL 8+ 필요 (WITH CTE 지원)
+      - used_amount = (이번달 서비스사용액) + (오늘 기준 진행중 렌탈 월금액 합계)
+    -->
+    <select id="selectBeneficiaryDetail"
+            parameterType="long"
+            resultMap="BeneficiaryDetailMap">
+        <![CDATA[
+        /* =========================================================
+           1) svc : 이번달 서비스 사용액 (cost_of_beneficiary 월 1건)
+              - cob.month = 'YYYY-MM'
+           ========================================================= */
+        WITH
+        svc AS (
+            SELECT
+                cob.beneficiary_id,
+                cob.monthly_amount AS svc_amount
+            FROM cost_of_beneficiary cob
+            WHERE cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
+        ),
+
+        /* =========================================================
+           2) rent : 오늘 기준 "진행중" 렌탈 월금액 합계
+              - start_date <= 오늘
+              - end_date가 NULL(무기한) 이거나 end_date >= 오늘(오늘 포함)
+              - rp.rental_status_id = 3 (회수완료) 는 제외
+              - 금액은 mcp.rental_amount 사용 (렌탈 탭 xml과 동일)
+           ========================================================= */
+            rent AS (
+                SELECT
+                    rc.beneficiary_id,
+                    SUM(mcp.rental_amount) AS rent_amount
+                FROM rental_contract rc
+                JOIN rental_product rp
+                    ON rp.rental_contract_cd = rc.id
+                JOIN m_care_product mcp
+                    ON mcp.id = rc.product_cd
+                WHERE rc.start_date <= CURDATE()
+                  AND (rc.end_date IS NULL OR rc.end_date >= CURDATE())
+                  AND rp.rental_status_id <> 3   -- 회수완료 제외
+                GROUP BY rc.beneficiary_id
+            ),
+
+        /* =========================================================
+           3) used : used_amount를 딱 1번만 계산해서 재사용
+              used_amount = IFNULL(svc_amount,0) + IFNULL(rent_amount,0)
+           ========================================================= */
+        used AS (
+            SELECT
+                b.id AS beneficiary_id,
+                IFNULL(svc.svc_amount, 0) + IFNULL(rent.rent_amount, 0) AS used_amount
+            FROM beneficiary b
+            LEFT JOIN svc  ON svc.beneficiary_id  = b.id
+            LEFT JOIN rent ON rent.beneficiary_id = b.id
+        )
+
+        /* =========================================================
+           4) 메인 SELECT : 상세 데이터 + used_amount 재사용
+           ========================================================= */
+        SELECT
+            b.id AS beneficiary_id,
+            b.name,
+            b.gender,
+            DATE_FORMAT(b.birthdate, '%Y-%m-%d') AS birthdate,
+            b.phone,
+            b.address,
+
+            /*  수급자 상태 라벨 */
+            CASE WHEN b.status = 1 THEN '서비스 중' ELSE '서비스 해지' END AS status,
+
+            /*  장기요양등급(레벨) & 만료일 */
+            mcl.level AS care_level,
+            DATE_FORMAT(bcl.end_date, '%Y-%m-%d') AS care_level_end_date,
+
+            /*  위험도 = 위험요소 점수 합(risk_total) 기준 */
+            CASE
+                WHEN IFNULL(rsum.risk_total, 0) < 10 THEN '저위험'
+                WHEN IFNULL(rsum.risk_total, 0) < 15 THEN '중위험'
+                ELSE '고위험'
+            END AS risk_level,
+
+            /*  요양보호사: 최신 방문 1건 기준 */
+            cw.id   AS care_worker_id,
+            ce.name AS care_worker_name,
+
+            /*  서비스유형: 수급자별 방문일정의 service_type_id를 집계해서 문자열로 */
+            st.service_types AS service_types,
+
+            /*  주보호자(대표 1명) */
+            g.name AS guardian_name,
+            g.relation AS guardian_relation,
+            g.phone AS guardian_phone,
+
+            /*  월 한도 */
+            mcl.monthly_limit,
+
+            /*  CTE에서 계산한 사용액을 그대로 사용 */
+            u.used_amount AS used_amount,
+
+            /*  잔액 = 월한도 - 사용액 */
+            (mcl.monthly_limit - u.used_amount) AS remaining_amount,
+
+            /*  사용률(%) = (사용액 / 월한도) * 100, 소수점 1자리 */
+            ROUND((u.used_amount / NULLIF(mcl.monthly_limit, 0)) * 100, 1) AS used_rate
+
+        FROM beneficiary b
+
+        /*  등급 관련 조인 */
+        LEFT JOIN beneficiary_care_level bcl
+            ON bcl.beneficiary_id = b.id
+
+        LEFT JOIN beneficiary_count bc
+            ON bc.beneficiary_care_level_id = bcl.id
+
+        LEFT JOIN m_care_level mcl
+            ON mcl.id = bc.m_care_level_id
+
+        /*  위험요소 합산 (수급자별 risk_total) */
+        LEFT JOIN (
+            SELECT
+                rom.beneficiary_id,
+                SUM(rf.score) AS risk_total
+            FROM risk_of_member rom
+            JOIN m_risk_factor rf ON rf.id = rom.risk_id
+            GROUP BY rom.beneficiary_id
+        ) rsum
+            ON rsum.beneficiary_id = b.id
+
+        /*  used_amount 계산 결과 조인(CTE) */
+        LEFT JOIN used u
+            ON u.beneficiary_id = b.id
+
+        /* =========================================================
+           (교체1) 최신 방문 기반(vs_done) 제거 → matching 기반으로 교체
+           - 수급자별 status='Y' 중 최신 start_date(동률이면 id) 1건
+           ========================================================= */
+        LEFT JOIN matching m_done
+            ON m_done.id = (
+                SELECT m2.id
+                FROM matching m2
+                WHERE m2.beneficiary_id = b.id
+                  AND m2.status = 'Y'
+                ORDER BY m2.start_date DESC, m2.id DESC
+                LIMIT 1
+            )
+
+        /* (교체2) 요양보호사 조인 기준 변경 */
+        LEFT JOIN care_worker cw
+            ON cw.id = m_done.care_worker_id
+
+        LEFT JOIN employee ce
+            ON ce.id = cw.employee_id
+
+        /* =========================================================
+           (교체3) 서비스유형 집계: visit_schedule → matching+cwst+mst
+           ========================================================= */
+        LEFT JOIN (
+            SELECT
+                m.beneficiary_id,
+                GROUP_CONCAT(DISTINCT mst.name ORDER BY mst.name SEPARATOR ', ') AS service_types
+            FROM matching m
+            JOIN care_worker_service_type cwst
+              ON cwst.care_worker_id = m.care_worker_id
+            JOIN m_service_type mst
+              ON mst.id = cwst.m_service_type_id
+            WHERE m.status = 'Y'
+            GROUP BY m.beneficiary_id
+        ) st
+            ON st.beneficiary_id = b.id
+
+        /*  대표 보호자 1명 */
+        LEFT JOIN guardian g
+            ON g.beneficiary_id = b.id
+           AND g.is_primary = 'Y'
+
+        /*  특정 수급자 1명 조회 */
+        WHERE b.id = #{beneficiaryId}
+        LIMIT 1
+        ]]>
+    </select>
+
+    <!--
+       수급자 태그 목록 조회
+      - 개인태그(personal_tag)와 연결테이블(tag_of_beneficiary) 조인
+    -->
+    <select id="selectBeneficiaryTags"
+            parameterType="long"
+            resultType="string">
+        <![CDATA[
+        SELECT pt.tag
+        FROM tag_of_beneficiary tob
+        JOIN personal_tag pt ON pt.id = tob.tag_id
+        WHERE tob.beneficiary_id = #{beneficiaryId}
+        ORDER BY pt.id
+        ]]>
+    </select>
+
+    <!--
+       수급자 위험요소 목록 조회
+      - risk_of_member(연결) + m_risk_factor(마스터) 조인
+    -->
+    <select id="selectBeneficiaryRiskFactors"
+            parameterType="long"
+            resultType="org.ateam.oncare.beneficiary.query.dto.response.BeneficiaryDetailResponse$RiskFactorItem">
+        <![CDATA[
+        SELECT
+            rf.id,
+            rf.name,
+            rf.score
+        FROM risk_of_member rom
+        JOIN m_risk_factor rf ON rf.id = rom.risk_id
+        WHERE rom.beneficiary_id = #{beneficiaryId}
+        ORDER BY rf.id
+        ]]>
+    </select>
+
+</mapper>

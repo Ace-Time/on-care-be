@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.careworker.command.mapper.BasicEvaluationCommandMapper">
+
+    <!-- 기초평가 작성 -->
+    <insert id="insertBasicEvaluation">
+        INSERT INTO basic_evaluations (
+            eval_type,
+            template_id,
+            eval_date,
+            eval_data,
+            special_note,
+            is_draft,
+            created_at,
+            beneficiary_id,
+            care_worker_id
+        ) VALUES (
+            #{request.evalType},
+            #{request.templateId},
+            #{request.evalDate},
+            #{request.evalData},
+            #{request.specialNote},
+            #{request.isDraft},
+            NOW(),
+            #{request.beneficiaryId},
+            (SELECT id FROM care_worker WHERE employee_id = #{careWorkerId} LIMIT 1)
+        )
+    </insert>
+
+    <!-- 기초평가 수정 -->
+    <update id="updateBasicEvaluation">
+        UPDATE basic_evaluations
+        <set>
+            <if test="request.evalDate != null">eval_date = #{request.evalDate},</if>
+            <if test="request.evalData != null">eval_data = #{request.evalData},</if>
+            <if test="request.specialNote != null">special_note = #{request.specialNote},</if>
+            <if test="request.isDraft != null">is_draft = #{request.isDraft},</if>
+        </set>
+        WHERE eval_id = #{evalId}
+    </update>
+
+    <!-- 기초평가 삭제 -->
+    <delete id="deleteBasicEvaluation">
+        DELETE FROM basic_evaluations
+        WHERE eval_id = #{evalId}
+    </delete>
+
+
+
+    <!-- 최신 템플릿 ID 조회 -->
+    <select id="findLatestTemplateIdByEvalType" resultType="java.lang.Long">
+        SELECT template_id
+        FROM eval_templates
+        WHERE eval_type = #{evalType}
+          AND is_active = TRUE
+        ORDER BY version DESC
+        LIMIT 1
+    </select>
+
+</mapper>

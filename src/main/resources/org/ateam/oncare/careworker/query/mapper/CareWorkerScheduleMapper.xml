@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ateam.oncare.careworker.query.mapper.CareWorkerScheduleMapper">
+
+    <select id="selectSchedulesByPeriod" resultType="org.ateam.oncare.careworker.query.dto.CalendarScheduleDto">
+        SELECT
+            vs.vs_id AS scheduleId,
+            FALSE AS isPersonal,
+            DATE(vs.start_dt) AS date,
+            TIME(vs.start_dt) AS startTime,
+            TIME(vs.end_dt) AS endTime,
+            NULL AS title,
+            COALESCE(mst.name, '일반') AS type,
+            b.address AS location,
+            vs.note AS notes,
+            vs.visit_status AS status,
+            b.name AS recipientName
+        FROM visit_schedule vs
+                 JOIN care_worker cw ON vs.care_worker_id = cw.id
+                 LEFT JOIN beneficiary b ON vs.beneficiary_id = b.id
+                 LEFT JOIN m_service_type mst ON vs.service_type_id = mst.id
+                 JOIN matching m ON m.care_worker_id = cw.id AND m.beneficiary_id = vs.beneficiary_id AND m.status = 'Y'
+        WHERE cw.employee_id = #{caregiverId}
+          AND (
+            DATE(vs.start_dt) BETWEEN #{startDate} AND #{endDate}
+            OR
+            DATE(vs.end_dt) BETWEEN #{startDate} AND #{endDate}
+            )
+
+        UNION ALL
+
+        SELECT
+            ps.ps_id AS scheduleId,
+            TRUE AS isPersonal,
+            DATE(ps.start_dt) AS date,
+            TIME(ps.start_dt) AS startTime,
+            TIME(ps.end_dt) AS endTime,
+            ps.title AS title,
+            COALESCE(ps.custom_type, mpt.name) AS type,
+            ps.location AS location,
+            ps.notes AS notes,
+            ps.schedule_status AS status,
+            NULL AS recipientName
+        FROM personal_schedule ps
+                 JOIN care_worker cw2 ON ps.care_worker_id = cw2.id
+                 LEFT JOIN m_personal_type mpt ON ps.personal_type_id = mpt.id
+        WHERE cw2.employee_id = #{caregiverId}
+          AND (
+            DATE(ps.start_dt) BETWEEN #{startDate} AND #{endDate}
+            OR
+            DATE(ps.end_dt) BETWEEN #{startDate} AND #{endDate}
+            )
+
+        ORDER BY date ASC, startTime ASC
+    </select>
+
+    <!-- 개인 일정 유형 목록 조회 (드롭다운용) -->
+    <select id="selectPersonalTypes" resultType="org.ateam.oncare.careworker.query.dto.PersonalTypeDto">
+        SELECT
+            id,
+            name,
+            description
+        FROM m_personal_type
+        ORDER BY id
+    </select>
+
+
+    <resultMap id="ScheduleDetailMap" type="org.ateam.oncare.careworker.query.dto.ScheduleDetailDto">
+        <id property="scheduleId" column="schedule_id"/>
+        <result property="status" column="status"/>
+        <result property="date" column="date_str"/>
+        <result property="timeRange" column="time_range"/>
+        <result property="serviceContent" column="service_content"/>
+        <result property="specialNotes" column="special_notes"/>
+
+        <association property="recipient" javaType="org.ateam.oncare.careworker.query.dto.RecipientInfoDto">
+            <id property="recipientId" column="r_id"/>
+            <result property="name" column="r_name"/>
+            <result property="careGrade" column="r_grade"/>
+            <result property="address" column="r_address"/>
+            <result property="guardianName" column="g_name"/>
+            <result property="guardianPhone" column="g_phone"/>
+            <result property="relation" column="g_relation"/>
+        </association>
+
+        <collection property="riskFactors" ofType="string">
+            <result column="risk_name"/>
+        </collection>
+        <collection property="personalTags" ofType="string">
+            <result column="personal_tag"/>
+        </collection>
+        <collection property="significants" ofType="string">
+            <result column="significant_name"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectScheduleDetail" resultMap="ScheduleDetailMap">
+        SELECT
+            vs.vs_id            AS schedule_id,
+            vs.visit_status     AS status,
+            DATE_FORMAT(vs.start_dt, '%Y-%m-%d') AS date_str,
+            CONCAT(TIME_FORMAT(vs.start_dt, '%H:%i'), '-', TIME_FORMAT(vs.end_dt, '%H:%i')) AS time_range,
+            COALESCE(mst.name, '일반') AS service_content,
+            vs.note AS special_notes,
+
+            /* 수급자 정보 */
+            b.id                AS r_id,
+            b.name              AS r_name,
+            COALESCE(mcl.level, '등급없음') AS r_grade,
+            b.address           AS r_address,
+            g.name              AS g_name,
+            g.phone             AS g_phone,
+            g.relation          AS g_relation,
+
+            /* 1:N 데이터 (위험요소, 개인 태그, 특이사항) */
+            mrf.name            AS risk_name,
+            pt.tag              AS personal_tag,
+            ms.name             AS significant_name
+
+        FROM visit_schedule vs
+                 JOIN care_worker cw ON vs.care_worker_id = cw.id
+                 JOIN beneficiary b ON vs.beneficiary_id = b.id
+                 LEFT JOIN m_service_type mst ON vs.service_type_id = mst.id
+                 LEFT JOIN (
+                     SELECT beneficiary_id, id
+                     FROM beneficiary_care_level bcl1
+                     WHERE start_date = (
+                         SELECT MAX(start_date)
+                         FROM beneficiary_care_level bcl2
+                         WHERE bcl2.beneficiary_id = bcl1.beneficiary_id
+                     )
+                 ) bcl ON b.id = bcl.beneficiary_id
+                 LEFT JOIN beneficiary_count bc ON bcl.id = bc.beneficiary_care_level_id
+                 LEFT JOIN m_care_level mcl ON bc.m_care_level_id = mcl.id
+                 LEFT JOIN guardian g ON b.id = g.beneficiary_id AND g.is_primary = 'Y'
+                 LEFT JOIN risk_of_member rom ON b.id = rom.beneficiary_id
+                 LEFT JOIN m_risk_factor mrf ON rom.risk_id = mrf.id
+                 LEFT JOIN tag_of_beneficiary tob ON b.id = tob.beneficiary_id
+                 LEFT JOIN personal_tag pt ON tob.tag_id = pt.id
+                 LEFT JOIN beneficiary_significant bs ON b.id = bs.beneficiary_id
+                 LEFT JOIN m_significant ms ON bs.significant_id = ms.id
+
+        WHERE vs.vs_id = #{scheduleId}
+          AND cw.employee_id = #{caregiverId}
+    </select>
+
+</mapper>
