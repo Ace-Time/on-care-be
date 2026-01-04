@@ -107,27 +107,32 @@ public class MatchingQueryService {
         return new ArrayList<>(timeSet);
     }
 
-    public List<BeneficiarySummaryDto> getBeneficiariesSummary(int page, int size, String keyword) {
+    public List<BeneficiarySummaryDto> getBeneficiariesSummary(int page, int size, String keyword, String assigned) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 50);
         int offset = safePage * safeSize;
 
-        String q = (keyword == null) ? null : keyword.trim();
-        if (q != null && q.isEmpty()) q = null;
+        String q = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+        String a = (assigned == null || assigned.trim().isEmpty()) ? null : assigned.trim();
 
-        return mapper.selectBeneficiariesSummary(offset, safeSize, q);
+        return mapper.selectBeneficiariesSummary(offset, safeSize, q, a);
     }
 
-    public BeneficiaryPageResponse getBeneficiariesPage(int page, int size, String keyword) {
-        int offset = Math.max(page, 0) * size;
+    public BeneficiaryPageResponse getBeneficiariesPage(int page, int size, String keyword, String assigned) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        int offset = safePage * safeSize;
+
         String q = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+        String a = (assigned == null || assigned.trim().isEmpty()) ? null : assigned.trim().toUpperCase();
+        if (!"Y".equals(a) && !"N".equals(a)) a = null;
 
         List<BeneficiarySummaryDto> list =
-                mapper.selectBeneficiariesSummary(offset, size, q);
+                mapper.selectBeneficiariesSummary(offset, safeSize, q, a);
 
-        long total = mapper.countBeneficiaries(q);
+        long total = mapper.countBeneficiaries(q, a);
 
-        return new BeneficiaryPageResponse(list, page, size, total);
+        return new BeneficiaryPageResponse(list, safePage, safeSize, total);
     }
 
     public BeneficiaryDetailDto getBeneficiaryDetail(Long beneficiaryId) {

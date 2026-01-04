@@ -36,10 +36,11 @@ public class MatchingQueryController {
     public ResponseEntity<BeneficiaryPageResponse> getBeneficiariesList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String assigned
     ) {
         return ResponseEntity.ok(
-                matchingQueryService.getBeneficiariesPage(page, size, keyword)
+                matchingQueryService.getBeneficiariesPage(page, size, keyword, assigned)
         );
     }
 

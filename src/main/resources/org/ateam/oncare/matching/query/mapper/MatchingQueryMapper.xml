@@ -235,11 +235,30 @@
             <if test="keyword != null and keyword != ''">
                 AND b.name LIKE CONCAT('%', #{keyword}, '%')
             </if>
+
+            <if test="assignedFilter != null and assignedFilter == &quot;Y&quot;">
+                AND EXISTS (
+                SELECT 1
+                FROM matching m
+                WHERE m.beneficiary_id = b.id
+                AND m.status = 'Y'
+                )
+            </if>
+
+            <if test="assignedFilter != null and assignedFilter == &quot;N&quot;">
+                AND NOT EXISTS (
+                SELECT 1
+                FROM matching m
+                WHERE m.beneficiary_id = b.id
+                AND m.status = 'Y'
+                )
+            </if>
         </where>
 
         ORDER BY assigned ASC, b.id ASC
         LIMIT #{limit} OFFSET #{offset}
     </select>
+
 
     <select id="countBeneficiaries" resultType="long">
         SELECT COUNT(*)
@@ -249,6 +268,24 @@
 
             <if test="keyword != null and keyword != ''">
                 AND b.name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+
+            <if test="assignedFilter != null and assignedFilter == &quot;Y&quot;">
+                AND EXISTS (
+                SELECT 1
+                FROM matching m
+                WHERE m.beneficiary_id = b.id
+                AND m.status = 'Y'
+                )
+            </if>
+
+            <if test="assignedFilter != null and assignedFilter == &quot;N&quot;">
+                AND NOT EXISTS (
+                SELECT 1
+                FROM matching m
+                WHERE m.beneficiary_id = b.id
+                AND m.status = 'Y'
+                )
             </if>
         </where>
     </select>
