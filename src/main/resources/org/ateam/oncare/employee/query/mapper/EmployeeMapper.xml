@@ -28,6 +28,7 @@
         <result property="certificateNames" column="certificate_names_str"/>
         <result property="serviceTypeNames" column="service_type_names_str"/>
         <result property="statusField" column="statusField"/>
+        <result property="beneficiaryCount" column="beneficiaryCount"/>
     </resultMap>
 
     <resultMap id="EmployeeDetailMap" type="org.ateam.oncare.employee.query.dto.EmployeeDetailDTO">
@@ -151,7 +152,13 @@
             JOIN care_worker_service_type sub_cwst ON sub_cw.id = sub_cwst.care_worker_id
             JOIN m_service_type sub_mst ON sub_cwst.m_service_type_id = sub_mst.id
             WHERE sub_cw.employee_id = e.id
-        ) AS service_type_names_str
+        ) AS service_type_names_str,
+        (
+            SELECT COUNT(*)
+            FROM matching m
+            WHERE m.care_worker_id = cw.id
+            AND m.status = 'Y'
+        ) AS beneficiaryCount
         FROM employee e
         LEFT JOIN m_department d ON e.dept_code = d.id      -- 부서 조인
         LEFT JOIN m_job j ON e.job_code = j.id              -- 직책 조인
@@ -179,7 +186,7 @@
                 AND cwst.m_service_type_id = #{serviceTypeId}
             </if>
         </where>
-        ORDER BY e.id DESC
+        ORDER BY beneficiaryCount DESC, e.id DESC
     </select>
 
     <select id="selectEmployeeDetail" resultMap="EmployeeDetailMap">
