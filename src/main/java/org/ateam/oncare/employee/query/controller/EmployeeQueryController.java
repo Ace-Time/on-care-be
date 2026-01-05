@@ -74,8 +74,9 @@ public class EmployeeQueryController {
      * GET /api/employees/education/alerts
      */
     @GetMapping("/education/alerts")
-    public ResponseEntity<List<org.ateam.oncare.employee.query.dto.EducationAlertDTO>> getEducationAlerts() {
-        return ResponseEntity.ok(employeeQueryService.getEducationAlerts());
+    public ResponseEntity<List<org.ateam.oncare.employee.query.dto.EducationAlertDTO>> getEducationAlerts(
+            @RequestParam(required = false) Long certificateId) {
+        return ResponseEntity.ok(employeeQueryService.getEducationAlerts(certificateId));
     }
 
     /**
