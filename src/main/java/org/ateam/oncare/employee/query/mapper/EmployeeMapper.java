@@ -33,7 +33,7 @@ public interface EmployeeMapper {
     List<ProductTaskVO> selectProductTasksByEmployeeId(Long employeeId);
 
     // 교육 예정일 임박/초과 직원 조회
-    List<EducationAlertDTO> selectEducationAlerts();
+    List<EducationAlertDTO> selectEducationAlerts(Long certificateId);
 
     // 필터 옵션 조회
     List<FilterOptionDTO> selectJobFilters();

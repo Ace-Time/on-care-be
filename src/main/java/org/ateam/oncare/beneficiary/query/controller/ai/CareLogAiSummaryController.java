@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/ai/beneficiaries")
+@RequestMapping("/api/beneficiaries")
 public class CareLogAiSummaryController {
 
     private final CareLogMonthlyAiSummaryService service;

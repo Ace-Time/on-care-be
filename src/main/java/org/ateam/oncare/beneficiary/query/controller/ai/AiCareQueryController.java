@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/ai/beneficiaries")
+@RequestMapping("/api/beneficiaries")
 public class AiCareQueryController {
 
     private final AiCareQueryService service;
