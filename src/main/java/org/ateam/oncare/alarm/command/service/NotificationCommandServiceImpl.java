@@ -6,11 +6,13 @@ import org.ateam.oncare.alarm.command.repository.NotificationEventTypeRepository
 import org.ateam.oncare.alarm.command.repository.NotificationLogRepository;
 import org.ateam.oncare.alarm.command.repository.NotificationTemplateRepository;
 import org.ateam.oncare.alarm.query.dto.NotificationQueryDTO;
+import org.ateam.oncare.beneficiary.command.service.NotificationPublisherForRedis;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,6 +25,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
     private final NotificationEventTypeRepository eventTypeRepository;
     private final org.ateam.oncare.employee.command.repository.EmployeeRepository employeeRepository; // 직업 코드로 직원을 찾기
                                                                                                       // 위해 주입
+    private final NotificationPublisherForRedis publisherForRedis;
 
     // SSE 저장소 (메모리)
     private static final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
@@ -77,10 +80,12 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
         // DTO static factory method 사용
         NotificationQueryDTO liveData = NotificationQueryDTO.from(log);
 
-        sendToClient(receiverId, liveData);
+        publisherForRedis.publish(receiverId, liveData);
+//        sendToClient(receiverId, liveData);
     }
 
     @Override
+    @Transactional
     public void readNotification(Long alarmId) {
         NotificationLog log = logRepository.findById(alarmId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Alarm ID"));
@@ -131,6 +136,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
     }
 
     @Override
+    @Transactional
     public void readAllNotifications(Long receiverId) {
         // 해당 사용자의 'SENT' 상태 알림을 모두 조회하여 'READ'로 변경
         java.util.List<NotificationLog> logs = logRepository.findAllByReceiverIdAndStatus(receiverId,
@@ -141,7 +147,9 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
         }
     }
 
-    private void sendToClient(Long userId, Object data) {
+
+    @Override
+    public void sendToClient(Long userId, Object data) {
         SseEmitter emitter = emitters.get(userId);
         if (emitter != null) {
             try {
@@ -170,6 +178,12 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
         logRepository.save(log);
 
         NotificationQueryDTO liveData = NotificationQueryDTO.from(log);
-        sendToClient(receiverId, liveData);
+
+
+        publisherForRedis.publish(receiverId, liveData);
+//        sendToClient(receiverId, liveData);
     }
+
+
+
 }
