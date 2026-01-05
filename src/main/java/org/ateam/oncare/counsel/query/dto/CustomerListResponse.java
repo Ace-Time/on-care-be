@@ -25,4 +25,5 @@ public class CustomerListResponse {
 
     private List<StageData> stages;
     private Integer currentStage;
+    private Long potentialCustomerId;
 }

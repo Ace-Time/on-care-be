@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -101,6 +102,15 @@ public class CounselCommandController {
     ) {
         customerFacadeService.deleteBeneficiarySignificant(beneficiaryId, significantId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/check-duplicate")
+    public ResponseEntity<Map<String, Object>> checkDuplicateCustomer(
+            @RequestBody CheckDuplicateRequest request) {
+
+        Map<String, Object> result = counselFacadeService.checkDuplicateCustomer(request.getPhone());
+
+        return ResponseEntity.ok(result);
     }
 
 }

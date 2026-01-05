@@ -26,10 +26,14 @@ public interface MatchingQueryMapper {
     List<BeneficiarySummaryDto> selectBeneficiariesSummary(
             @Param("offset") int offset,
             @Param("limit") int limit,
-            @Param("keyword") String keyword
+            @Param("keyword") String keyword,
+            @Param("assignedFilter") String assignedFilter
     );
 
-    long countBeneficiaries(@Param("keyword") String keyword);
+    long countBeneficiaries(
+            @Param("keyword") String keyword,
+            @Param("assignedFilter") String assignedFilter
+    );
 
     BeneficiaryDetailDto selectBeneficiaryDetail(@Param("beneficiaryId") Long beneficiaryId);
 
