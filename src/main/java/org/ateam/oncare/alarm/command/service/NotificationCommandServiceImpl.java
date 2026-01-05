@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class NotificationCommandServiceImpl implements NotificationCommandService {
 
     private final NotificationLogRepository logRepository;
@@ -46,6 +45,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
     }
 
     @Override
+    @Transactional
     public void send(Long receiverId, Long templateId) {
         // 1. 템플릿 조회 (내용 복사용)
         NotificationTemplate template = templateRepository.findById(templateId)
@@ -153,6 +153,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
     }
 
     @Override
+    @Transactional
     public void sendCustom(Long receiverId, String title, String content, String templateType, Integer severity) {
         NotificationLog log = NotificationLog.builder()
                 .receiverId(receiverId)
