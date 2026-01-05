@@ -87,8 +87,19 @@
         FROM employee e
         JOIN care_worker cw ON e.id = cw.employee_id
         JOIN care_worker_certificate cwc ON cw.id = cwc.care_worker_id
-        JOIN education edu ON cwc.id = edu.care_worker_certificate_id
-        /* 가장 최근 교육 기록 중, 다음 예정일이 90일 이내로 남았거나 지난 경우 */
+        JOIN (
+            SELECT 
+                e1.care_worker_certificate_id, 
+                e1.next_edu_date
+            FROM education e1
+            JOIN (
+                SELECT care_worker_certificate_id, MAX(edu_date) AS max_edu_date
+                FROM education
+                GROUP BY care_worker_certificate_id
+            ) e2 ON e1.care_worker_certificate_id = e2.care_worker_certificate_id 
+                AND e1.edu_date = e2.max_edu_date
+        ) edu ON cwc.id = edu.care_worker_certificate_id
+        /* 가장 최근 교육 기록 중, 다음 예정일이 30일 이내로 남았거나 지난 경우 */
         GROUP BY e.id, e.name
         HAVING d_day &lt;= 30
         ORDER BY d_day ASC
