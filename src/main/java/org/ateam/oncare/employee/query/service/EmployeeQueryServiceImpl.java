@@ -61,8 +61,8 @@ public class EmployeeQueryServiceImpl implements EmployeeQueryService {
     }
 
     @Override
-    public List<EducationAlertDTO> getEducationAlerts() {
-        List<EducationAlertDTO> alerts = employeeMapper.selectEducationAlerts();
+    public List<EducationAlertDTO> getEducationAlerts(Long certificateId) {
+        List<EducationAlertDTO> alerts = employeeMapper.selectEducationAlerts(certificateId);
 
         // 상태값(OVERDUE, WARNING) 세팅
         for (EducationAlertDTO dto : alerts) {
