@@ -53,6 +53,10 @@ jobs:
               url: jdbc:mariadb://\${RDS_HOSTNAME}:\${RDS_PORT}/\${RDS_DB_NAME}
               username: \${RDS_USERNAME}
               password: \${RDS_PASSWORD}
+            data:
+              redis:
+                host: \${REDIS_HOST}
+                port: \${REDIS_PORT}
           
             jpa:
               generate-ddl: false
@@ -89,6 +93,8 @@ jobs:
           JWT_AT_SECRET: ${{ secrets.JWT_AT_SECRET}}
           JWT_RT_SECRET: ${{ secrets.JWT_RT_SECRET}}
           AI_HOSTNAME: ${{ secrets.AI_HOSTNAME}}
+          REDIS_HOST: ${{ secrets.REDIS_HOST}}
+          REDIS_PORT: ${{ secrets.REDIS_PORT}}
 
       ###############################################
 
