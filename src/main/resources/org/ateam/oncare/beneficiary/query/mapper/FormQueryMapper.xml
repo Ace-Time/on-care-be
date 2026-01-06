@@ -9,7 +9,7 @@
       수급자별 서류 목록 조회 규칙
       1) 카테고리 1~5 : 기본 노출
       2) 카테고리 9   : 위험요소에 '치매'가 있는 경우만 노출
-      3) 카테고리 6~8 : (변경) matching + care_worker_service_type 서비스 유형에 따라 노출
+      3) 카테고리 6~8 : (변경) beneficiary_schedule 서비스 유형에 따라 노출
     -->
 
     <select id="selectFormsForBeneficiary"
@@ -45,45 +45,54 @@
         )
         )
 
-        <!-- (6) 제공기록지 - 방문요양 : 현재 매칭(Y) 요양보호사가 방문요양(1) 가능할 때 -->
+        <!-- (6) 제공기록지 - 방문요양 : 현재 매칭(Y) + 수급자 스케줄에 방문요양(1) 존재 -->
         OR (
         af.form_category_id = 6
         AND EXISTS (
         SELECT 1
         FROM matching m
-        JOIN care_worker_service_type cwst
-        ON cwst.care_worker_id = m.care_worker_id
         WHERE m.beneficiary_id = #{beneficiaryId}
         AND m.status = 'Y'
-        AND cwst.m_service_type_id = 1
+        AND EXISTS (
+        SELECT 1
+        FROM beneficiary_schedule bs
+        WHERE bs.beneficiary_id = m.beneficiary_id
+        AND bs.service_type_id = 1
+        )
         )
         )
 
-        <!-- (7) 제공기록지 - 방문목욕 : 현재 매칭(Y) 요양보호사가 방문목욕(2) 가능할 때 -->
+        <!-- (7) 제공기록지 - 방문목욕 : 현재 매칭(Y) + 수급자 스케줄에 방문목욕(2) 존재 -->
         OR (
         af.form_category_id = 7
         AND EXISTS (
         SELECT 1
         FROM matching m
-        JOIN care_worker_service_type cwst
-        ON cwst.care_worker_id = m.care_worker_id
         WHERE m.beneficiary_id = #{beneficiaryId}
         AND m.status = 'Y'
-        AND cwst.m_service_type_id = 2
+        AND EXISTS (
+        SELECT 1
+        FROM beneficiary_schedule bs
+        WHERE bs.beneficiary_id = m.beneficiary_id
+        AND bs.service_type_id = 2
+        )
         )
         )
 
-        <!-- (8) 제공기록지 - 방문간호 : 현재 매칭(Y) 요양보호사가 방문간호(3) 가능할 때 -->
+        <!-- (8) 제공기록지 - 방문간호 : 현재 매칭(Y) + 수급자 스케줄에 방문간호(3) 존재 -->
         OR (
         af.form_category_id = 8
         AND EXISTS (
         SELECT 1
         FROM matching m
-        JOIN care_worker_service_type cwst
-        ON cwst.care_worker_id = m.care_worker_id
         WHERE m.beneficiary_id = #{beneficiaryId}
         AND m.status = 'Y'
-        AND cwst.m_service_type_id = 3
+        AND EXISTS (
+        SELECT 1
+        FROM beneficiary_schedule bs
+        WHERE bs.beneficiary_id = m.beneficiary_id
+        AND bs.service_type_id = 3
+        )
         )
         )
         )

@@ -14,6 +14,9 @@ public interface CareLevelExpirationCommandMapper {
     int updateOutboundStatus(@Param("expirationId") Integer expirationId,
                              @Param("outboundStatus") String outboundStatus);
 
+    /* [추가] 최신 안내이력 memo 조회 (notice_date 기준 최신 1건) */
+    String selectLatestNoticeMemo(@Param("expirationId") Integer expirationId);
+
     /* 안내완료처리(사용자입력) */
     int insertNotice(@Param("expirationId") Integer expirationId,
                      @Param("noticeDate") String noticeDate,
