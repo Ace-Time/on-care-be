@@ -1,6 +1,9 @@
 package org.ateam.oncare.alarm.command.service;
 
+import org.ateam.oncare.alarm.query.dto.NotificationQueryDTO;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.List;
 
 public interface NotificationCommandService {
 
@@ -30,4 +33,7 @@ public interface NotificationCommandService {
 
     // 내용으로 알림 전송
     void sendCustom(Long receiverId, String title, String content, String templateType, Integer severity);
+
+    void sendToClient(Long userId, Object data);
+
 }
