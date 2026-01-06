@@ -27,7 +27,7 @@ public class BeneficiaryDetailDto {
     private String careLevel;
     private LocalDate careLevelStartDate;
     private LocalDate careLevelEndDate;
-    private Long careLevelNumber;
+    private String careLevelNumber;
 
     // 보호자 정보
     private List<GuardianDto> guardians;

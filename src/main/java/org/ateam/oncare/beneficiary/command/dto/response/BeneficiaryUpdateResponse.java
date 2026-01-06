@@ -31,6 +31,6 @@ public class BeneficiaryUpdateResponse {
     private String careLevelEndDate;
 
     // ✅ 추가
-    private Long careLevelNumber;  // 인정번호
+    private String careLevelNumber;  // 인정번호
     private Integer careLevelId;   // 장기요양등급 id (m_care_level.id)
 }

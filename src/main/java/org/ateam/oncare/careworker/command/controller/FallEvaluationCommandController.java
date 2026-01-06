@@ -21,9 +21,23 @@ public class FallEvaluationCommandController {
     @PostMapping
     public ApiResponse<Void> createFallEvaluation(
             @AuthenticationPrincipal EmployeeImpl employee,
-            @RequestBody CreateBasicEvaluationRequest request) {
-        request.setEvalType(EVAL_TYPE);
-        basicEvaluationCommandService.createBasicEvaluation(employee.getId(), request);
+            @RequestBody String requestBody) {
+        System.out.println(">>> [DEBUG] Raw JSON: " + requestBody);
+
+        // Debugging: Manual deserialization
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+            CreateBasicEvaluationRequest dto = mapper.readValue(requestBody, CreateBasicEvaluationRequest.class);
+            System.out.println(">>> [DEBUG] Manually Mapped DTO: " + dto);
+
+            dto.setEvalType(EVAL_TYPE);
+            basicEvaluationCommandService.createBasicEvaluation(employee.getId(), dto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("JSON Parsing Failed", e);
+        }
+
         return ApiResponse.success(null);
     }
 

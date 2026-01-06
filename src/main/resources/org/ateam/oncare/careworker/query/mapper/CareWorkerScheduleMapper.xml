@@ -5,16 +5,17 @@
 
     <select id="selectSchedulesByPeriod" resultType="org.ateam.oncare.careworker.query.dto.CalendarScheduleDto">
         SELECT
-            vs.vs_id AS scheduleId,
+            MIN(vs.vs_id) AS scheduleId,
             FALSE AS isPersonal,
             DATE(vs.start_dt) AS date,
             TIME(vs.start_dt) AS startTime,
             TIME(vs.end_dt) AS endTime,
             NULL AS title,
-            COALESCE(mst.name, '일반') AS type,
+            COALESCE(MIN(mst.name), '일반') AS type,
+            GROUP_CONCAT(DISTINCT COALESCE(mst.name, '일반') ORDER BY mst.name SEPARATOR ', ') AS serviceTypes,
             b.address AS location,
-            vs.note AS notes,
-            vs.visit_status AS status,
+            MAX(vs.note) AS notes,
+            MAX(vs.visit_status) AS status,
             b.name AS recipientName
         FROM visit_schedule vs
                  JOIN care_worker cw ON vs.care_worker_id = cw.id
@@ -27,6 +28,7 @@
             OR
             DATE(vs.end_dt) BETWEEN #{startDate} AND #{endDate}
             )
+        GROUP BY DATE(vs.start_dt), TIME(vs.start_dt), TIME(vs.end_dt), b.id, b.name, b.address
 
         UNION ALL
 
@@ -38,6 +40,7 @@
             TIME(ps.end_dt) AS endTime,
             ps.title AS title,
             COALESCE(ps.custom_type, mpt.name) AS type,
+            NULL AS serviceTypes,
             ps.location AS location,
             ps.notes AS notes,
             ps.schedule_status AS status,

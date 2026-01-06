@@ -36,4 +36,7 @@ public class CounselingLogDetailDto {
     // 서명
     private String counselorSignUrl;
     private String guardianSignUrl;
+
+    // 작성자 정보
+    private String careWorkerName;  // 작성자명
 }

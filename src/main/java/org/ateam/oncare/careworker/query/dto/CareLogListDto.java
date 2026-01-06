@@ -25,4 +25,5 @@ public class CareLogListDto {
     private String careLevel;
     private String specialNote;
     private Boolean isDraft;  // 임시저장 여부
+    private String careWorkerName;  // 작성자명
 }
