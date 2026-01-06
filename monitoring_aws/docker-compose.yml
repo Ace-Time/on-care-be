@@ -20,6 +20,11 @@ services:
     restart: always  # [핵심] EC2 재부팅 시 자동 실행
     ports:
       - "3000:3000"
+    environment:
+      # [핵심 설정 1] 내 실제 접속 주소 (도메인 + 경로)
+      - GF_SERVER_ROOT_URL=https://healthsystem.shop/grafana
+      # [핵심 설정 2] 서브 경로(/grafana) 뒤에서 서비스함을 명시
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
