@@ -1,0 +1,10 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    # [중요] Docker Compose 내부에서는 서비스명('prometheus')으로 통신 가능함
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
