@@ -22,4 +22,5 @@ public class BasicEvaluationListDto {
     private String resultGrade;
     private Integer totalScore;
     private String specialNote;
+    private String careWorkerName;  // 작성자명
 }

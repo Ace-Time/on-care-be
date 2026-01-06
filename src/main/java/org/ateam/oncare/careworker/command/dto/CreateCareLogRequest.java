@@ -1,5 +1,6 @@
 package org.ateam.oncare.careworker.command.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,14 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateCareLogRequest {
+    @JsonProperty("vsId")
     private Long vsId;
+
+    @JsonProperty("scheduleId")
+    public void setScheduleId(Long scheduleId) {
+        this.vsId = scheduleId;
+    }
+
     private LocalDate serviceDate;
     private LocalTime startTime;
     private LocalTime endTime;

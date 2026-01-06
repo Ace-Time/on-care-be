@@ -3,11 +3,13 @@ package org.ateam.oncare.careworker.query.service;
 import org.ateam.oncare.careworker.query.dto.*;
 import org.ateam.oncare.careworker.query.mapper.DashboardMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true) // 읽기 전용으로 성능 최적화
@@ -60,6 +62,11 @@ public class DashboardQueryService {
     }
 
     public List<MyBeneficiaryDto> getMyBeneficiaries(Long employeeId) {
-        return dashboardMapper.selectMyBeneficiaries(employeeId);
+        try {
+            return dashboardMapper.selectMyBeneficiaries(employeeId);
+        } catch (Exception e) {
+            log.error("내 수급자 목록 조회 중 오류 발생 - employeeId: {}", employeeId, e);
+            throw e;
+        }
     }
 }

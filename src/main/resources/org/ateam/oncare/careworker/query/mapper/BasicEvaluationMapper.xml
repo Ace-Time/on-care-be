@@ -53,9 +53,11 @@
                     JSON_EXTRACT(be.eval_data, '$.total_score')
                 )
             END AS totalScore,
-            be.special_note AS specialNote
+            be.special_note AS specialNote,
+            e.name AS careWorkerName
         FROM basic_evaluations be
                  INNER JOIN care_worker cw ON be.care_worker_id = cw.id
+                 LEFT JOIN employee e ON cw.employee_id = e.id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -123,8 +125,11 @@
                     JSON_EXTRACT(be.eval_data, '$.total_score')
                 )
             END AS totalScore,
-            be.special_note AS specialNote
+            be.special_note AS specialNote,
+            e.name AS careWorkerName
         FROM basic_evaluations be
+                 LEFT JOIN care_worker cw ON be.care_worker_id = cw.id
+                 LEFT JOIN employee e ON cw.employee_id = e.id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -191,9 +196,11 @@
                     JSON_EXTRACT(be.eval_data, '$.total_score')
                 )
             END AS totalScore,
-            be.special_note AS specialNote
+            be.special_note AS specialNote,
+            e.name AS careWorkerName
         FROM basic_evaluations be
                  INNER JOIN care_worker cw ON be.care_worker_id = cw.id
+                 LEFT JOIN employee e ON cw.employee_id = e.id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -265,8 +272,11 @@
                     JSON_EXTRACT(be.eval_data, '$.total_score')
                 )
             END AS totalScore,
-            be.special_note AS specialNote
+            be.special_note AS specialNote,
+            e.name AS careWorkerName
         FROM basic_evaluations be
+                 LEFT JOIN care_worker cw ON be.care_worker_id = cw.id
+                 LEFT JOIN employee e ON cw.employee_id = e.id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -310,9 +320,12 @@
             COALESCE(mcl.level, '등급없음') AS careLevel,
             be.eval_data AS evalData,
             be.special_note AS specialNote,
-            be.is_draft AS isDraft
+            be.is_draft AS isDraft,
+            e.name AS careWorkerName
         FROM basic_evaluations be
                  LEFT JOIN eval_templates et ON be.template_id = et.template_id
+                 LEFT JOIN care_worker cw ON be.care_worker_id = cw.id
+                 LEFT JOIN employee e ON cw.employee_id = e.id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -351,9 +364,12 @@
             COALESCE(mcl.level, '등급없음') AS careLevel,
             be.eval_data AS evalData,
             be.special_note AS specialNote,
-            be.is_draft AS isDraft
+            be.is_draft AS isDraft,
+            e.name AS careWorkerName
         FROM basic_evaluations be
                  LEFT JOIN eval_templates et ON be.template_id = et.template_id
+                 LEFT JOIN care_worker cw ON be.care_worker_id = cw.id
+                 LEFT JOIN employee e ON cw.employee_id = e.id
                  LEFT JOIN beneficiary b ON be.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id

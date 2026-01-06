@@ -4,6 +4,7 @@ import org.ateam.oncare.careworker.command.dto.CareLogInfo;
 import org.ateam.oncare.careworker.command.dto.CreateCareLogRequest;
 import org.ateam.oncare.careworker.command.dto.UpdateCareLogRequest;
 import org.ateam.oncare.careworker.command.mapper.CareLogCommandMapper;
+import org.ateam.oncare.config.customexception.DuplicateCareLogException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,23 @@ public class CareLogCommandService {
         if (request.getStartTime() != null && request.getEndTime() != null
                 && request.getStartTime().isAfter(request.getEndTime())) {
             throw new IllegalArgumentException("종료 시간은 시작 시간보다 빠를 수 없습니다.");
+        }
+
+        // vs_id가 없으면 DB에서 조회
+        if (request.getVsId() == null) {
+            Long resolvedVsId = careLogCommandMapper.selectVsIdByBeneficiaryAndDate(
+                    request.getBeneficiaryId(), employeeId, request.getServiceDate());
+            if (resolvedVsId != null) {
+                request.setVsId(resolvedVsId);
+            }
+        }
+
+        // 근무 일정(vs_id)에 대한 중복 체크
+        if (request.getVsId() != null) {
+            int existingCount = careLogCommandMapper.countCareLogsByVsId(request.getVsId());
+            if (existingCount > 0) {
+                throw new DuplicateCareLogException("해당 근무 일정에 이미 요양일지가 등록되어 있습니다. 한 근무 일정에는 하나의 요양일지만 작성할 수 있습니다.");
+            }
         }
 
         log.info("요양일지 작성 시작 - employeeId: {}, beneficiaryId: {}", employeeId, request.getBeneficiaryId());

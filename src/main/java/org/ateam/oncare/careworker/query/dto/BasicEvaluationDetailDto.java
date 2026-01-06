@@ -33,4 +33,6 @@ public class BasicEvaluationDetailDto {
     private String specialNote;
     // 임시저장 여부
     private Boolean isDraft;
+    // 작성자 정보
+    private String careWorkerName;  // 작성자명
 }

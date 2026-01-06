@@ -1,33 +1,56 @@
 package org.ateam.oncare.careworker.command.dto;
 
-import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDate;
 
-@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateBasicEvaluationRequest {
-    @Setter
+
     private LocalDate evalDate;
+    private String evalData;
+    private String specialNote;
+    private Boolean isDraft;
 
-    @Setter
-    private String evalData; // JSON 형식
+    // --- Explicit Getters and Setters with @JsonProperty ---
 
-    @Setter
-    private String specialNote; // 특이사항
+    @JsonProperty("eval_date")
+    public void setEvalDate(LocalDate evalDate) {
+        this.evalDate = evalDate;
+    }
 
-    @Setter
-    private Boolean isDraft; // 임시저장 여부
+    @JsonProperty("eval_date")
+    public LocalDate getEvalDate() {
+        return this.evalDate;
+    }
 
-    // JSON 객체를 문자열로 자동 변환
-    @JsonSetter("evalData")
+    @JsonProperty("special_note")
+    public void setSpecialNote(String specialNote) {
+        this.specialNote = specialNote;
+    }
+
+    @JsonProperty("special_note")
+    public String getSpecialNote() {
+        return this.specialNote;
+    }
+
+    @JsonProperty("is_draft")
+    public void setIsDraft(Boolean isDraft) {
+        this.isDraft = isDraft;
+    }
+
+    @JsonProperty("is_draft")
+    public Boolean getIsDraft() {
+        return this.isDraft;
+    }
+
+    // Custom logic for eval_data
+    @JsonProperty("eval_data")
     public void setEvalData(Object evalData) {
         if (evalData == null) {
             this.evalData = null;
@@ -41,5 +64,10 @@ public class UpdateBasicEvaluationRequest {
                 throw new IllegalArgumentException("Invalid evalData format", e);
             }
         }
+    }
+
+    @JsonProperty("eval_data")
+    public String getEvalData() {
+        return this.evalData;
     }
 }
