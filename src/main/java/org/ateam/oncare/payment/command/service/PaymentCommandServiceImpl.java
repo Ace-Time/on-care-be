@@ -49,9 +49,9 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                 processRepository.save(process);
             }
 
-            // 결재자들에게 알림 전송 (Template ID: 7)
+            // 결재자들에게 알림 전송 (Template ID: 6)
             try {
-                notificationCommandService.send(approverIds, 7L);
+                notificationCommandService.send(approverIds, 6L);
             } catch (Exception e) {
                 // 알림 전송 실패 로그
                 System.err.println("알림 전송 실패: " + e.getMessage());
@@ -102,9 +102,9 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                 // 더 이상 결재자가 없으면 문서 전체 승인 처리
                 payment.setStatus(1); // 1: 승인
 
-                // 승인 완료 알림 (기안자에게) - Template ID: 8
+                // 승인 완료 알림 (기안자에게) - Template ID: 7
                 try {
-                    notificationCommandService.send(payment.getEmployeeId(), 8L);
+                    notificationCommandService.send(payment.getEmployeeId(), 7L);
                 } catch (Exception e) {
                     System.err.println("승인 알림 전송 실패: " + e.getMessage());
                 }
@@ -119,9 +119,9 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                     .filter(p -> p.getStepOrder() > myProcess.getStepOrder())
                     .forEach(p -> p.setStatus(2));
 
-            // 반려 알림 (기안자에게) - Template ID: 9
+            // 반려 알림 (기안자에게) - Template ID: 8
             try {
-                notificationCommandService.send(payment.getEmployeeId(), 9L);
+                notificationCommandService.send(payment.getEmployeeId(), 8L);
             } catch (Exception e) {
                 System.err.println("반려 알림 전송 실패: " + e.getMessage());
             }
