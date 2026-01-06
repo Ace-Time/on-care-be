@@ -21,6 +21,8 @@ configurations {
 }
 
 repositories {
+    //  Maven Central 차단 우회용 구글 미러 (맨 위에 작성)
+    maven { url "https://maven-central.storage-download.googleapis.com/maven2/" }
     mavenCentral()
 }
 
