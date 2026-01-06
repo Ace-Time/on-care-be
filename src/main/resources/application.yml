@@ -32,3 +32,17 @@ jwt:
 
 ai:
   base-url: ${AI_HOSTNAME}
+
+# 모니터링을 위한 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info, metrics # 프로메테우스 필수 포함
+      base-path: /api/actuator  # <--- 이 줄을 추가하세요! (기본값: /actuator)
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: oncare # 그라파나에서 구분할 앱 이름
