@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # 메트릭스 데이터 수집
   prometheus:
     image: prom/prometheus
     container_name: prometheus
@@ -13,7 +14,7 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
     networks:
       - monitoring-net
-
+  # 수집된 메트릭스 데이터 시각화
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -32,7 +33,16 @@ services:
       - prometheus
     networks:
       - monitoring-net
-
+  # app단 로그 중앙 수집기
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    restart: always
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring-net
 networks:
   monitoring-net:
     driver: bridge
