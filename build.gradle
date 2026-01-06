@@ -38,8 +38,7 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     annotationProcessor 'org.projectlombok:lombok'
-//    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-//    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+
     // 스프링 통합 테스트 (여기에 JPA 테스트 기능도 다 들어있음)
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
@@ -108,6 +107,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     // 2. 마이크로미터 프로메테우스 (데이터를 프로메테우스 형식을 변환)
     implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // redis 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'com.fasterxml.jackson.core:jackson-databind' // JSON 변환용
 }
 
 tasks.named('test') {
