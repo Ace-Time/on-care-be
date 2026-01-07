@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.beneficiary.command.entity.*;
 import org.ateam.oncare.beneficiary.command.repository.*;
+import org.ateam.oncare.common.command.repository.PersonalTagRepository;
 import org.ateam.oncare.counsel.command.dto.RegistNewBeneficiary;
 import org.ateam.oncare.employee.command.repository.BeneficiaryRepository;
 import org.ateam.oncare.schedule.command.repository.BeneficiaryScheduleRepository;
@@ -13,10 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -31,6 +29,8 @@ public class BeneficiaryRegistService {
     private final BeneficiaryScheduleRepository beneficiaryScheduleRepository;
     private final BeneficiarySignificantRepository beneficiarySignificantRepository;
     private final BeneficiaryHistoryRepository beneficiaryHistoryRepository;
+    private final TagOfBeneficiaryRepository tagOfBeneficiaryRepository;
+    private final PersonalTagRepository personalTagRepository;
 
     @Transactional
     public BigInteger registBeneficiaryAndReturnId(RegistNewBeneficiary request) {
@@ -279,5 +279,20 @@ public class BeneficiaryRegistService {
         beneficiaryHistoryRepository.save(history);
 
         log.info("히스토리 등록 완료");
+    }
+
+    @Transactional
+    public void registTagOfBeneficiary(BigInteger beneficiaryId, RegistNewBeneficiary request) {
+        for (String tagName : request.getSelectedMatchTags()) {
+            // personal_tag 테이블에서 name으로 id 조회
+            Optional<Long> tagIdOpt = personalTagRepository.findIdByTag(tagName);
+
+            if (tagIdOpt.isPresent()) {
+                TagOfBeneficiary tag = new TagOfBeneficiary();
+                tag.setBeneficiaryId(beneficiaryId.longValue());
+                tag.setTagId(tagIdOpt.get());
+                tagOfBeneficiaryRepository.save(tag);
+            }
+        }
     }
 }

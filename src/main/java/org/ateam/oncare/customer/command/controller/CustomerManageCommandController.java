@@ -21,7 +21,7 @@ public class CustomerManageCommandController {
      * 이탈위험 - 상담 요청 알림 발송
      * POST /api/customer-manage/beneficiaries/{beneficiaryId}/churn-risk/notify
      */
-    @PostMapping("/beneficiaries/{beneficiaryId}/churn-risk/notify")
+    @PostMapping("/notify/{beneficiaryId}/churn-risk")
     public ResponseEntity<CustomerManageCommandDTO.CommandResponse> sendChurnRiskNotification(
             @PathVariable Long beneficiaryId,
             @AuthenticationPrincipal UserDetails userDetails
@@ -37,7 +37,7 @@ public class CustomerManageCommandController {
      * 불만상담 - 후속조치 등록 및 알림 발송
      * POST /api/customer-manage/complaint/follow-up
      */
-    @PostMapping("/complaint/follow-up")
+    @PostMapping("/notify/complaint")
     public ResponseEntity<CustomerManageCommandDTO.CommandResponse> registerComplaintFollowUp(
             @RequestBody CustomerManageCommandDTO.FollowUpRequest request,
             @AuthenticationPrincipal UserDetails userDetails

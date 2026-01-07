@@ -71,4 +71,5 @@ public class RegistNewBeneficiary {
         private String beneficiaryScheduleStartTime; // "09:00"
         private String beneficiaryScheduleEndTime;   // "12:00"
     }
+
 }
