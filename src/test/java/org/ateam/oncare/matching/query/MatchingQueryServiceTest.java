@@ -25,33 +25,49 @@ class MatchingQueryServiceTest {
     @Autowired private MatchingQueryMapper mapper;
     @Autowired private JdbcTemplate jdbcTemplate;
 
-    /**
-     * (케이스1) 수급자 기준 추천 정렬 테스트
-     * 1) 태그 겹침 수 DESC
-     * 2) 거리 ASC
-     * 3) id ASC
-     */
+    // ===========================
+    // CASE 1: 수급자 기준
+    // ===========================
+
     @Test
-    void sort_case1_beneficiary_based_tag_then_distance_then_id() {
+    void sort_case1_beneficiary_TOTAL() {
         Long beneficiaryId = pickAnyBeneficiaryIdOrNull();
         Assumptions.assumeTrue(beneficiaryId != null, "beneficiary 데이터가 없어서 테스트 스킵");
 
-        List<CareWorkerCardDto> cards = matchingQueryService.getCandidateCareWorkers(beneficiaryId);
+        List<CareWorkerCardDto> cards = matchingQueryService.getCandidateCareWorkers(beneficiaryId, "TOTAL");
         Assumptions.assumeTrue(cards != null && cards.size() >= 2, "후보 요양보호사가 2명 미만이라 정렬 검증 스킵");
 
-        List<Long> sortedIds = cards.stream()
-                .map(CareWorkerCardDto::getCareWorkerId)
-                .collect(Collectors.toList());
-
-        assertSortedByOverlapThenDistanceThenId(beneficiaryId, sortedIds);
+        assertSortedByMode(beneficiaryId, cards, "TOTAL");
     }
 
-    /**
-     * (케이스2) 방문일정 기준 추천 정렬 테스트
-     * - vs_id 1개 집어서 start_dt/end_dt 그대로 넣어 정렬 검증
-     */
     @Test
-    void sort_case2_visit_schedule_based_tag_then_distance_then_id() {
+    void sort_case1_beneficiary_TAG() {
+        Long beneficiaryId = pickAnyBeneficiaryIdOrNull();
+        Assumptions.assumeTrue(beneficiaryId != null, "beneficiary 데이터가 없어서 테스트 스킵");
+
+        List<CareWorkerCardDto> cards = matchingQueryService.getCandidateCareWorkers(beneficiaryId, "TAG");
+        Assumptions.assumeTrue(cards != null && cards.size() >= 2, "후보 요양보호사가 2명 미만이라 정렬 검증 스킵");
+
+        assertSortedByMode(beneficiaryId, cards, "TAG");
+    }
+
+    @Test
+    void sort_case1_beneficiary_DIST() {
+        Long beneficiaryId = pickAnyBeneficiaryIdOrNull();
+        Assumptions.assumeTrue(beneficiaryId != null, "beneficiary 데이터가 없어서 테스트 스킵");
+
+        List<CareWorkerCardDto> cards = matchingQueryService.getCandidateCareWorkers(beneficiaryId, "DIST");
+        Assumptions.assumeTrue(cards != null && cards.size() >= 2, "후보 요양보호사가 2명 미만이라 정렬 검증 스킵");
+
+        assertSortedByMode(beneficiaryId, cards, "DIST");
+    }
+
+    // ===========================
+    // CASE 2: 방문일정 기준
+    // ===========================
+
+    @Test
+    void sort_case2_visit_schedule_TOTAL() {
         Long vsId = pickAnyVisitScheduleIdOrNull();
         Assumptions.assumeTrue(vsId != null, "visit_schedule 데이터가 없어서 테스트 스킵");
 
@@ -64,24 +80,70 @@ class MatchingQueryServiceTest {
         String startDt = Objects.toString(row.get("start_dt"), null);
         String endDt = Objects.toString(row.get("end_dt"), null);
 
-        Assumptions.assumeTrue(beneficiaryId != null && startDt != null && endDt != null,
-                "vs_id의 필수값이 없어 테스트 스킵");
+        Assumptions.assumeTrue(startDt != null && endDt != null, "vs_id의 필수값이 없어 테스트 스킵");
 
-        List<CareWorkerCardDto> cards = matchingQueryService.getVisitTimeAvailableCareWorkers(vsId, startDt, endDt);
+        List<CareWorkerCardDto> cards =
+                matchingQueryService.getVisitTimeAvailableCareWorkers(vsId, startDt, endDt, "TOTAL");
+
         Assumptions.assumeTrue(cards != null && cards.size() >= 2, "후보 요양보호사가 2명 미만이라 정렬 검증 스킵");
 
-        List<Long> sortedIds = cards.stream()
-                .map(CareWorkerCardDto::getCareWorkerId)
-                .collect(Collectors.toList());
-
-        assertSortedByOverlapThenDistanceThenId(beneficiaryId, sortedIds);
+        assertSortedByMode(beneficiaryId, cards, "TOTAL");
     }
 
-    /**
-     * (케이스3) 방문일정 "생성" 기준 추천 정렬 테스트
-     */
     @Test
-    void sort_case3_visit_create_based_tag_then_distance_then_id() {
+    void sort_case2_visit_schedule_TAG() {
+        Long vsId = pickAnyVisitScheduleIdOrNull();
+        Assumptions.assumeTrue(vsId != null, "visit_schedule 데이터가 없어서 테스트 스킵");
+
+        Map<String, Object> row = jdbcTemplate.queryForMap(
+                "SELECT beneficiary_id, start_dt, end_dt FROM visit_schedule WHERE vs_id = ?",
+                vsId
+        );
+
+        Long beneficiaryId = ((Number) row.get("beneficiary_id")).longValue();
+        String startDt = Objects.toString(row.get("start_dt"), null);
+        String endDt = Objects.toString(row.get("end_dt"), null);
+
+        Assumptions.assumeTrue(startDt != null && endDt != null, "vs_id의 필수값이 없어 테스트 스킵");
+
+        List<CareWorkerCardDto> cards =
+                matchingQueryService.getVisitTimeAvailableCareWorkers(vsId, startDt, endDt, "TAG");
+
+        Assumptions.assumeTrue(cards != null && cards.size() >= 2, "후보 요양보호사가 2명 미만이라 정렬 검증 스킵");
+
+        assertSortedByMode(beneficiaryId, cards, "TAG");
+    }
+
+    @Test
+    void sort_case2_visit_schedule_DIST() {
+        Long vsId = pickAnyVisitScheduleIdOrNull();
+        Assumptions.assumeTrue(vsId != null, "visit_schedule 데이터가 없어서 테스트 스킵");
+
+        Map<String, Object> row = jdbcTemplate.queryForMap(
+                "SELECT beneficiary_id, start_dt, end_dt FROM visit_schedule WHERE vs_id = ?",
+                vsId
+        );
+
+        Long beneficiaryId = ((Number) row.get("beneficiary_id")).longValue();
+        String startDt = Objects.toString(row.get("start_dt"), null);
+        String endDt = Objects.toString(row.get("end_dt"), null);
+
+        Assumptions.assumeTrue(startDt != null && endDt != null, "vs_id의 필수값이 없어 테스트 스킵");
+
+        List<CareWorkerCardDto> cards =
+                matchingQueryService.getVisitTimeAvailableCareWorkers(vsId, startDt, endDt, "DIST");
+
+        Assumptions.assumeTrue(cards != null && cards.size() >= 2, "후보 요양보호사가 2명 미만이라 정렬 검증 스킵");
+
+        assertSortedByMode(beneficiaryId, cards, "DIST");
+    }
+
+    // ===========================
+    // CASE 3: 방문 생성 기준
+    // ===========================
+
+    @Test
+    void sort_case3_visit_create_TOTAL() {
         Long beneficiaryId = pickAnyBeneficiaryIdOrNull();
         Assumptions.assumeTrue(beneficiaryId != null, "beneficiary 데이터가 없어서 테스트 스킵");
 
@@ -91,24 +153,69 @@ class MatchingQueryServiceTest {
 
         Long serviceTypeId = st.getServiceTypeId();
 
-        // 시간대 변경
         String startDt = "2026-01-06 10:00:00";
         String endDt = "2026-01-06 11:00:00";
 
         List<CareWorkerCardDto> cards =
-                matchingQueryService.getCreateVisitAvailableCareWorkers(beneficiaryId, serviceTypeId, startDt, endDt);
+                matchingQueryService.getCreateVisitAvailableCareWorkers(
+                        beneficiaryId, serviceTypeId, startDt, endDt, "TOTAL"
+                );
 
         Assumptions.assumeTrue(cards != null && cards.size() >= 2, "후보 요양보호사가 2명 미만이라 정렬 검증 스킵");
 
-        List<Long> sortedIds = cards.stream()
-                .map(CareWorkerCardDto::getCareWorkerId)
-                .collect(Collectors.toList());
+        assertSortedByMode(beneficiaryId, cards, "TOTAL");
+    }
 
-        assertSortedByOverlapThenDistanceThenId(beneficiaryId, sortedIds);
+    @Test
+    void sort_case3_visit_create_TAG() {
+        Long beneficiaryId = pickAnyBeneficiaryIdOrNull();
+        Assumptions.assumeTrue(beneficiaryId != null, "beneficiary 데이터가 없어서 테스트 스킵");
+
+        ServiceTypePairDto st = mapper.selectBeneficiaryPrimaryServiceType(beneficiaryId);
+        Assumptions.assumeTrue(st != null && st.getServiceTypeId() != null,
+                "수급자의 service type을 찾지 못해 테스트 스킵");
+
+        Long serviceTypeId = st.getServiceTypeId();
+
+        String startDt = "2026-01-06 10:00:00";
+        String endDt = "2026-01-06 11:00:00";
+
+        List<CareWorkerCardDto> cards =
+                matchingQueryService.getCreateVisitAvailableCareWorkers(
+                        beneficiaryId, serviceTypeId, startDt, endDt, "TAG"
+                );
+
+        Assumptions.assumeTrue(cards != null && cards.size() >= 2, "후보 요양보호사가 2명 미만이라 정렬 검증 스킵");
+
+        assertSortedByMode(beneficiaryId, cards, "TAG");
+    }
+
+    @Test
+    void sort_case3_visit_create_DIST() {
+        Long beneficiaryId = pickAnyBeneficiaryIdOrNull();
+        Assumptions.assumeTrue(beneficiaryId != null, "beneficiary 데이터가 없어서 테스트 스킵");
+
+        ServiceTypePairDto st = mapper.selectBeneficiaryPrimaryServiceType(beneficiaryId);
+        Assumptions.assumeTrue(st != null && st.getServiceTypeId() != null,
+                "수급자의 service type을 찾지 못해 테스트 스킵");
+
+        Long serviceTypeId = st.getServiceTypeId();
+
+        String startDt = "2026-01-06 10:00:00";
+        String endDt = "2026-01-06 11:00:00";
+
+        List<CareWorkerCardDto> cards =
+                matchingQueryService.getCreateVisitAvailableCareWorkers(
+                        beneficiaryId, serviceTypeId, startDt, endDt, "DIST"
+                );
+
+        Assumptions.assumeTrue(cards != null && cards.size() >= 2, "후보 요양보호사가 2명 미만이라 정렬 검증 스킵");
+
+        assertSortedByMode(beneficiaryId, cards, "DIST");
     }
 
     // ===========================
-    // helpers
+    // helpers: pick ids
     // ===========================
 
     private Long pickAnyBeneficiaryIdOrNull() {
@@ -127,19 +234,23 @@ class MatchingQueryServiceTest {
         return list.isEmpty() ? null : list.get(0);
     }
 
-    /**
-     * 서비스 로직(sortByTagThenDistance)와 동일한 규칙을 테스트에서 재계산해서 검증
-     */
-    private void assertSortedByOverlapThenDistanceThenId(Long beneficiaryId, List<Long> sortedIds) {
-        assertNotNull(sortedIds);
-        assertTrue(sortedIds.size() >= 2);
+    // ===========================
+    // core assertion (모드별)
+    // ===========================
 
-        // beneficiary 좌표
+    private void assertSortedByMode(Long beneficiaryId, List<CareWorkerCardDto> cards, String mode) {
+        List<Long> sortedIds = cards.stream()
+                .filter(Objects::nonNull)
+                .map(CareWorkerCardDto::getCareWorkerId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        assertTrue(sortedIds.size() >= 2, "정렬 검증을 위한 후보가 2명 미만");
+
+        // beneficiary 좌표 (없으면 Double.MAX_VALUE로 처리 -> null last 룰에 의해 뒤로 밀림)
         LatLngDto b = mapper.selectBeneficiaryLatLng(beneficiaryId);
-        Double bLat = b == null ? null : b.getLat();
-        Double bLng = b == null ? null : b.getLng();
-        Assumptions.assumeTrue(bLat != null && bLng != null,
-                "beneficiary lat/lng가 NULL이라 거리 기반 정렬 검증 스킵(geo 채움이 안된 상태)");
+        Double bLat = (b == null) ? null : b.getLat();
+        Double bLng = (b == null) ? null : b.getLng();
 
         // overlapCount map
         Map<Long, Integer> overlapMap = mapper.selectTagOverlapCounts(beneficiaryId, sortedIds).stream()
@@ -162,47 +273,124 @@ class MatchingQueryServiceTest {
                         (a, c) -> a
                 ));
 
-        // 인접 원소끼리 규칙 위반 없는지 확인
+        // card 점수 map(서비스가 applyScores로 넣은 값 검증용)
+        Map<Long, CareWorkerCardDto> cardMap = cards.stream()
+                .filter(Objects::nonNull)
+                .filter(c -> c.getCareWorkerId() != null)
+                .collect(Collectors.toMap(
+                        CareWorkerCardDto::getCareWorkerId,
+                        c -> c,
+                        (a, c) -> a
+                ));
+
         for (int i = 0; i < sortedIds.size() - 1; i++) {
-            Long left = sortedIds.get(i);
-            Long right = sortedIds.get(i + 1);
+            Long leftId = sortedIds.get(i);
+            Long rightId = sortedIds.get(i + 1);
 
-            int leftOv = overlapMap.getOrDefault(left, 0);
-            int rightOv = overlapMap.getOrDefault(right, 0);
+            int leftOv = overlapMap.getOrDefault(leftId, 0);
+            int rightOv = overlapMap.getOrDefault(rightId, 0);
 
-            // 1) overlap DESC
-            if (leftOv != rightOv) {
-                assertTrue(
-                        leftOv >= rightOv,
-                        String.format(
-                                "overlap DESC 위반: idx=%d left(id=%d ov=%d) right(id=%d ov=%d)",
-                                i, left, leftOv, right, rightOv
-                        )
-                );
-                continue;
+            double leftDist = distanceKmOrMax(bLat, bLng, cwLatLngMap.get(leftId));
+            double rightDist = distanceKmOrMax(bLat, bLng, cwLatLngMap.get(rightId));
+
+            CareWorkerCardDto left = cardMap.get(leftId);
+            CareWorkerCardDto right = cardMap.get(rightId);
+
+            int leftTagScore = (left == null || left.getTagScore() == null) ? (leftOv * 2) : left.getTagScore();
+            int rightTagScore = (right == null || right.getTagScore() == null) ? (rightOv * 2) : right.getTagScore();
+
+            // distanceScore는 서비스에서 geoMissing이면 null, 아니면 10-floor(dist/2)
+            Integer leftDistScoreView = (left == null) ? null : left.getDistanceScore();
+            Integer rightDistScoreView = (right == null) ? null : right.getDistanceScore();
+
+            boolean leftGeoMissing = leftDist == Double.MAX_VALUE;
+            boolean rightGeoMissing = rightDist == Double.MAX_VALUE;
+
+            int leftDistScoreForSum = leftGeoMissing ? 0 : (leftDistScoreView == null ? 0 : leftDistScoreView);
+            int rightDistScoreForSum = rightGeoMissing ? 0 : (rightDistScoreView == null ? 0 : rightDistScoreView);
+
+            int leftTotalView = leftTagScore + leftDistScoreForSum;
+            int rightTotalView = rightTagScore + rightDistScoreForSum;
+
+            // TOTAL 정렬용: geoMissing이면 null 취급(맨 뒤)
+            Integer leftTotalSort = leftGeoMissing ? null : leftTotalView;
+            Integer rightTotalSort = rightGeoMissing ? null : rightTotalView;
+
+            switch (normalizeMode(mode)) {
+                case "DIST" -> {
+                    // distanceKm ASC (null last) -> id ASC
+                    int distCmp = compareDistAscNullLast(leftDist, rightDist);
+                    if (distCmp != 0) {
+                        assertTrue(distCmp <= 0, msg(i, mode, leftId, rightId, leftDist, rightDist));
+                        continue;
+                    }
+                    assertTrue(leftId <= rightId, "DIST: id ASC 위반 idx=" + i + " left=" + leftId + " right=" + rightId);
+                }
+                case "TAG" -> {
+                    // overlap DESC -> distanceKm ASC(null last) -> id ASC
+                    if (leftOv != rightOv) {
+                        assertTrue(leftOv >= rightOv, "TAG: overlap DESC 위반 idx=" + i
+                                + " left(id=" + leftId + ", ov=" + leftOv + ") right(id=" + rightId + ", ov=" + rightOv + ")");
+                        continue;
+                    }
+
+                    int distCmp = compareDistAscNullLast(leftDist, rightDist);
+                    if (distCmp != 0) {
+                        assertTrue(distCmp <= 0, msg(i, mode, leftId, rightId, leftDist, rightDist));
+                        continue;
+                    }
+
+                    assertTrue(leftId <= rightId, "TAG: id ASC 위반 idx=" + i + " left=" + leftId + " right=" + rightId);
+                }
+                default -> {
+                    // TOTAL: totalScoreSort DESC(null last) -> distanceKm ASC(null last) -> id ASC
+                    int totalCmp = compareTotalDescNullLast(leftTotalSort, rightTotalSort);
+                    if (totalCmp != 0) {
+                        assertTrue(totalCmp <= 0, "TOTAL: totalScoreSort DESC(null last) 위반 idx=" + i
+                                + " left(id=" + leftId + ", totalSort=" + leftTotalSort + ") right(id=" + rightId + ", totalSort=" + rightTotalSort + ")");
+                        continue;
+                    }
+
+                    int distCmp = compareDistAscNullLast(leftDist, rightDist);
+                    if (distCmp != 0) {
+                        assertTrue(distCmp <= 0, msg(i, mode, leftId, rightId, leftDist, rightDist));
+                        continue;
+                    }
+
+                    assertTrue(leftId <= rightId, "TOTAL: id ASC 위반 idx=" + i + " left=" + leftId + " right=" + rightId);
+                }
             }
-
-            // 2) distance ASC
-            double leftDist = distanceKmOrMax(bLat, bLng, cwLatLngMap.get(left));
-            double rightDist = distanceKmOrMax(bLat, bLng, cwLatLngMap.get(right));
-
-            if (Double.compare(leftDist, rightDist) != 0) {
-                assertTrue(
-                        leftDist <= rightDist,
-                        String.format(
-                                "distance ASC 위반: idx=%d left(id=%d dist=%.6f) right(id=%d dist=%.6f)",
-                                i, left, leftDist, right, rightDist
-                        )
-                );
-                continue;
-            }
-
-            // 3) id ASC
-            assertTrue(
-                    left <= right,
-                    String.format("id ASC 위반: idx=%d left=%d right=%d", i, left, right)
-            );
         }
+    }
+
+    private String normalizeMode(String mode) {
+        if (mode == null) return "TOTAL";
+        String v = mode.trim().toUpperCase();
+        return switch (v) {
+            case "TAG" -> "TAG";
+            case "DIST" -> "DIST";
+            default -> "TOTAL";
+        };
+    }
+
+    // distance ASC, null(last) = Double.MAX_VALUE 처리
+    private int compareDistAscNullLast(double leftDist, double rightDist) {
+        double a = (leftDist == Double.MAX_VALUE) ? Double.MAX_VALUE : leftDist;
+        double b = (rightDist == Double.MAX_VALUE) ? Double.MAX_VALUE : rightDist;
+        return Double.compare(a, b);
+    }
+
+    // total DESC, null(last)
+    private int compareTotalDescNullLast(Integer leftTotalSort, Integer rightTotalSort) {
+        if (leftTotalSort == null && rightTotalSort == null) return 0;
+        if (leftTotalSort == null) return 1;   // left 뒤로
+        if (rightTotalSort == null) return -1; // right 뒤로
+        return Integer.compare(rightTotalSort, leftTotalSort); // DESC
+    }
+
+    private String msg(int idx, String mode, Long leftId, Long rightId, double leftDist, double rightDist) {
+        return mode + ": distance ASC(null last) 위반 idx=" + idx
+                + " left(id=" + leftId + ", dist=" + leftDist + ") right(id=" + rightId + ", dist=" + rightDist + ")";
     }
 
     private double distanceKmOrMax(Double bLat, Double bLng, LatLngDto cw) {

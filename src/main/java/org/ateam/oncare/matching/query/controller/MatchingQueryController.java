@@ -23,11 +23,12 @@ public class MatchingQueryController {
             @RequestParam Long beneficiaryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "8") int size,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false, defaultValue = "TOTAL") String sort
     ) {
         return ResponseEntity.ok(
                 matchingQueryService.getCandidateCareWorkersPage(
-                        beneficiaryId, page, size, keyword
+                        beneficiaryId, page, size, keyword, sort
                 )
         );
     }
@@ -70,10 +71,11 @@ public class MatchingQueryController {
             @RequestParam("vsId") Long vsId,
             @RequestParam("startDt") String startDt,
             @RequestParam("endDt") String endDt,
-            @RequestParam(value = "page", defaultValue = "0") int page
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "TOTAL") String sort
     ) {
         return ResponseEntity.ok(
-                matchingQueryService.getVisitTimeAvailableCareWorkersPage(vsId, startDt, endDt, page)
+                matchingQueryService.getVisitTimeAvailableCareWorkersPage(vsId, startDt, endDt, page, sort)
         );
     }
 
@@ -87,11 +89,12 @@ public class MatchingQueryController {
             @RequestParam("startDt") String startDt,
             @RequestParam("endDt") String endDt,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "8") int size
+            @RequestParam(value = "size", defaultValue = "8") int size,
+            @RequestParam(required = false, defaultValue = "TOTAL") String sort
     ) {
         return ResponseEntity.ok(
                 matchingQueryService.getCreateVisitAvailableCareWorkersPage(
-                        beneficiaryId, serviceTypeId, startDt, endDt, page, size
+                        beneficiaryId, serviceTypeId, startDt, endDt, page, size, sort
                 )
         );
     }
