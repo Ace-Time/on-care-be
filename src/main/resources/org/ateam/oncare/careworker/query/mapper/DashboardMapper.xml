@@ -32,12 +32,11 @@
     <select id="selectUrgentNotifications" resultType="org.ateam.oncare.careworker.query.dto.UrgentNotificationDto">
         SELECT
             nl.alarm_id AS id,
-            nt.title,
-            nt.content AS message,
+            nl.title,
+            nl.content AS message,
             nl.sent_at AS dueDate,
             TRUE AS isUrgent
         FROM notification_log nl
-                 JOIN notification_template nt ON nl.template_id = nt.template_id
                  JOIN care_worker cw ON nl.receiver_id = cw.employee_id
         WHERE cw.employee_id = #{caregiverId}
           AND nl.receiver_type = 'EMPLOYEE'
