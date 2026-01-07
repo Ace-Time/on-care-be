@@ -47,11 +47,13 @@
     <!-- additivity="false"를 주면 APP_ALL의 로그가 system까지 올라가지 않음 -->
     <logger name="p6spy" level="INFO" additivity="false">
         <appender-ref ref="P6SPY_FILE" />
+        <appender-ref ref="LOKI" />
     </logger>
 
     <!-- additivity="false"를 주면 APP_ALL의 로그가 system까지 올라가지 않음 -->
     <logger name="repoPerformance" level="INFO" additivity="false">
         <appender-ref ref="repoPerformance_file" />
+        <appender-ref ref="LOKI" />
     </logger>
 
 
