@@ -90,11 +90,12 @@ public class MatchingQueryController {
             @RequestParam("endDt") String endDt,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "8") int size,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false, defaultValue = "TOTAL") String sort
     ) {
         return ResponseEntity.ok(
                 matchingQueryService.getCreateVisitAvailableCareWorkersPage(
-                        beneficiaryId, serviceTypeId, startDt, endDt, page, size, sort
+                        beneficiaryId, serviceTypeId, startDt, endDt, page, size, keyword, sort
                 )
         );
     }
