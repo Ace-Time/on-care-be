@@ -115,6 +115,10 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind' // JSON 변환용
 
     implementation 'com.github.loki4j:loki-logback-appender:1.4.2' //Loki 로그 전송
+
+    // P6Spy (쿼리 로그)
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
 }
 
 tasks.named('test') {

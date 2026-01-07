@@ -1,7 +1,8 @@
-package org.ateam.oncare.config.logutil;
+package org.ateam.oncare.config.interceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.ateam.oncare.config.logutil.LogMaskingUtils;
 import org.ateam.oncare.global.util.ClientIpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,42 +40,6 @@ public class LogInterceptor implements HandlerInterceptor {
 
         return true;
     }
-
-//    @Override
-//    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-//        // 요청 끝난 시간 계산
-//        long startTime = (Long) request.getAttribute("startTime");
-//        long endTime = System.currentTimeMillis();
-//        long executionTime = endTime - startTime;
-//        int status = response.getStatus();
-//        String clientIP = ClientIpUtils.getClientIp(request);
-//
-//        // 응답 결과, 응답시간을 남기기 위한 포맷
-//        // 로그 포맷: [Status] [소요시간ms] [HTTP Method] [URI] [client 접속 경로] [client 정보]
-//        String message = String.format("endPoint : [%s] %s | clientIP: %s | %d[ms] | Status: %d | Referer : %s | User-Agent : %s",
-//                request.getMethod(),
-//                request.getRequestURI(),
-//                clientIP,
-//                executionTime,
-//                status,
-//                request.getHeader("Referer"),   // 우리 사이트까지 오기까지의 client 경로
-//                request.getHeader("User-Agent") // 클라이언트 접속 브라우저 정보
-//        );
-//
-//        if( status >= 400) {
-//            logger.warn( "[ERROR] " + message);
-//        }
-//        // 1초 이상 응답이 지연 될 경우 별도로 로그파일에 기록
-//        else if (executionTime >= 1000) {
-//            perfLog.warn(message);
-//            logger.warn( "[SLOW] " + message);
-//        } else {
-//            logger.info("[ END ] " + message ); // 끝났음을 명시
-//        }
-//
-//        // 안 지우면 다음 요청이 이 쓰레드를 재사용할 때 이전 ID가 남아있을 수 있음.
-//        MDC.clear();
-//    }
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
