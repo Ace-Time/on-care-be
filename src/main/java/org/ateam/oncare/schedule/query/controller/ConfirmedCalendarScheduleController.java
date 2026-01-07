@@ -19,6 +19,25 @@ public class ConfirmedCalendarScheduleController {
 
     private final ConfirmedCalendarScheduleService confirmedCalendarScheduleService;
 
+    @GetMapping("/day-list/performance")
+    public SchedulePageResponse<ConfirmedCalendarDayItemDto> dayListPerformance(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) Long beneficiaryId,
+            @RequestParam(required = false) Integer careWorkerId,
+            @RequestParam(required = false) Integer serviceTypeId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String searchField,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestHeader(value = "X-Bypass-Cache", required = false, defaultValue = "false") boolean bypassCache
+
+    ) {
+
+        return confirmedCalendarScheduleService.getConfirmedCalendarDayPage_test(
+                date, beneficiaryId, careWorkerId, serviceTypeId, keyword, searchField, page, size, bypassCache
+        );
+    }
+
     @GetMapping("/range-counts")
     public List<ConfirmedCalendarMonthCountDto> rangeCounts(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
