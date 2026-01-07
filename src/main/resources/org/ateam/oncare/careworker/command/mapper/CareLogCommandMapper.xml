@@ -120,6 +120,14 @@
           AND is_deleted = 0
     </select>
 
+    <!-- 방문 일정의 모든 요양일지 정보 조회 (beneficiaryId, serviceDate) -->
+    <select id="selectCareLogInfosByVsId" resultType="org.ateam.oncare.careworker.command.dto.CareLogInfo">
+        SELECT beneficiary_id, service_date
+        FROM care_logs
+        WHERE vs_id = #{vsId}
+          AND is_deleted = 0
+    </select>
+
     <!-- 방문 일정 삭제 시 관련 요양일지 삭제 (물리삭제) -->
     <delete id="deleteCareLogsByVsId">
         DELETE FROM care_logs
