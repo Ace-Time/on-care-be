@@ -30,7 +30,7 @@ public class CustomerFacadeService {
             boolean exists = beneficiaryRepository.existsByPotentialCustomerId(request.getPotentialCustomerId());
 
             if (exists) {
-                log.warn("⚠️ 이미 등록된 수급자입니다 - Potential Customer ID: {}", request.getPotentialCustomerId());
+                log.warn("이미 등록된 수급자입니다 - Potential Customer ID: {}", request.getPotentialCustomerId());
 
                 RegistNewBeneficiaryResponse response = new RegistNewBeneficiaryResponse();
                 response.setSuccess(false);
@@ -57,6 +57,8 @@ public class CustomerFacadeService {
         beneficiaryRegistService.registBeneficiarySignificant(beneficiaryId,request);
         // 수급자 히스토리 등록
         beneficiaryRegistService.registHistory(beneficiaryId, request);
+        // 수급자 매칭 태그 등록
+        beneficiaryRegistService.registTagOfBeneficiary(beneficiaryId, request);
 
         RegistNewBeneficiaryResponse response = new RegistNewBeneficiaryResponse();
         response.setBeneficiaryId(beneficiaryId);
