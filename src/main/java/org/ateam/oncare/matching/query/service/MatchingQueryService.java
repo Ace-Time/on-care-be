@@ -364,10 +364,12 @@ public class MatchingQueryService {
 
     public CareWorkerPageResponse getCreateVisitAvailableCareWorkersPage(
             Long beneficiaryId, Long serviceTypeId, String startDt, String endDt,
-            int page, int size, String sort
+            int page, int size, String keyword, String sort
     ) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 50);
+
+        String q = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
 
         List<CareWorkerCardDto> all =
                 getCreateVisitAvailableCareWorkers(beneficiaryId, serviceTypeId, startDt, endDt, sort);
@@ -376,13 +378,24 @@ public class MatchingQueryService {
             return new CareWorkerPageResponse(List.of(), safePage, safeSize, 0);
         }
 
-        long total = all.size();
+        List<CareWorkerCardDto> filtered;
+        if (q == null) {
+            filtered = all;
+        } else {
+            String lower = q.toLowerCase();
+            filtered = all.stream()
+                    .filter(cw -> cw != null && cw.getName() != null
+                            && cw.getName().toLowerCase().contains(lower))
+                    .toList();
+        }
+
+        long total = filtered.size();
 
         int from = safePage * safeSize;
-        int to = Math.min(from + safeSize, all.size());
+        int to = Math.min(from + safeSize, filtered.size());
 
         List<CareWorkerCardDto> pageList =
-                (from >= all.size()) ? List.of() : all.subList(from, to);
+                (from >= filtered.size()) ? List.of() : filtered.subList(from, to);
 
         return new CareWorkerPageResponse(pageList, safePage, safeSize, total);
     }

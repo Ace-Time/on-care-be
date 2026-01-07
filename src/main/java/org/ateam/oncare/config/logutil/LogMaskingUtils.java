@@ -7,7 +7,7 @@ public class LogMaskingUtils {
 
     // JSON 형식에서 password, pwd, cardNo 등의 값을 찾아 마스킹 (**로 변경)
     private static final String JSON_MASKING_REGEX =
-            "(\"password\"|\"passwd\"|\"pwd\"|\"cardNo\")\\s*:\\s*\"([^\"]+)\"";
+            "(\"password\"|\"passwd\"|\"pwd\"|\"cardNo\"|\"accessToken\")\\s*:\\s*\"([^\"]+)\"";
 
     private static final Pattern PATTERN = Pattern.compile(JSON_MASKING_REGEX, Pattern.CASE_INSENSITIVE);
 
