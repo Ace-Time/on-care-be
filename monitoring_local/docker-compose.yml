@@ -33,7 +33,16 @@ services:
       - prometheus # 프로메테우스가 켜진 뒤에 실행됨
     networks:
       - monitoring-net
-
+  # 3. LOKI
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    restart: always
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring-net
 # 네트워크 정의
 networks:
   monitoring-net:

@@ -53,10 +53,6 @@ public class TokenServiceImpl implements TokenService {
         RefreshToken refreshTokenEntity = this.saveRefreshToken(clientIp, employee.getId().intValue(), refreshTokenInfo,
                 jti, "");
 
-        log.debug("atToken:{}", atToken);
-        log.debug("refreshTokenInfo:{},{}", refreshTokenInfo.token(), refreshTokenInfo.expiredAt());
-        log.debug("LocalDateTime:{}", LocalDateTime.now());
-        log.debug("refreshTokenEntity:{}", refreshTokenEntity);
 
         refreshTokenRepository.save(refreshTokenEntity);
 
@@ -80,8 +76,6 @@ public class TokenServiceImpl implements TokenService {
         String jti = claims.getId();
 
         RefreshTokenOfEmployeeDTO rtOfEmployee = authQueryService.selectRefreshTokenOfEmployee(jti);
-
-        log.debug("rt : {}", rtOfEmployee);
 
         if (rtOfEmployee.getRevoked() == 1) {
             log.warn("RT 실패: revoked 토큰. jti={}, userId={}, useremail={}", rtOfEmployee.getJti(),
@@ -130,8 +124,6 @@ public class TokenServiceImpl implements TokenService {
 
         // 새로운 RT, AT 생성
         ResponseToken responseToken = this.generateToken(clientIp, employeeImpl);
-        log.debug("벌크 연산 결과 count : {}", count);
-
         return responseToken;
     }
 

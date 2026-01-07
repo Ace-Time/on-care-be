@@ -34,7 +34,7 @@ public class AuthController {
                 tokenResponse.getAccessToken(),
                 tokenResponse.getTokenType());
 
-        log.info("[로그인 인증] employeeId={}",tokenResponse.getEmployeeId());
+//        log.info("[로그인 인증] employeeId={}",tokenResponse.getEmployeeId());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, tokenResponse.getCookie().toString())
@@ -55,16 +55,11 @@ public class AuthController {
                                 @CookieValue(name = CookieUtil.REFRESH_COOKIE, required = false) String refreshToken,
                                 ServletRequest request,
                                 @ClientIp String clientIp) {
-        log.debug("리프래시 컨트롤러");
-        log.debug("리프래시 요청 refreshToken:{}",refreshToken);
-
         ResponseToken responseToken = authService.refreshToken(refreshToken,request,clientIp);
 
         ResponseTokenDTO reponseBody = new ResponseTokenDTO(
                 responseToken.getAccessToken(),
                 responseToken.getTokenType());
-
-        log.info("[토근 재 발급] employeeId={}, old rt={}",responseToken.getEmployeeId(), refreshToken);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, responseToken.getCookie().toString())

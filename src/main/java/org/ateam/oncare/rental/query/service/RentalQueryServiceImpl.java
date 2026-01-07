@@ -31,7 +31,6 @@ public class RentalQueryServiceImpl implements RentalQueryService {
             response.remove(pageable.getPageSize());
         }
 
-        log.debug("getContract: response={}",response);
         return new SliceImpl<>(response,pageable,hasNext);
     }
 
@@ -39,8 +38,6 @@ public class RentalQueryServiceImpl implements RentalQueryService {
     public List<RentalContractForCalculationDTO> getTargetRentalContracts(LocalDate calcDate) {
         List<RentalContractForCalculationDTO> targetRentalContracts
                 = rentalContractMapper.selectRentalContractForCalculation(calcDate);
-
-        log.debug("targetRentalContracts:{}",targetRentalContracts);
 
         return targetRentalContracts;
     }

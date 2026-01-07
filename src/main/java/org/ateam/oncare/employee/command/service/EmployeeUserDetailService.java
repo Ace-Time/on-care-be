@@ -52,9 +52,6 @@ public class EmployeeUserDetailService implements UserDetailsService {
                                 employee.getPhone(),
                                 results.get(0).get(QJob.job.name));
 
-                log.debug("queryDSL 결과(employeeImpl):{}", employeeImpl);
-                log.debug("queryDSL 결과(권한):{}", authorities);
-
                 return employeeImpl;
         }
 }

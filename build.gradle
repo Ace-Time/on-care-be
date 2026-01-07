@@ -21,6 +21,8 @@ configurations {
 }
 
 repositories {
+    //  Maven Central 차단 우회용 구글 미러 (맨 위에 작성)
+    maven { url "https://maven-central.storage-download.googleapis.com/maven2/" }
     mavenCentral()
 }
 
@@ -111,6 +113,8 @@ dependencies {
     // redis 의존성 추가
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'com.fasterxml.jackson.core:jackson-databind' // JSON 변환용
+
+    implementation 'com.github.loki4j:loki-logback-appender:1.4.2' //Loki 로그 전송
 }
 
 tasks.named('test') {

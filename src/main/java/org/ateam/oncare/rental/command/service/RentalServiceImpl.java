@@ -116,8 +116,6 @@ public class RentalServiceImpl implements RentalService {
         RentalContract responseEntity = contractRepository.save(requestEitnty);
         ResponseRentalContractDTO responseDTO = rentalContractMapstruct.toConractDTO(responseEntity);
 
-        log.debug("responseDTO:{}", responseDTO);
-
         return responseDTO;
     }
 

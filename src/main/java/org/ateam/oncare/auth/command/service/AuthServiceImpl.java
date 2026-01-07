@@ -90,7 +90,6 @@ public class AuthServiceImpl implements AuthService {
     @Cacheable(value="masterData" , key="'m_authorities'")
     public Map<Long, String> getAuthorities() {
         Map<Long, String> getAuthorities = employeeService.getAuthorityMasters();
-        log.debug("getAuthorities: getAuthorities={}", getAuthorities);
         return getAuthorities;
     }
 
@@ -104,7 +103,6 @@ public class AuthServiceImpl implements AuthService {
     @CacheEvict(value="masterData" , key="'m_authorities'")
     public void updateAuthorityEvent(MasterDataEvent event) {
         if(event.getType() == MasterInternalType.AUTHORITY) {
-            log.debug("updateAuthorityEvent: eventType=AUTHORITY 실행");
         }
     }
 }
