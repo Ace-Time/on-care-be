@@ -90,6 +90,13 @@ public class CareLogCommandService {
     @Transactional
     public void deleteCareLog(Long logId) {
         log.info("요양일지 삭제 시작 - logId: {}", logId);
+
+        // 삭제 전 요양일지 정보 조회 (beneficiaryId, serviceDate)
+        CareLogInfo careLogInfo = careLogCommandMapper.selectCareLogInfo(logId);
+        if (careLogInfo == null) {
+            throw new IllegalArgumentException("해당 요양일지를 찾을 수 없습니다. logId: " + logId);
+        }
+
         int deleted = careLogCommandMapper.deleteCareLog(logId);
 
         if (deleted == 0) {
@@ -97,5 +104,8 @@ public class CareLogCommandService {
         }
 
         log.info("요양일지 삭제 완료 - logId: {}", logId);
+
+        // AI 요약 생성 (비동기 처리)
+        aiSummaryAsyncService.generateAiSummaryAsync(careLogInfo.getBeneficiaryId(), careLogInfo.getServiceDate());
     }
 }

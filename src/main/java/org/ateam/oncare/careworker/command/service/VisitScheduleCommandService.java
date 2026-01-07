@@ -19,6 +19,7 @@ public class VisitScheduleCommandService {
 
     private final VisitScheduleCommandMapper visitScheduleCommandMapper;
     private final CareLogCommandMapper careLogCommandMapper;
+    private final AiSummaryAsyncService aiSummaryAsyncService;
     // private final BeneficiaryCostService beneficiaryCostService;
 
     @Transactional
@@ -205,11 +206,16 @@ public class VisitScheduleCommandService {
     public void deleteVisitSchedule(Long vsId) {
         log.info("방문 요양 일정 삭제 시작 - vsId: {}", vsId);
 
-        // 1. 관련된 요양일지 먼저 삭제 (논리삭제)
+        // 1. 삭제될 요양일지 정보 조회 (AI 요약 재생성을 위해)
+        java.util.List<org.ateam.oncare.careworker.command.dto.CareLogInfo> careLogInfos =
+                careLogCommandMapper.selectCareLogInfosByVsId(vsId);
+        log.info("삭제될 요양일지 조회 완료 - vsId: {}, 개수: {}", vsId, careLogInfos.size());
+
+        // 2. 관련된 요양일지 먼저 삭제 (물리삭제)
         int careLogsDeleted = careLogCommandMapper.deleteCareLogsByVsId(vsId);
         log.info("관련 요양일지 삭제 완료 - vsId: {}, 삭제된 개수: {}", vsId, careLogsDeleted);
 
-        // 2. 방문 일정 삭제 (물리삭제)
+        // 3. 방문 일정 삭제 (물리삭제)
         int deleted = visitScheduleCommandMapper.deleteVisitSchedule(vsId);
 
         if (deleted == 0) {
@@ -217,5 +223,10 @@ public class VisitScheduleCommandService {
         }
 
         log.info("방문 요양 일정 삭제 완료 - vsId: {}", vsId);
+
+        // 4. AI 요약 생성 (비동기 처리, 각 요양일지의 월별로 재생성)
+        for (org.ateam.oncare.careworker.command.dto.CareLogInfo info : careLogInfos) {
+            aiSummaryAsyncService.generateAiSummaryAsync(info.getBeneficiaryId(), info.getServiceDate());
+        }
     }
 }
