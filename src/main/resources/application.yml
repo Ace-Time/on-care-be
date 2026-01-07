@@ -5,7 +5,7 @@ server:
 
 spring:
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
+#    driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://${RDS_HOSTNAME}:${RDS_PORT}/${RDS_DB_NAME}
     username: ${RDS_USERNAME}
     password: ${RDS_PASSWORD}
@@ -50,3 +50,15 @@ management:
   metrics:
     tags:
       application: oncare # 그라파나에서 구분할 앱 이름
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true # 이게 true여야 함
+      multiline: true # (선택) 한줄로 나오는게 싫으면 true
+
+logging:
+  level:
+    p6spy: INFO # p6spy 패키지의 로그 레벨을 INFO로 지정
+  loki:
+    url: http://10.0.0.6:3100/loki/api/v1/push

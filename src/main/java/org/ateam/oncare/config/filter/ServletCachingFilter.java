@@ -1,4 +1,4 @@
-package org.ateam.oncare.config.logutil;
+package org.ateam.oncare.config.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

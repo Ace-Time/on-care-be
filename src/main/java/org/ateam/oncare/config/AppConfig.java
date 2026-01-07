@@ -2,8 +2,8 @@ package org.ateam.oncare.config;
 
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
-import org.ateam.oncare.config.logutil.LogInterceptor;
-import org.ateam.oncare.config.logutil.ServletCachingFilter;
+import org.ateam.oncare.config.interceptor.LogInterceptor;
+import org.ateam.oncare.config.filter.ServletCachingFilter;
 import org.ateam.oncare.global.customannotation.resolver.ClientIpArgumentResolver;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
