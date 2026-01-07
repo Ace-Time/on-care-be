@@ -103,8 +103,6 @@ public class ProductServiceImpl implements ProductService {
         productTask.setProductId(entity.get(0).getId());
 
         productTaskRepository.saveAndFlush(productTask);
-        log.debug("productTask: {}", productTask);
-        log.debug("예정 출고 entity : {}", entity);
     }
 
     private void inBound(ProductStockEvent productStockEvent) {
@@ -114,8 +112,6 @@ public class ProductServiceImpl implements ProductService {
         productTask.setProductId(entity.getId());
 
         productTaskRepository.saveAndFlush(productTask);
-        log.debug("productTask: {}", productTask);
-        log.debug("예정 출고 entity : {}", entity);
     }
 
 }

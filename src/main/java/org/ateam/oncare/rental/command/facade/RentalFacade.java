@@ -70,7 +70,6 @@ public class RentalFacade {
                                 p -> p
                         ));
 
-        log.debug("productAmountForRentalDTOS:{}", productAmountForRentalDTOS);
         // 제품 마스터가 등록되지 않은 렌탈 계약건이 1건이라도 있을 경우 에러 처리
         targetRentalContracts.stream()
                 .filter(x -> !productAmountForRentalMap.containsKey(x.getProductCd()))
@@ -89,8 +88,6 @@ public class RentalFacade {
                             x.getUsedDays() * dto.getAmountDaily(); // 사용기간을 한달을 못 채웟을때 일일 금액 * 사용일
                     x.setCalculationAmount(calculation);
                 });
-
-        log.debug("targetRentalContracts:{}", targetRentalContracts);
 
 
         // 제품별 렌탈 비용 계산
@@ -174,7 +171,6 @@ public class RentalFacade {
             }
         });
 
-        log.debug("calcProductRentalFeeList:{}", calcProductRentalFeeList);
         return calcProductRentalFeeList;
     }
 
@@ -209,16 +205,12 @@ public class RentalFacade {
         Slice<ResponseProductMasterDetailDTO> responeSlice = productMasterService.getProductMasterDetail(condition, pageable);
         List<ResponseProductMasterDetailDTO> responseProductMasterDetailDTOList = responeSlice.getContent();
 
-        log.debug("responseProductMasterDetailDTOList:{}", responseProductMasterDetailDTOList);
-
         ResponseProductMasterDetailDTO responseDTO = responseProductMasterDetailDTOList.size() > 0 ?
                 responseProductMasterDetailDTOList.get(0) :
                 null;
         boolean isPossable = false;
         if (responseDTO != null && responseDTO.getAvailableProducts() > 0)
             isPossable = true;
-
-        log.debug("responseDTO:{}", responseDTO);
 
         return isPossable;
     }

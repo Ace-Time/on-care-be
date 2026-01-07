@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             String jwt = getJwtFromRequest(request);
-            log.debug("엑세스토큰 jwt: {}", jwt);
             if (jwt != null && tokenProvider.validateAccessToken(jwt)) {
                 Claims claims = tokenProvider.getClaimsFromAT(jwt);
                 String username = claims.getSubject();
