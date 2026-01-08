@@ -55,7 +55,6 @@ decorator:
   datasource:
     p6spy:
       enable-logging: true # 이게 true여야 함
-      multiline: true # (선택) 한줄로 나오는게 싫으면 true
 
 logging:
   level:
