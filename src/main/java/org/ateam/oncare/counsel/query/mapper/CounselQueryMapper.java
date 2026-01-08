@@ -26,4 +26,6 @@ public interface CounselQueryMapper {
     @Nullable CounselDetailResponse findCounselDetailById(BigInteger counselHistoryId);
 
     Long findPotentialIdByBeneficiaryId(Long beneficiaryId);
+
+    Long findLastCounselorId(@Param("beneficiaryId") Long beneficiaryId);
 }
