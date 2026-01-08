@@ -332,4 +332,16 @@
             id = #{beneficiaryId}
     </select>
 
+    <select id="findLastCounselorId" parameterType="long" resultType="java.lang.Long">
+        SELECT
+            ch.counselor_id
+        FROM counsel_history ch
+        WHERE ch.beneficiary_id = #{beneficiaryId}
+           OR ch.potential_id = (
+            SELECT potential_customer_id FROM beneficiary WHERE id = #{beneficiaryId}
+        )
+        ORDER BY ch.consult_date DESC
+            LIMIT 1
+    </select>
+
 </mapper>

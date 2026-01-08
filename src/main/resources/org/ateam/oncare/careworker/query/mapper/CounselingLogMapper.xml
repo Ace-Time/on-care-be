@@ -13,9 +13,11 @@
             cl.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            cl.is_draft AS isDraft
+            cl.is_draft AS isDraft,
+            e.name AS careWorkerName
         FROM counseling_logs cl
                  JOIN care_worker cw ON cl.care_worker_id = cw.id
+                 LEFT JOIN employee e ON cw.employee_id = e.id
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -43,8 +45,11 @@
             cl.beneficiary_id AS beneficiaryId,
             b.name AS beneficiaryName,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            cl.is_draft AS isDraft
+            cl.is_draft AS isDraft,
+            e.name AS careWorkerName
         FROM counseling_logs cl
+                 LEFT JOIN care_worker cw ON cl.care_worker_id = cw.id
+                 LEFT JOIN employee e ON cw.employee_id = e.id
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id
@@ -79,8 +84,11 @@
             cl.agreement_content AS agreementContent,
             cl.next_visit_date AS nextVisitDate,
             cl.counselor_sign_url AS counselorSignUrl,
-            cl.guardian_sign_url AS guardianSignUrl
+            cl.guardian_sign_url AS guardianSignUrl,
+            e.name AS careWorkerName
         FROM counseling_logs cl
+                 LEFT JOIN care_worker cw ON cl.care_worker_id = cw.id
+                 LEFT JOIN employee e ON cw.employee_id = e.id
                  LEFT JOIN beneficiary b ON cl.beneficiary_id = b.id
                  LEFT JOIN (
                      SELECT beneficiary_id, id

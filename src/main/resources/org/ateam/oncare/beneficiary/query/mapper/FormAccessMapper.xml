@@ -31,45 +31,54 @@
         )
         )
 
-        <!-- (6) 방문요양 제공기록지 : 현재 매칭(Y) 요양보호사가 방문요양(1) 가능할 때 -->
+        <!-- (6) 방문요양 제공기록지 : 현재 매칭(Y) + 수급자 스케줄에 방문요양(1) 존재 -->
         OR (
         af.form_category_id = 6
         AND EXISTS (
         SELECT 1
         FROM matching m
-        JOIN care_worker_service_type cwst
-        ON cwst.care_worker_id = m.care_worker_id
         WHERE m.beneficiary_id = #{beneficiaryId}
         AND m.status = 'Y'
-        AND cwst.m_service_type_id = 1
+        AND EXISTS (
+        SELECT 1
+        FROM beneficiary_schedule bs
+        WHERE bs.beneficiary_id = m.beneficiary_id
+        AND bs.service_type_id = 1
+        )
         )
         )
 
-        <!-- (7) 방문목욕 제공기록지 : 현재 매칭(Y) 요양보호사가 방문목욕(2) 가능할 때 -->
+        <!-- (7) 방문목욕 제공기록지 : 현재 매칭(Y) + 수급자 스케줄에 방문목욕(2) 존재 -->
         OR (
         af.form_category_id = 7
         AND EXISTS (
         SELECT 1
         FROM matching m
-        JOIN care_worker_service_type cwst
-        ON cwst.care_worker_id = m.care_worker_id
         WHERE m.beneficiary_id = #{beneficiaryId}
         AND m.status = 'Y'
-        AND cwst.m_service_type_id = 2
+        AND EXISTS (
+        SELECT 1
+        FROM beneficiary_schedule bs
+        WHERE bs.beneficiary_id = m.beneficiary_id
+        AND bs.service_type_id = 2
+        )
         )
         )
 
-        <!-- (8) 방문간호 제공기록지 : 현재 매칭(Y) 요양보호사가 방문간호(3) 가능할 때 -->
+        <!-- (8) 방문간호 제공기록지 : 현재 매칭(Y) + 수급자 스케줄에 방문간호(3) 존재 -->
         OR (
         af.form_category_id = 8
         AND EXISTS (
         SELECT 1
         FROM matching m
-        JOIN care_worker_service_type cwst
-        ON cwst.care_worker_id = m.care_worker_id
         WHERE m.beneficiary_id = #{beneficiaryId}
         AND m.status = 'Y'
-        AND cwst.m_service_type_id = 3
+        AND EXISTS (
+        SELECT 1
+        FROM beneficiary_schedule bs
+        WHERE bs.beneficiary_id = m.beneficiary_id
+        AND bs.service_type_id = 3
+        )
         )
         )
         )

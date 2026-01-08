@@ -195,6 +195,9 @@
             <if test="statusId != null">
                 AND e.status_id = #{statusId}
             </if>
+            <if test="statusId == null">
+                AND s.field != '퇴사'
+            </if>
             <if test="certificateId != null">
                 AND cwc.certificate_id = #{certificateId}
             </if>

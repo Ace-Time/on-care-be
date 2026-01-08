@@ -96,7 +96,6 @@ public class ProductMasterServiceImpl implements ProductMasterService {
 
         List<CareProductMaster> careProductMasters = productMasterRepository.findAllById(productCodes);
 
-        log.debug(" careProductMasters={}",careProductMasters);
         List<ProductAmountForRentalDTO> productAmountForRentalDTOS
                 = careProductMasters.stream()
                 .map(e ->new ProductAmountForRentalDTO(

@@ -1,1 +1,13 @@
+// 플러그인 다운로드 저장소 설정 (반드시 파일 맨 위에 있어야 함)
+pluginManagement {
+    repositories {
+        // 1. Maven Central 차단 시 사용할 구글 미러 (가장 먼저 시도)
+        maven { url "https://maven-central.storage-download.googleapis.com/maven2/" }
+
+        // 2. 기존 저장소들
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
 rootProject.name = 'oncare'

@@ -32,12 +32,11 @@
     <select id="selectUrgentNotifications" resultType="org.ateam.oncare.careworker.query.dto.UrgentNotificationDto">
         SELECT
             nl.alarm_id AS id,
-            nt.title,
-            nt.content AS message,
+            nl.title,
+            nl.content AS message,
             nl.sent_at AS dueDate,
             TRUE AS isUrgent
         FROM notification_log nl
-                 JOIN notification_template nt ON nl.template_id = nt.template_id
                  JOIN care_worker cw ON nl.receiver_id = cw.employee_id
         WHERE cw.employee_id = #{caregiverId}
           AND nl.receiver_type = 'EMPLOYEE'
@@ -273,7 +272,7 @@
             b.address,
             b.phone,
             COALESCE(mcl.level, '등급없음') AS careLevel,
-            (SELECT GROUP_CONCAT(DISTINCT mst.name ORDER BY mst.name SEPARATOR ', ')
+            (SELECT GROUP_CONCAT(DISTINCT mst.name SEPARATOR ', ')
              FROM visit_schedule vs
                       JOIN m_service_type mst ON vs.service_type_id = mst.id
              WHERE vs.beneficiary_id = b.id

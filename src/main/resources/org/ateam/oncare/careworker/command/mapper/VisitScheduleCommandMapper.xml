@@ -64,4 +64,34 @@
         WHERE vs_id = #{vsId}
     </delete>
 
+    <!-- 방문 일정의 요양보호사 ID 조회 -->
+    <select id="selectCareWorkerIdByVsId" resultType="long">
+        SELECT care_worker_id
+        FROM visit_schedule
+        WHERE vs_id = #{vsId}
+    </select>
+
+    <!-- 방문 일정의 요양보호사(Employee) ID 조회 -->
+    <select id="selectEmployeeIdByVsId" resultType="long">
+        SELECT cw.employee_id
+        FROM visit_schedule vs
+        INNER JOIN care_worker cw ON vs.care_worker_id = cw.id
+        WHERE vs.vs_id = #{vsId}
+    </select>
+
+    <!-- 형제 일정 조회 -->
+    <select id="selectVisitScheduleSiblings" resultType="org.ateam.oncare.schedule.command.entity.VisitSchedule">
+        SELECT *
+        FROM visit_schedule
+        WHERE beneficiary_id = #{beneficiaryId}
+          AND care_worker_id = #{careWorkerId}
+          AND DATE(start_dt) = #{date}
+    </select>
+
+    <!-- ID로 일정 단건 조회 -->
+    <select id="selectVisitScheduleById" resultType="org.ateam.oncare.schedule.command.entity.VisitSchedule">
+        SELECT *
+        FROM visit_schedule
+        WHERE vs_id = #{vsId}
+    </select>
 </mapper>

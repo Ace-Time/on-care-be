@@ -1,5 +1,6 @@
 package org.ateam.oncare.config.exception;
 
+import org.ateam.oncare.config.customexception.DuplicateCareLogException;
 import org.ateam.oncare.config.customexception.ExistsAlreadyProductMasterException;
 import org.ateam.oncare.config.customexception.InsufficientStockException;
 import org.ateam.oncare.config.customexception.InvalidRentalDateException;
@@ -67,7 +68,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({InsufficientStockException.class, InvalidRentalDateException.class
-    , ExistsAlreadyProductMasterException.class})
+    , ExistsAlreadyProductMasterException.class, DuplicateCareLogException.class})
     public ResponseEntity<String> BAD_REQUEST(Exception e) {
         log.error(e.getMessage());
         return ResponseEntity

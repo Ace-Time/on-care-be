@@ -20,4 +20,5 @@ public class CounselingLogListDto {
     private String beneficiaryName;
     private String careLevel;
     private Boolean isDraft;  // 임시저장 여부
+    private String careWorkerName;  // 작성자명
 }

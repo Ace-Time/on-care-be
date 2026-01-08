@@ -21,6 +21,27 @@ public class MatchingQueryService {
     // ✅ CSV 로더 주입
     private final DongCoordinateLoader dongCoordinateLoader;
 
+    // =========================
+    // sort 모드
+    // =========================
+    private enum SortMode {
+        TOTAL, TAG, DIST;
+
+        static SortMode from(String s) {
+            if (s == null || s.isBlank()) return TOTAL;
+            String v = s.trim().toUpperCase();
+            return switch (v) {
+                case "TAG" -> TAG;
+                case "DIST" -> DIST;
+                case "TOTAL" -> TOTAL;
+                default -> TOTAL;
+            };
+        }
+    }
+
+    // =========================
+    // 후보 ID 필터링(케이스별)
+    // =========================
     public List<Long> selectFinalCandidateCareWorkerIds(Long beneficiaryId) {
 
         var schedules = mapper.selectBeneficiarySchedules(beneficiaryId);
@@ -107,6 +128,43 @@ public class MatchingQueryService {
         return new ArrayList<>(timeSet);
     }
 
+    public List<Long> selectFinalCandidateCareWorkerIdsForCreateVisit(
+            Long beneficiaryId, Long serviceTypeId, String startDt, String endDt
+    ) {
+        if (beneficiaryId == null) return List.of();
+        if (serviceTypeId == null) return List.of();
+        if (startDt == null || startDt.isBlank() || endDt == null || endDt.isBlank()) return List.of();
+
+        int conflict = mapper.existsBeneficiaryVisitConflict(beneficiaryId, startDt, endDt);
+        if (conflict == 1) {
+            log.info("[STOP] beneficiary time conflict beneficiaryId={} startDt={} endDt={}",
+                    beneficiaryId, startDt, endDt);
+            return List.of();
+        }
+
+        Set<Long> serviceTypeSet = mapper.selectCareWorkerIdsByServiceTypeId(serviceTypeId).stream()
+                .map(CareWorkerIdDto::getCareWorkerId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (serviceTypeSet.isEmpty()) return List.of();
+
+        Set<Long> riskCertSet = mapper.selectCareWorkerIdsByRiskCertificates(beneficiaryId).stream()
+                .map(CareWorkerIdDto::getCareWorkerId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        serviceTypeSet.retainAll(riskCertSet);
+        if (serviceTypeSet.isEmpty()) return List.of();
+
+        Set<Long> noVisitConflictSet = mapper.selectAvailableCareWorkerIdsByVisitTime(startDt, endDt).stream()
+                .map(CareWorkerIdDto::getCareWorkerId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        serviceTypeSet.retainAll(noVisitConflictSet);
+        if (serviceTypeSet.isEmpty()) return List.of();
+
+        return new ArrayList<>(serviceTypeSet);
+    }
+
+    // =========================
+    // Beneficiary
+    // =========================
     public List<BeneficiarySummaryDto> getBeneficiariesSummary(int page, int size, String keyword, String assigned) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 50);
@@ -156,6 +214,19 @@ public class MatchingQueryService {
         return detail;
     }
 
+    // =========================
+    // CareWorker detail
+    // =========================
+    public CareWorkerDetailDto getCareWorkerDetail(Long careWorkerId) {
+        var detail = mapper.selectCareWorkerDetail(careWorkerId);
+        if (detail == null) {
+            log.warn("[CAREWORKER DETAIL] careWorkerId={} NOT FOUND", careWorkerId);
+            return null;
+        }
+        log.info("[CAREWORKER DETAIL] careWorkerId={} name={}", careWorkerId, detail.getName());
+        return detail;
+    }
+
     /**
      * ⚠️ 중요: mapper SQL이 ORDER BY cw.id 라도,
      * 여기서 ids 순서대로 카드 리스트를 재정렬해서 반환합니다.
@@ -183,95 +254,248 @@ public class MatchingQueryService {
         return ordered;
     }
 
+    // =========================
+    // 케이스1/2/3: 전체 리스트(정렬 포함)
+    // =========================
+
     /**
-     * ✅ (케이스1) 수급자 기준 추천: 필터링 -> 정렬 -> 카드
+     * ✅ (케이스1) 수급자 기준 추천: 필터링 -> 정렬 -> 카드 (+점수 주입)
      */
-    public List<CareWorkerCardDto> getCandidateCareWorkers(Long beneficiaryId) {
+    public List<CareWorkerCardDto> getCandidateCareWorkers(Long beneficiaryId, String sort) {
         var ids = selectFinalCandidateCareWorkerIds(beneficiaryId);
-        ids = sortByTagThenDistance(beneficiaryId, ids);
-        return getCareWorkerCardsByIds(ids);
-    }
 
-    public CareWorkerDetailDto getCareWorkerDetail(Long careWorkerId) {
-        var detail = mapper.selectCareWorkerDetail(careWorkerId);
-        if (detail == null) {
-            log.warn("[CAREWORKER DETAIL] careWorkerId={} NOT FOUND", careWorkerId);
-            return null;
-        }
-        log.info("[CAREWORKER DETAIL] careWorkerId={} name={}", careWorkerId, detail.getName());
-        return detail;
-    }
+        ScoreResult scoreResult = sortByModeWithScore(beneficiaryId, ids, sort);
+        List<CareWorkerCardDto> cards = getCareWorkerCardsByIds(scoreResult.getSortedIds());
+        applyScores(cards, scoreResult.getScoreMap());
 
-    public List<Long> selectFinalCandidateCareWorkerIdsForCreateVisit(
-            Long beneficiaryId, Long serviceTypeId, String startDt, String endDt
-    ) {
-        if (beneficiaryId == null) return List.of();
-        if (serviceTypeId == null) return List.of();
-        if (startDt == null || startDt.isBlank() || endDt == null || endDt.isBlank()) return List.of();
-
-        int conflict = mapper.existsBeneficiaryVisitConflict(beneficiaryId, startDt, endDt);
-        if (conflict == 1) {
-            log.info("[STOP] beneficiary time conflict beneficiaryId={} startDt={} endDt={}",
-                    beneficiaryId, startDt, endDt);
-            return List.of();
-        }
-
-        Set<Long> serviceTypeSet = mapper.selectCareWorkerIdsByServiceTypeId(serviceTypeId).stream()
-                .map(CareWorkerIdDto::getCareWorkerId)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        if (serviceTypeSet.isEmpty()) return List.of();
-
-        Set<Long> riskCertSet = mapper.selectCareWorkerIdsByRiskCertificates(beneficiaryId).stream()
-                .map(CareWorkerIdDto::getCareWorkerId)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        serviceTypeSet.retainAll(riskCertSet);
-        if (serviceTypeSet.isEmpty()) return List.of();
-
-        Set<Long> noVisitConflictSet = mapper.selectAvailableCareWorkerIdsByVisitTime(startDt, endDt).stream()
-                .map(CareWorkerIdDto::getCareWorkerId)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        serviceTypeSet.retainAll(noVisitConflictSet);
-        if (serviceTypeSet.isEmpty()) return List.of();
-
-        return new ArrayList<>(serviceTypeSet);
+        return cards;
     }
 
     /**
-     * ✅ (케이스3) 생성 기준 추천: 필터링 -> 정렬 -> 카드
+     * ✅ (케이스3) 생성 기준 추천: 필터링 -> 정렬 -> 카드 (+점수 주입)
      */
     public List<CareWorkerCardDto> getCreateVisitAvailableCareWorkers(
-            Long beneficiaryId, Long serviceTypeId, String startDt, String endDt
+            Long beneficiaryId, Long serviceTypeId, String startDt, String endDt, String sort
     ) {
         var ids = selectFinalCandidateCareWorkerIdsForCreateVisit(beneficiaryId, serviceTypeId, startDt, endDt);
-        ids = sortByTagThenDistance(beneficiaryId, ids);
-        return getCareWorkerCardsByIds(ids);
+
+        ScoreResult scoreResult = sortByModeWithScore(beneficiaryId, ids, sort);
+        List<CareWorkerCardDto> cards = getCareWorkerCardsByIds(scoreResult.getSortedIds());
+        applyScores(cards, scoreResult.getScoreMap());
+
+        return cards;
     }
 
     /**
-     * ✅ (케이스2) 방문일정 기준 추천: 필터링 -> 정렬 -> 카드
+     * ✅ (케이스2) 방문일정 기준 추천: 필터링 -> 정렬 -> 카드 (+점수 주입)
      */
     public List<CareWorkerCardDto> getVisitTimeAvailableCareWorkers(
-            Long vsId, String startDt, String endDt
+            Long vsId, String startDt, String endDt, String sort
     ) {
         Long beneficiaryId = mapper.selectVisitScheduleBeneficiaryId(vsId);
         if (beneficiaryId == null) return List.of();
 
         var ids = selectFinalCandidateCareWorkerIdsByVisitSchedule(vsId, startDt, endDt);
-        ids = sortByTagThenDistance(beneficiaryId, ids);
-        return getCareWorkerCardsByIds(ids);
+
+        ScoreResult scoreResult = sortByModeWithScore(beneficiaryId, ids, sort);
+        List<CareWorkerCardDto> cards = getCareWorkerCardsByIds(scoreResult.getSortedIds());
+        applyScores(cards, scoreResult.getScoreMap());
+
+        return cards;
+    }
+
+    // =========================
+    // Page (케이스1/2/3)
+    // =========================
+
+    public CareWorkerPageResponse getCandidateCareWorkersPage(
+            Long beneficiaryId, int page, int size, String keyword, String sort
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+
+        String q = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+
+        List<CareWorkerCardDto> all = getCandidateCareWorkers(beneficiaryId, sort);
+
+        List<CareWorkerCardDto> filtered;
+        if (q == null) {
+            filtered = all;
+        } else {
+            String lower = q.toLowerCase();
+            filtered = all.stream()
+                    .filter(cw -> cw != null && cw.getName() != null
+                            && cw.getName().toLowerCase().contains(lower))
+                    .toList();
+        }
+
+        long total = filtered.size();
+
+        int from = safePage * safeSize;
+        int to = Math.min(from + safeSize, filtered.size());
+
+        List<CareWorkerCardDto> pageList =
+                (from >= filtered.size()) ? List.of() : filtered.subList(from, to);
+
+        return new CareWorkerPageResponse(pageList, safePage, safeSize, total);
+    }
+
+    public CareWorkerPageResponse getVisitTimeAvailableCareWorkersPage(
+            Long vsId, String startDt, String endDt, int page, String sort
+    ) {
+        int safePage = Math.max(page, 0);
+        int size = 3;
+
+        List<CareWorkerCardDto> all = getVisitTimeAvailableCareWorkers(vsId, startDt, endDt, sort);
+        if (all == null || all.isEmpty()) {
+            return new CareWorkerPageResponse(List.of(), safePage, size, 0);
+        }
+
+        long total = all.size();
+
+        int from = safePage * size;
+        int to = Math.min(from + size, all.size());
+
+        List<CareWorkerCardDto> pageList =
+                (from >= all.size()) ? List.of() : all.subList(from, to);
+
+        return new CareWorkerPageResponse(pageList, safePage, size, total);
+    }
+
+    public CareWorkerPageResponse getCreateVisitAvailableCareWorkersPage(
+            Long beneficiaryId, Long serviceTypeId, String startDt, String endDt,
+            int page, int size, String keyword, String sort
+    ) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+
+        String q = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+
+        List<CareWorkerCardDto> all =
+                getCreateVisitAvailableCareWorkers(beneficiaryId, serviceTypeId, startDt, endDt, sort);
+
+        if (all == null || all.isEmpty()) {
+            return new CareWorkerPageResponse(List.of(), safePage, safeSize, 0);
+        }
+
+        List<CareWorkerCardDto> filtered;
+        if (q == null) {
+            filtered = all;
+        } else {
+            String lower = q.toLowerCase();
+            filtered = all.stream()
+                    .filter(cw -> cw != null && cw.getName() != null
+                            && cw.getName().toLowerCase().contains(lower))
+                    .toList();
+        }
+
+        long total = filtered.size();
+
+        int from = safePage * safeSize;
+        int to = Math.min(from + safeSize, filtered.size());
+
+        List<CareWorkerCardDto> pageList =
+                (from >= filtered.size()) ? List.of() : filtered.subList(from, to);
+
+        return new CareWorkerPageResponse(pageList, safePage, safeSize, total);
+    }
+
+    // =========================
+    // 정렬 + 점수 계산
+    // =========================
+
+    /**
+     * ✅ mode별 정렬
+     * - TOTAL: totalScore DESC, (동점) distanceKm ASC, id ASC
+     * - TAG: overlapCount DESC, (동점) distanceKm ASC, id ASC
+     * - DIST: distanceKm ASC(null last), id ASC
+     */
+    private ScoreResult sortByModeWithScore(Long beneficiaryId, List<Long> ids, String sort) {
+        SortMode mode = SortMode.from(sort);
+
+        // 점수/거리/겹침수는 항상 계산(프론트 표시/디버깅 용이)
+        ScoreResult base = buildScoreResult(beneficiaryId, ids);
+
+        List<Long> sorted = new ArrayList<>(base.sortedIds); // base.sortedIds는 ids 그대로(아래에서 정렬)
+        Map<Long, ScoreDetail> scoreMap = base.scoreMap;
+
+        Comparator<Long> byIdAsc = Long::compare;
+
+        Comparator<Long> byDistAscNullLast = (a, b) -> {
+            ScoreDetail sa = scoreMap.get(a);
+            ScoreDetail sb = scoreMap.get(b);
+            double da = (sa == null || sa.distanceKm == null) ? Double.MAX_VALUE : sa.distanceKm;
+            double db = (sb == null || sb.distanceKm == null) ? Double.MAX_VALUE : sb.distanceKm;
+            int cmp = Double.compare(da, db);
+            return (cmp != 0) ? cmp : byIdAsc.compare(a, b);
+        };
+
+        Comparator<Long> byTotalDesc = (a, b) -> {
+            ScoreDetail sa = scoreMap.get(a);
+            ScoreDetail sb = scoreMap.get(b);
+
+            // 좌표 없는 사람은 null -> 맨 뒤로
+            Integer ta = (sa == null) ? null : sa.totalScoreSort;
+            Integer tb = (sb == null) ? null : sb.totalScoreSort;
+
+            int cmp;
+            if (ta == null && tb == null) cmp = 0;
+            else if (ta == null) cmp = 1;      // a 뒤로
+            else if (tb == null) cmp = -1;     // b 뒤로
+            else cmp = Integer.compare(tb, ta); // DESC
+
+            if (cmp != 0) return cmp;
+            return byDistAscNullLast.compare(a, b);
+        };
+
+        Comparator<Long> byTagDesc = (a, b) -> {
+            ScoreDetail sa = scoreMap.get(a);
+            ScoreDetail sb = scoreMap.get(b);
+            int ta = (sa == null || sa.overlapCount == null) ? Integer.MIN_VALUE : sa.overlapCount;
+            int tb = (sb == null || sb.overlapCount == null) ? Integer.MIN_VALUE : sb.overlapCount;
+            int cmp = Integer.compare(tb, ta); // DESC
+            if (cmp != 0) return cmp;
+            return byDistAscNullLast.compare(a, b);
+        };
+
+        switch (mode) {
+            case DIST -> sorted.sort(byDistAscNullLast);
+            case TAG -> sorted.sort(byTagDesc);
+            case TOTAL -> sorted.sort(byTotalDesc);
+        }
+
+        // 로그(상위 10명)
+        for (int i = 0; i < Math.min(10, sorted.size()); i++) {
+            Long id = sorted.get(i);
+            ScoreDetail sd = scoreMap.get(id);
+
+            log.info("[SORT-CHK] mode={} rank={} careWorkerId={} overlap={} distKm={} tagScore={} distScore={} totalView={} totalSort={}",
+                    mode,
+                    i + 1,
+                    id,
+                    sd == null ? null : sd.overlapCount,
+                    sd == null ? null : sd.distanceKm,
+                    sd == null ? null : sd.tagScore,
+                    sd == null ? null : sd.distanceScore,
+                    sd == null ? null : sd.totalScoreView,
+                    sd == null ? null : sd.totalScoreSort
+            );
+        }
+
+        return new ScoreResult(sorted, scoreMap);
     }
 
     /**
-     * ✅ 핵심 정렬:
-     * 1) 태그 겹침 수 DESC
-     * 2) (동률) 거리 ASC
-     * 3) (완전동률) id ASC
+     * ✅ 점수 + 거리 + 겹침수 맵을 만든다(정렬은 mode에서 별도).
+     * - totalScore = tagScore + distanceScore
+     * - tagScore: overlapCount * 2
+     * - distanceScore: 10 - floor(distanceKm / 2)
      */
-    private List<Long> sortByTagThenDistance(Long beneficiaryId, List<Long> ids) {
-        if (beneficiaryId == null) return ids == null ? List.of() : ids;
-        if (ids == null || ids.isEmpty()) return List.of();
+    private ScoreResult buildScoreResult(Long beneficiaryId, List<Long> ids) {
+        if (beneficiaryId == null) return new ScoreResult(ids == null ? List.of() : ids, Map.of());
+        if (ids == null || ids.isEmpty()) return new ScoreResult(List.of(), Map.of());
 
-        // ✅ 정렬 전에: lat/lng 없으면 CSV로 채워서 UPDATE
+        // 정렬 전에: lat/lng 없으면 CSV로 채워서 UPDATE
         ensureBeneficiaryGeo(beneficiaryId);
         ensureCareWorkersGeo(ids);
 
@@ -279,7 +503,6 @@ public class MatchingQueryService {
         LatLngDto b = mapper.selectBeneficiaryLatLng(beneficiaryId);
         Double bLat = b == null ? null : b.getLat();
         Double bLng = b == null ? null : b.getLng();
-
         log.info("[GEO] beneficiaryId={} lat={} lng={}", beneficiaryId, bLat, bLng);
 
         // 2) 태그 겹침수
@@ -303,46 +526,76 @@ public class MatchingQueryService {
                         (a, c) -> a
                 ));
 
-        log.info("[GEO] careWorkerLatLngMap.size={} / ids.size={}",
-                careWorkerLatLngMap.size(), ids.size());
-
-        // 4) 정렬
-        List<Long> sorted = new ArrayList<>(ids);
-        sorted.sort((a, c) -> {
-            int aOverlap = overlapMap.getOrDefault(a, 0);
-            int cOverlap = overlapMap.getOrDefault(c, 0);
-
-            // 태그 겹침수 DESC
-            int cmp1 = Integer.compare(cOverlap, aOverlap);
-            if (cmp1 != 0) return cmp1;
-
-            // 거리 ASC
-            double aDist = distanceKmOrMax(bLat, bLng, careWorkerLatLngMap.get(a));
-            double cDist = distanceKmOrMax(bLat, bLng, careWorkerLatLngMap.get(c));
-
-            int cmp2 = Double.compare(aDist, cDist);
-            if (cmp2 != 0) return cmp2;
-
-            // 안정성
-            return Long.compare(a, c);
-        });
-
-        // ✅ 검증용: 상위 10명만 overlap/거리 같이 출력
-        for (int i = 0; i < Math.min(10, sorted.size()); i++) {
-            Long id = sorted.get(i);
+        // 4) 점수맵 생성
+        Map<Long, ScoreDetail> scoreMap = new HashMap<>();
+        for (Long id : ids) {
             int ov = overlapMap.getOrDefault(id, 0);
-            double dist = distanceKmOrMax(bLat, bLng, careWorkerLatLngMap.get(id));
-            log.info("[SORT-CHK] rank={} careWorkerId={} overlap={} distKm={}", i + 1, id, ov,
-                    dist == Double.MAX_VALUE ? null : dist);
+
+            double distRaw = distanceKmOrMax(bLat, bLng, careWorkerLatLngMap.get(id));
+            boolean geoMissing = (distRaw == Double.MAX_VALUE);
+
+            Double distKm = geoMissing ? null : distRaw;
+
+            int tagScore = ov * 3;
+
+            Integer distScoreView = geoMissing ? null : distanceScore(distRaw); // 표시용
+            int distScoreForSum = geoMissing ? 0 : distScoreView;              // 합산용
+
+            int totalView = tagScore + distScoreForSum;
+
+            ScoreDetail sd = new ScoreDetail();
+            sd.overlapCount = ov;
+            sd.tagScore = tagScore;
+            sd.distanceKm = distKm;
+            sd.distanceScore = distScoreView;
+
+            sd.totalScoreView = totalView;
+
+
+            sd.totalScoreSort = geoMissing ? null : totalView;
+
+            scoreMap.put(id, sd);
         }
 
-        return sorted;
+        // 여기서는 ids 순서를 그대로 반환(정렬은 mode에서 수행)
+        return new ScoreResult(new ArrayList<>(ids), scoreMap);
+    }
+
+    private void applyScores(List<CareWorkerCardDto> cards, Map<Long, ScoreDetail> scoreMap) {
+        if (cards == null || cards.isEmpty()) return;
+        if (scoreMap == null || scoreMap.isEmpty()) return;
+
+        for (CareWorkerCardDto card : cards) {
+            if (card == null || card.getCareWorkerId() == null) continue;
+
+            ScoreDetail sd = scoreMap.get(card.getCareWorkerId());
+            if (sd == null) continue;
+
+            card.setOverlapCount(sd.overlapCount);
+            card.setTagScore(sd.tagScore);
+            card.setDistanceKm(sd.distanceKm);
+            card.setDistanceScore(sd.distanceScore);
+
+            card.setTotalScore(sd.totalScoreView);
+        }
     }
 
     /**
-     * ✅ beneficiary: lat/lng NULL이면 주소 기반(동/구)으로 CSV에서 찾아 UPDATE
-     *    lat/lng 있으면 geo_ready만 1로 맞춰줌(선택)
+     * 거리점수:
+     * - 기본 10점
+     * - 1km 멀어질 때마다 -1점  (floor(distanceKm / 2))
+     * - 좌표 없어서 distance가 MAX면 0점 처리(정렬에서 뒤로 가도록)
      */
+    private int distanceScore(double distanceKm) {
+        if (distanceKm == Double.MAX_VALUE) return 0;
+
+        int score = 10 - (int) Math.floor(distanceKm); // 1km당 -1
+        return Math.max(score, 0);
+    }
+
+    // =========================
+    // GEO (CSV 기반 자동 채움)
+    // =========================
     private void ensureBeneficiaryGeo(Long beneficiaryId) {
         try {
             var geo = mapper.selectBeneficiaryGeoForUpdate(beneficiaryId);
@@ -378,10 +631,6 @@ public class MatchingQueryService {
         }
     }
 
-    /**
-     * ✅ careworker(employee): lat/lng NULL이면 주소 기반(동/구)으로 CSV에서 찾아 UPDATE
-     *    lat/lng 있으면 geo_ready만 1로 맞춰줌(선택)
-     */
     private void ensureCareWorkersGeo(List<Long> careWorkerIds) {
         try {
             var list = mapper.selectCareWorkerGeoForUpdateByIds(careWorkerIds);
@@ -440,82 +689,36 @@ public class MatchingQueryService {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }
-    public CareWorkerPageResponse getCandidateCareWorkersPage(
-            Long beneficiaryId, int page, int size, String keyword
-    ) {
-        int safePage = Math.max(page, 0);
-        int safeSize = Math.min(Math.max(size, 1), 50);
 
-        String q = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+    // =========================
+    // 내부 점수 객체들
+    // =========================
+    private static class ScoreDetail {
+        Integer overlapCount;
+        Integer tagScore;
 
-        List<CareWorkerCardDto> all = getCandidateCareWorkers(beneficiaryId);
+        Double distanceKm;          // null 가능
+        Integer distanceScore;      // 표시용(좌표 없으면 null)
+        Integer totalScoreView;     // 표시용(좌표 없어도 tagScore는 반영)
 
-        List<CareWorkerCardDto> filtered;
-        if (q == null) {
-            filtered = all;
-        } else {
-            String lower = q.toLowerCase();
-            filtered = all.stream()
-                    .filter(cw -> cw != null && cw.getName() != null
-                            && cw.getName().toLowerCase().contains(lower))
-                    .toList();
-        }
-
-        long total = filtered.size();
-
-        int from = safePage * safeSize;
-        int to = Math.min(from + safeSize, filtered.size());
-
-        List<CareWorkerCardDto> pageList =
-                (from >= filtered.size()) ? List.of() : filtered.subList(from, to);
-
-        return new CareWorkerPageResponse(pageList, safePage, safeSize, total);
+        Integer totalScoreSort;     // 정렬용(좌표 없으면 null -> TOTAL 정렬에서 뒤로)
     }
 
-    public CareWorkerPageResponse getVisitTimeAvailableCareWorkersPage(
-            Long vsId, String startDt, String endDt, int page
-    ) {
-        int safePage = Math.max(page, 0);
-        int size = 3;
+    private static class ScoreResult {
+        private final List<Long> sortedIds;
+        private final Map<Long, ScoreDetail> scoreMap;
 
-        List<CareWorkerCardDto> all = getVisitTimeAvailableCareWorkers(vsId, startDt, endDt);
-        if (all == null || all.isEmpty()) {
-            return new CareWorkerPageResponse(List.of(), safePage, size, 0);
+        private ScoreResult(List<Long> sortedIds, Map<Long, ScoreDetail> scoreMap) {
+            this.sortedIds = sortedIds;
+            this.scoreMap = scoreMap;
         }
 
-        long total = all.size();
-
-        int from = safePage * size;
-        int to = Math.min(from + size, all.size());
-
-        List<CareWorkerCardDto> pageList =
-                (from >= all.size()) ? List.of() : all.subList(from, to);
-
-        return new CareWorkerPageResponse(pageList, safePage, size, total);
-    }
-    public CareWorkerPageResponse getCreateVisitAvailableCareWorkersPage(
-            Long beneficiaryId, Long serviceTypeId, String startDt, String endDt,
-            int page, int size
-    ) {
-        int safePage = Math.max(page, 0);
-        int safeSize = Math.min(Math.max(size, 1), 50);
-
-        // ✅ 기존 로직 그대로 호출 (필터링/정렬 그대로)
-        List<CareWorkerCardDto> all =
-                getCreateVisitAvailableCareWorkers(beneficiaryId, serviceTypeId, startDt, endDt);
-
-        if (all == null || all.isEmpty()) {
-            return new CareWorkerPageResponse(List.of(), safePage, safeSize, 0);
+        public List<Long> getSortedIds() {
+            return sortedIds;
         }
 
-        long total = all.size();
-
-        int from = safePage * safeSize;
-        int to = Math.min(from + safeSize, all.size());
-
-        List<CareWorkerCardDto> pageList =
-                (from >= all.size()) ? List.of() : all.subList(from, to);
-
-        return new CareWorkerPageResponse(pageList, safePage, safeSize, total);
+        public Map<Long, ScoreDetail> getScoreMap() {
+            return scoreMap;
+        }
     }
 }

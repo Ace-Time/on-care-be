@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # 메트릭스 데이터 수집
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restart: always  # [핵심] EC2 재부팅 시 자동 실행
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - monitoring-net
+  # 수집된 메트릭스 데이터 시각화
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: always  # [핵심] EC2 재부팅 시 자동 실행
+    ports:
+      - "3000:3000"
+    environment:
+      # [핵심 설정 1] 내 실제 접속 주소 (도메인 + 경로)
+      - GF_SERVER_ROOT_URL=https://healthsystem.shop/grafana
+      # [핵심 설정 2] 서브 경로(/grafana) 뒤에서 서비스함을 명시
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-net
+  # app단 로그 중앙 수집기
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    restart: always
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring-net
+networks:
+  monitoring-net:
+    driver: bridge
+
+volumes:
+  grafana-data:

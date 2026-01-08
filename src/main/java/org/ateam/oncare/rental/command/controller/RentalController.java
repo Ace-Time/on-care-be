@@ -61,7 +61,6 @@ public class RentalController {
     @PutMapping("/calculation/{calcDate}")
     public ResponseEntity<Integer> calculationRentalAmount(@PathVariable LocalDate calcDate) {
         int count = rentalFacade.calcRentalAmount(calcDate);
-        log.debug("calculationRentalAmount:{}",calcDate);
         return ResponseEntity.ok(1);
     }
 

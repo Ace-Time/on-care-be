@@ -18,6 +18,15 @@
         WHERE id = #{expirationId}
     </update>
 
+    <!-- [추가] 최신 안내이력 memo 조회 (notice_date 기준 최신 1건) -->
+    <select id="selectLatestNoticeMemo" resultType="string">
+        SELECT ne.memo
+        FROM notice_expiration ne
+        WHERE ne.expiration_id = #{expirationId}
+        ORDER BY ne.notice_date DESC, ne.id DESC
+        LIMIT 1
+    </select>
+
     <!-- noticeDate가 null이면 NOW() -->
     <insert id="insertNotice">
         INSERT INTO notice_expiration (notice_date, memo, expiration_id, emp_id)
@@ -61,7 +70,7 @@
     <delete id="deleteNotice">
         DELETE FROM notice_expiration
         WHERE id = #{noticeId}
-            AND expiration_id = #{expirationId}
+        AND expiration_id = #{expirationId}
     </delete>
 
 </mapper>

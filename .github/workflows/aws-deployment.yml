@@ -49,10 +49,13 @@ jobs:
           
           spring:
             datasource:
-              driver-class-name: org.mariadb.jdbc.Driver
               url: jdbc:mariadb://\${RDS_HOSTNAME}:\${RDS_PORT}/\${RDS_DB_NAME}
               username: \${RDS_USERNAME}
               password: \${RDS_PASSWORD}
+            data:
+              redis:
+                host: \${REDIS_HOST}
+                port: \${REDIS_PORT}
           
             jpa:
               generate-ddl: false
@@ -71,6 +74,33 @@ jobs:
           
           ai:
             base-url: \${AI_HOSTNAME}
+
+
+          # 모니터링을 위한 설정
+          management:
+            endpoints:
+              web:
+                exposure:
+                  include: prometheus, health, info, metrics # 프로메테우스 필수 포함
+                base-path: /api/actuator  # <--- 이 줄을 추가하세요! (기본값: /actuator)
+            endpoint:
+              health:
+                show-details: always
+            metrics:
+              tags:
+                application: oncare # 그라파나에서 구분할 앱 이름
+
+          decorator:
+            datasource:
+              p6spy:
+                enable-logging: true # 이게 true여야 함
+                multiline: true # (선택) 한줄로 나오는게 싫으면 true
+          
+          logging:
+            level:
+              p6spy: INFO # p6spy 패키지의 로그 레벨을 INFO로 지정
+            loki:
+              url: http://10.0.0.6:3100/loki/api/v1/push
           
           EOL
 
@@ -89,6 +119,8 @@ jobs:
           JWT_AT_SECRET: ${{ secrets.JWT_AT_SECRET}}
           JWT_RT_SECRET: ${{ secrets.JWT_RT_SECRET}}
           AI_HOSTNAME: ${{ secrets.AI_HOSTNAME}}
+          REDIS_HOST: ${{ secrets.REDIS_HOST}}
+          REDIS_PORT: ${{ secrets.REDIS_PORT}}
 
       ###############################################
 

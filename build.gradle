@@ -21,6 +21,8 @@ configurations {
 }
 
 repositories {
+    //  Maven Central 차단 우회용 구글 미러 (맨 위에 작성)
+    maven { url "https://maven-central.storage-download.googleapis.com/maven2/" }
     mavenCentral()
 }
 
@@ -38,8 +40,7 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     annotationProcessor 'org.projectlombok:lombok'
-//    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-//    testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+
     // 스프링 통합 테스트 (여기에 JPA 테스트 기능도 다 들어있음)
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
@@ -100,6 +101,24 @@ dependencies {
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
     // ================= [QueryDSL 설정 끝] ===================
+
+
+
+    //모니터링 관련 의존성 추가
+    // 1. 스프링 액추에이터 (서버 상태 정보 제공)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    // 2. 마이크로미터 프로메테우스 (데이터를 프로메테우스 형식을 변환)
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // redis 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'com.fasterxml.jackson.core:jackson-databind' // JSON 변환용
+
+    implementation 'com.github.loki4j:loki-logback-appender:1.4.2' //Loki 로그 전송
+
+    // P6Spy (쿼리 로그)
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
 }
 
 tasks.named('test') {

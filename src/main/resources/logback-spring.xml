@@ -13,6 +13,8 @@
     <!-- 분린된 설정 파일 추가 -->
     <include resource="logback/request-logger.xml" />
     <include resource="logback/performance-logger.xml" />
+    <include resource="logback/loki-logger.xml" />
+    <include resource="logback/p6spy-logger.xml" />
 
 
     <!--  info 레벨 이상의 로그 기록 시스템 설정 포함(jpa, spring 로그등)  -->
@@ -20,6 +22,7 @@
         <!-- 콘솔과 파일 모두에 로그를 출력 -->
         <appender-ref ref="Console"/>
         <appender-ref ref="SYSTEM_ALL" />
+        <appender-ref ref="LOKI"/>
     </root>
 
 
@@ -40,5 +43,18 @@
     <logger name="PERFORMANCE_WARN" level="WARN">
         <appender-ref ref="PERFORMANCE_WARN"/>
     </logger>
+
+    <!-- additivity="false"를 주면 APP_ALL의 로그가 system까지 올라가지 않음 -->
+    <logger name="p6spy" level="INFO" additivity="false">
+        <appender-ref ref="P6SPY_FILE" />
+        <appender-ref ref="LOKI" />
+    </logger>
+
+    <!-- additivity="false"를 주면 APP_ALL의 로그가 system까지 올라가지 않음 -->
+    <logger name="repoPerformance" level="INFO" additivity="false">
+        <appender-ref ref="repoPerformance_file" />
+        <appender-ref ref="LOKI" />
+    </logger>
+
 
 </configuration>

@@ -50,8 +50,6 @@ public class ProductHistoryRepositoryImpl implements ProductHistoryRepositoryCus
             productHistories.remove(pageSize);
         }
 
-        productHistories.forEach(m -> log.debug(m.toString()));
-
         List<ResponseProductHistoryDTO> responseDTOs =
                 productHistories.stream()
                         .map(productHistoryMapper::toHistoryDTO)

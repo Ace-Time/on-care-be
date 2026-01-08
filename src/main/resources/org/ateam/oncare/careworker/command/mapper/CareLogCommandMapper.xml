@@ -120,13 +120,37 @@
           AND is_deleted = 0
     </select>
 
-    <!-- 방문 일정 삭제 시 관련 요양일지 삭제 (논리삭제) -->
-    <update id="deleteCareLogsByVsId">
-        UPDATE care_logs
-        SET is_deleted = 1,
-            updated_at = NOW()
+    <!-- 방문 일정의 모든 요양일지 정보 조회 (beneficiaryId, serviceDate) -->
+    <select id="selectCareLogInfosByVsId" resultType="org.ateam.oncare.careworker.command.dto.CareLogInfo">
+        SELECT beneficiary_id, service_date
+        FROM care_logs
         WHERE vs_id = #{vsId}
           AND is_deleted = 0
-    </update>
+    </select>
+
+    <!-- 방문 일정 삭제 시 관련 요양일지 삭제 (물리삭제) -->
+    <delete id="deleteCareLogsByVsId">
+        DELETE FROM care_logs
+        WHERE vs_id = #{vsId}
+    </delete>
+
+    <!-- 요양일지 작성 시 vs_id 찾기 -->
+    <select id="selectVsIdByBeneficiaryAndDate" resultType="Long">
+        SELECT vs_id
+        FROM visit_schedule
+        WHERE beneficiary_id = #{beneficiaryId}
+          AND care_worker_id = (SELECT id FROM care_worker WHERE employee_id = #{employeeId} LIMIT 1)
+          AND DATE(start_dt) = #{serviceDate}
+        ORDER BY start_dt DESC
+        LIMIT 1
+    </select>
+
+    <!-- 특정 근무 일정(vs_id)에 대한 요양일지 존재 여부 확인 -->
+    <select id="countCareLogsByVsId" resultType="int">
+        SELECT COUNT(*)
+        FROM care_logs
+        WHERE vs_id = #{vsId}
+          AND is_deleted = 0
+    </select>
 
 </mapper>
