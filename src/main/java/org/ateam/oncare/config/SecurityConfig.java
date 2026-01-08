@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); //security 인증전 filter를 가로채 JWT 인증 절차 진행
 
         http.authorizeHttpRequests(auth -> auth
+//                .requestMatchers("/**").permitAll() // 개발 기간동안 모든 요청 허용
 //                .requestMatchers("/health", "/auth/**", "/employee/**").permitAll() // health, 인증 관련 요청만 인증 없이 허용
                 .requestMatchers("/api/health", "/api/auth/**").permitAll() // health, 인증, API 요청 허용
                 .requestMatchers("/api/actuator/**").permitAll() // 모니터링을 위한 endpoint
