@@ -8,7 +8,7 @@ permissions:
 # PR 이벤트 관련해서 워크플로우 실행
 on:
   push:
-    branches: [ "test/deploy" ]
+    branches: [ "main" ]
 
 # 워크플로우 실행 작업 정의
 jobs:
@@ -125,8 +125,8 @@ jobs:
       ###############################################
 
       - name: Build with Gradle
-#        run: ./gradlew clean build -x test
-        run: ./gradlew clean build
+        run: ./gradlew clean build -x test
+#        run: ./gradlew clean build
         shell: bash
 
       - name: Get current time
