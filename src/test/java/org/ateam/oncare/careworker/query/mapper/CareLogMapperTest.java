@@ -69,10 +69,8 @@ class CareLogMapperTest {
 
         if (!careLogs.isEmpty()) {
             System.out.println("요양일지 목록:");
-            careLogs.forEach(log -> {
-                System.out.println("  - " + log.getServiceDate()
-                        + " / " + log.getCareWorkerName());
-            });
+            careLogs.forEach(log -> System.out.println("  - " + log.getServiceDate()
+                    + " / " + log.getCareWorkerName()));
 
             // 모든 요양일지가 동일한 수급자의 것인지 확인
             boolean allSameBeneficiary = careLogs.stream()

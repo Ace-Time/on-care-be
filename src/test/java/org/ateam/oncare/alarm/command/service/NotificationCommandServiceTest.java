@@ -26,6 +26,10 @@ class NotificationCommandServiceTest {
     private NotificationTemplateRepository templateRepository;
     @Mock
     private org.ateam.oncare.employee.command.repository.EmployeeRepository employeeRepository;
+    @Mock
+    private org.ateam.oncare.alarm.command.repository.NotificationEventTypeRepository eventTypeRepository;
+    @Mock
+    private org.ateam.oncare.beneficiary.command.service.NotificationPublisherForRedis publisherForRedis;
 
     @InjectMocks
     private NotificationCommandServiceImpl notificationService;
