@@ -60,10 +60,8 @@ class DashboardMapperTest {
         System.out.println("알림 개수: " + notifications.size());
 
         if (!notifications.isEmpty()) {
-            notifications.forEach(notification -> {
-                System.out.println("- " + notification.getMessage()
-                        + " (" + notification.getDueDate() + ")");
-            });
+            notifications.forEach(notification -> System.out.println("- " + notification.getMessage()
+                    + " (" + notification.getDueDate() + ")"));
         } else {
             System.out.println("긴급 알림이 없습니다.");
         }
@@ -86,10 +84,8 @@ class DashboardMapperTest {
         System.out.println("일정 개수: " + todaySchedules.size());
 
         if (!todaySchedules.isEmpty()) {
-            todaySchedules.forEach(schedule -> {
-                System.out.println("- " + schedule.getVisitTime()
-                        + " / " + schedule.getRecipientName());
-            });
+            todaySchedules.forEach(schedule -> System.out.println("- " + schedule.getVisitTime()
+                    + " / " + schedule.getRecipientName()));
         } else {
             System.out.println("오늘 일정이 없습니다.");
         }
@@ -142,11 +138,9 @@ class DashboardMapperTest {
         System.out.println("보호자 수: " + guardians.size());
 
         if (!guardians.isEmpty()) {
-            guardians.forEach(guardian -> {
-                System.out.println("- " + guardian.getName()
-                        + " (" + guardian.getRelation() + ") "
-                        + guardian.getPhone());
-            });
+            guardians.forEach(guardian -> System.out.println("- " + guardian.getName()
+                    + " (" + guardian.getRelation() + ") "
+                    + guardian.getPhone()));
         } else {
             System.out.println("등록된 보호자가 없습니다.");
         }
@@ -169,10 +163,8 @@ class DashboardMapperTest {
         System.out.println("수급자 수: " + beneficiaries.size());
 
         if (!beneficiaries.isEmpty()) {
-            beneficiaries.forEach(beneficiary -> {
-                System.out.println("- " + beneficiary.getName()
-                        + " (" + beneficiary.getAddress() + ")");
-            });
+            beneficiaries.forEach(beneficiary -> System.out.println("- " + beneficiary.getName()
+                    + " (" + beneficiary.getAddress() + ")"));
         } else {
             System.out.println("담당 수급자가 없습니다.");
         }

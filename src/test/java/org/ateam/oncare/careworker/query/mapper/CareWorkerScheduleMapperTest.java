@@ -130,10 +130,8 @@ class CareWorkerScheduleMapperTest {
 
             schedules.stream()
                     .filter(s -> s.getServiceTypes() != null && s.getServiceTypes().size() > 1)
-                    .forEach(s -> {
-                        System.out.println("수급자: " + s.getRecipientName()
-                                + ", 서비스 유형: " + s.getServiceTypes());
-                    });
+                    .forEach(s -> System.out.println("수급자: " + s.getRecipientName()
+                            + ", 서비스 유형: " + s.getServiceTypes()));
         } else {
             System.out.println("현재 데이터에는 여러 서비스 유형을 가진 일정이 없습니다.");
         }

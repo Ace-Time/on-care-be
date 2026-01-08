@@ -13,6 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import org.ateam.oncare.alarm.query.dto.NotificationQueryDTO;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -26,6 +28,10 @@ class NotificationCommandServiceTest {
     private NotificationTemplateRepository templateRepository;
     @Mock
     private org.ateam.oncare.employee.command.repository.EmployeeRepository employeeRepository;
+    @Mock
+    private org.ateam.oncare.alarm.command.repository.NotificationEventTypeRepository eventTypeRepository;
+    @Mock
+    private org.ateam.oncare.beneficiary.command.service.NotificationPublisherForRedis publisherForRedis;
 
     @InjectMocks
     private NotificationCommandServiceImpl notificationService;
@@ -51,6 +57,8 @@ class NotificationCommandServiceTest {
 
         // Then
         verify(logRepository, times(1)).save(any(NotificationLog.class));
+        verify(publisherForRedis, times(1)).publish(eq(receiverId), any(NotificationQueryDTO.class));
+        verifyNoInteractions(eventTypeRepository);
     }
 
     @Test
@@ -127,5 +135,6 @@ class NotificationCommandServiceTest {
 
         // Then
         verify(logRepository, times(1)).save(any(NotificationLog.class));
+        verify(publisherForRedis, times(1)).publish(eq(receiverId), any(NotificationQueryDTO.class));
     }
 }
