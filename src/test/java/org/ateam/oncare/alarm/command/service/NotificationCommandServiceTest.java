@@ -13,6 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import org.ateam.oncare.alarm.query.dto.NotificationQueryDTO;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -55,6 +57,8 @@ class NotificationCommandServiceTest {
 
         // Then
         verify(logRepository, times(1)).save(any(NotificationLog.class));
+        verify(publisherForRedis, times(1)).publish(eq(receiverId), any(NotificationQueryDTO.class));
+        verifyNoInteractions(eventTypeRepository);
     }
 
     @Test
@@ -131,5 +135,6 @@ class NotificationCommandServiceTest {
 
         // Then
         verify(logRepository, times(1)).save(any(NotificationLog.class));
+        verify(publisherForRedis, times(1)).publish(eq(receiverId), any(NotificationQueryDTO.class));
     }
 }
