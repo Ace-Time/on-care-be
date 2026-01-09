@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ateam.oncare.careproduct.command.dto.ProductAmountForRentalDTO;
 import org.ateam.oncare.careproduct.command.dto.RequestProductMasterForSelectDTO;
+import org.ateam.oncare.careproduct.command.dto.ResponseProductDTO;
 import org.ateam.oncare.careproduct.command.dto.ResponseProductMasterDetailDTO;
 import org.ateam.oncare.careproduct.command.service.ProductMasterService;
 import org.ateam.oncare.careproduct.command.service.ProductService;
@@ -189,7 +190,9 @@ public class RentalFacade {
             throw new InsufficientStockException(
                     String.format("%s 제품은 가용 재고 부족으로 계약을 할 수없습니다.", request.getProductCd()));
 
-        ResponseRentalContractDTO responseDTO = rentalService.registRentalContract(request);
+        ResponseProductDTO product = productService.updateStatusForRental(request.getProductCd());
+
+        ResponseRentalContractDTO responseDTO = rentalService.registRentalContract(request,product);
 
         applicationEventPublisher.publishEvent(
                 ProductStockEvent.builder()
@@ -197,6 +200,7 @@ public class RentalFacade {
                         .expectedDate(responseDTO.getWantedDate())
                         .productCode(responseDTO.getProductCd())
                         .isConfirmed("N")
+                        .careProductId(product.getId())
                         .build());
         return responseDTO;
     }
