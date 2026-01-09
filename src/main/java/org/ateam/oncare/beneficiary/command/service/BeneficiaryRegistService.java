@@ -144,15 +144,15 @@ public class BeneficiaryRegistService {
 
         // 위험요소명 → ID 매핑 (m_risk 테이블 참고)
         Map<String, Integer> riskMap = new HashMap<>();
-        riskMap.put("뇌졸증", 1);
-        riskMap.put("치매", 2);
-        riskMap.put("거동불편", 3);
-        riskMap.put("당뇨", 4);
-        riskMap.put("고혈압", 5);
-        riskMap.put("공격성", 6);
-        riskMap.put("몽유병", 7);
-        riskMap.put("낙상위험", 8);
-        riskMap.put("욕창위험", 9);
+        riskMap.put("낙상", 1);
+        riskMap.put("욕창", 2);
+        riskMap.put("치매", 3);
+        riskMap.put("고혈압", 4);
+        riskMap.put("당뇨", 5);
+        riskMap.put("뇌졸증", 6);
+        riskMap.put("거동불편", 7);
+        riskMap.put("공격성", 8);
+        riskMap.put("몽유병", 9);
 
         for (String riskName : request.getSelectedRisks()) {
             Integer riskId = riskMap.get(riskName);
