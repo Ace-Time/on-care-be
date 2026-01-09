@@ -58,65 +58,14 @@
 
     <!--
        수급자 상세조회
-      - 중복되던 used_amount/remaining_amount/used_rate 계산을 CTE로 1회 계산 후 재사용
-      - MySQL 8+ 필요 (WITH CTE 지원)
+      - 배포환경 호환: WITH(CTE) 제거 (MySQL 5.7 / 구버전 MariaDB에서도 동작)
       - used_amount = (이번달 서비스사용액) + (오늘 기준 진행중 렌탈 월금액 합계)
+      - used_amount/remaining_amount/used_rate 는 u(파생테이블)에서 1회 계산 후 재사용
     -->
     <select id="selectBeneficiaryDetail"
             parameterType="long"
             resultMap="BeneficiaryDetailMap">
         <![CDATA[
-        /* =========================================================
-           1) svc : 이번달 서비스 사용액 (cost_of_beneficiary 월 1건)
-              - cob.month = 'YYYY-MM'
-           ========================================================= */
-        WITH
-        svc AS (
-            SELECT
-                cob.beneficiary_id,
-                cob.monthly_amount AS svc_amount
-            FROM cost_of_beneficiary cob
-            WHERE cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
-        ),
-
-        /* =========================================================
-           2) rent : 오늘 기준 "진행중" 렌탈 월금액 합계
-              - start_date <= 오늘
-              - end_date가 NULL(무기한) 이거나 end_date >= 오늘(오늘 포함)
-              - rp.rental_status_id = 3 (회수완료) 는 제외
-              - 금액은 mcp.rental_amount 사용 (렌탈 탭 xml과 동일)
-           ========================================================= */
-            rent AS (
-                SELECT
-                    rc.beneficiary_id,
-                    SUM(mcp.rental_amount) AS rent_amount
-                FROM rental_contract rc
-                JOIN rental_product rp
-                    ON rp.rental_contract_cd = rc.id
-                JOIN m_care_product mcp
-                    ON mcp.id = rc.product_cd
-                WHERE rc.start_date <= CURDATE()
-                  AND (rc.end_date IS NULL OR rc.end_date >= CURDATE())
-                  AND rp.rental_status_id <> 3   -- 회수완료 제외
-                GROUP BY rc.beneficiary_id
-            ),
-
-        /* =========================================================
-           3) used : used_amount를 딱 1번만 계산해서 재사용
-              used_amount = IFNULL(svc_amount,0) + IFNULL(rent_amount,0)
-           ========================================================= */
-        used AS (
-            SELECT
-                b.id AS beneficiary_id,
-                IFNULL(svc.svc_amount, 0) + IFNULL(rent.rent_amount, 0) AS used_amount
-            FROM beneficiary b
-            LEFT JOIN svc  ON svc.beneficiary_id  = b.id
-            LEFT JOIN rent ON rent.beneficiary_id = b.id
-        )
-
-        /* =========================================================
-           4) 메인 SELECT : 상세 데이터 + used_amount 재사용
-           ========================================================= */
         SELECT
             b.id AS beneficiary_id,
             b.name,
@@ -139,7 +88,7 @@
                 ELSE '고위험'
             END AS risk_level,
 
-            /*  요양보호사: 최신 방문 1건 기준 */
+            /*  요양보호사: 최신 매칭 1건 기준 */
             cw.id   AS care_worker_id,
             ce.name AS care_worker_name,
 
@@ -154,7 +103,7 @@
             /*  월 한도 */
             mcl.monthly_limit,
 
-            /*  CTE에서 계산한 사용액을 그대로 사용 */
+            /*  파생테이블에서 1회 계산한 used_amount 재사용 */
             u.used_amount AS used_amount,
 
             /*  잔액 = 월한도 - 사용액 */
@@ -186,8 +135,45 @@
         ) rsum
             ON rsum.beneficiary_id = b.id
 
-        /*  used_amount 계산 결과 조인(CTE) */
-        LEFT JOIN used u
+        /* =========================================================
+           used_amount 계산 파생테이블 (CTE used/svc/rent 대체)
+           - svc: 이번달 서비스 사용액
+           - rent: 진행중 렌탈 월금액 합계 (mcp.rental_amount)
+           - used_amount = IFNULL(svc,0) + IFNULL(rent,0)
+           ========================================================= */
+        LEFT JOIN (
+            SELECT
+                b2.id AS beneficiary_id,
+                IFNULL(svc2.svc_amount, 0) + IFNULL(rent2.rent_amount, 0) AS used_amount
+            FROM beneficiary b2
+
+            /* 1) svc */
+            LEFT JOIN (
+                SELECT
+                    cob.beneficiary_id,
+                    cob.monthly_amount AS svc_amount
+                FROM cost_of_beneficiary cob
+                WHERE cob.month = DATE_FORMAT(CURDATE(), '%Y-%m')
+            ) svc2
+                ON svc2.beneficiary_id = b2.id
+
+            /* 2) rent */
+            LEFT JOIN (
+                SELECT
+                    rc.beneficiary_id,
+                    SUM(mcp.rental_amount) AS rent_amount
+                FROM rental_contract rc
+                JOIN rental_product rp
+                    ON rp.rental_contract_cd = rc.id
+                JOIN m_care_product mcp
+                    ON mcp.id = rc.product_cd
+                WHERE rc.start_date <= CURDATE()
+                  AND (rc.end_date IS NULL OR rc.end_date >= CURDATE())
+                  AND rp.rental_status_id <> 3   -- 회수완료 제외
+                GROUP BY rc.beneficiary_id
+            ) rent2
+                ON rent2.beneficiary_id = b2.id
+        ) u
             ON u.beneficiary_id = b.id
 
         /* =========================================================
