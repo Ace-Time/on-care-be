@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<CareProduct, String>, ProductRepositoryCustom {
     List<CareProduct> findByProductCdAndProductStatus(String productCode, int i);
+
+    List<CareProduct> findByIdAndProductStatus(String careProductId, int i);
 }

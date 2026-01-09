@@ -3,6 +3,7 @@ package org.ateam.oncare.rental.command.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ateam.oncare.careproduct.command.dto.ResponseProductDTO;
 import org.ateam.oncare.config.customexception.InvalidRentalDateException;
 import org.ateam.oncare.global.enums.StockType;
 import org.ateam.oncare.global.eventType.ProductStockEvent;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -110,14 +112,6 @@ public class RentalServiceImpl implements RentalService {
         return rentalProductStatus;
     }
 
-    @Override
-    public ResponseRentalContractDTO registRentalContract(RequestRentalContractDTO request) {
-        RentalContract requestEitnty = rentalContractMapstruct.toConractEntity(request);
-        RentalContract responseEntity = contractRepository.save(requestEitnty);
-        ResponseRentalContractDTO responseDTO = rentalContractMapstruct.toConractDTO(responseEntity);
-
-        return responseDTO;
-    }
 
     @Override
     @Transactional
@@ -185,6 +179,36 @@ public class RentalServiceImpl implements RentalService {
         ResponseRentalProductDTO response = rentalProductMapStruct.toProductDTO(responseEntity);
 
         return response;
+    }
+
+
+    @Override
+    public ResponseRentalContractDTO registRentalContract(RequestRentalContractDTO request) {
+        RentalContract requestEitnty = rentalContractMapstruct.toConractEntity(request);
+        RentalContract responseEntity = contractRepository.save(requestEitnty);
+        ResponseRentalContractDTO responseDTO = rentalContractMapstruct.toConractDTO(responseEntity);
+
+
+
+        return responseDTO;
+    }
+
+    @Override
+    public ResponseRentalContractDTO registRentalContract(RequestRentalContractDTO request, ResponseProductDTO product) {
+        RentalContract requestEitnty = rentalContractMapstruct.toConractEntity(request);
+        RentalContract responseEntity = contractRepository.save(requestEitnty);
+        ResponseRentalContractDTO responseDTO = rentalContractMapstruct.toConractDTO(responseEntity);
+
+        RentalProduct rentalProduct =  RentalProduct.builder()
+                .startDate(LocalDateTime.now())
+                .rentalContractCd(responseEntity.getId())
+                .rentalStatusId(1L)
+                .productId(product.getId())
+                .build();
+
+        rentalProductRepository.save(rentalProduct);
+
+        return responseDTO;
     }
 
 

@@ -139,7 +139,7 @@ public class ProductMasterServiceImpl implements ProductMasterService {
                     Long expectedCount = expectedToShip.getOrDefault(data.getProductCode(), 0L);
 
                     if (expectedCount > 0) {
-                        data.setAvailable(data.getAvailable() - expectedCount.intValue());
+//                        data.setAvailable(data.getAvailable() - expectedCount.intValue());
                         data.setReserved(expectedCount.intValue());
                     }
                 })

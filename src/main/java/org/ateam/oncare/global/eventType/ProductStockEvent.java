@@ -15,4 +15,5 @@ public class ProductStockEvent {
     private String productId;
     private String isConfirmed = "N";
     private Integer employeeId;
+    private String careProductId;
 }

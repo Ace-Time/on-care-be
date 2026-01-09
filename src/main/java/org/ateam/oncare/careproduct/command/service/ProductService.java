@@ -25,4 +25,6 @@ public interface ProductService {
     List<ResponseProductStatusDTO> getProductStatus();
 
     Slice<ResponsePlannedStockInOutDTO> getExpectedStock(RequestPlannedStockInOutDTO condition, Pageable pageable);
+
+    ResponseProductDTO updateStatusForRental(String productCd);
 }
