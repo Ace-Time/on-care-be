@@ -10,6 +10,7 @@ import org.ateam.oncare.careproduct.command.repository.ProductHistoryRepository;
 import org.ateam.oncare.careproduct.command.repository.ProductRepository;
 import org.ateam.oncare.careproduct.command.repository.ProductStatusRepository;
 import org.ateam.oncare.careproduct.command.repository.ProductTaskRepository;
+import org.ateam.oncare.careproduct.mapper.ProductMapper;
 import org.ateam.oncare.careproduct.mapper.ProductStatusMapstruct;
 import org.ateam.oncare.careproduct.mapper.ProductTaskMapStruct;
 import org.ateam.oncare.global.enums.StockType;
@@ -38,6 +39,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductTaskMapStruct productTaskMapStruct;
     private final ProductStatusRepository productStatusRepository;
     private final ProductStatusMapstruct  productStatusMapstruct;
+    private final ProductMapper productMapper;
 
     @Override
     public Slice<ResponseProductDTO> getProduct(RequestProductForSelectDTO condition, Pageable pageable) {
@@ -86,21 +88,56 @@ public class ProductServiceImpl implements ProductService {
         return entities;
     }
 
+    @Override
+    public ResponseProductDTO updateStatusForRental(String productCd) {
+        CareProduct productEntity = productRepository.selelctAvalableItem(productCd);
+        if(productEntity==null)
+            return null;
+
+        productEntity.setProductStatus(2);
+        productRepository.save(productEntity);
+
+        return productMapper.toProductDTO(productEntity);
+    }
+
     private void canceled(ProductStockEvent productStockEvent) {
         ProductTask productTask = productTaskRepository.selectByProductId(productStockEvent.getProductId());
         productTaskRepository.delete(productTask);
     }
 
-    private void outBound(ProductStockEvent productStockEvent) {
-        List<CareProduct> entity = productRepository.findByProductCdAndProductStatus(
-                productStockEvent.getProductCode(),
-                1);
+//    private void outBound(ProductStockEvent productStockEvent) {
+////        List<CareProduct> entity = productRepository.findByProductCdAndProductStatus(
+////                productStockEvent.getProductCode(),
+////                1);
+//
+//        List<CareProduct> entity = productRepository.findByIdAndProductStatus(
+//                productStockEvent.getCareProductId(),1);
+//
+//
+//        if(entity.size() == 0)
+//            return;
+//
+//        ProductTask productTask = productTaskMapStruct.toEntity(productStockEvent);
+//        productTask.setProductId(entity.get(0).getId());
+//
+//        productTaskRepository.saveAndFlush(productTask);
+//    }
 
-        if(entity.size() == 0)
+
+    private void outBound(ProductStockEvent productStockEvent) {
+//        List<CareProduct> entity = productRepository.findByProductCdAndProductStatus(
+//                productStockEvent.getProductCode(),
+//                1);
+
+        CareProduct entity = productRepository.findById(
+                productStockEvent.getCareProductId()).orElse(null);
+
+
+        if(entity == null)
             return;
 
         ProductTask productTask = productTaskMapStruct.toEntity(productStockEvent);
-        productTask.setProductId(entity.get(0).getId());
+        productTask.setProductId(entity.getId());
 
         productTaskRepository.saveAndFlush(productTask);
     }

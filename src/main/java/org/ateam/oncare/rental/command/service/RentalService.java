@@ -2,6 +2,7 @@ package org.ateam.oncare.rental.command.service;
 
 import org.apache.ibatis.javassist.NotFoundException;
 import org.ateam.oncare.careproduct.command.dto.ProductAmountForRentalDTO;
+import org.ateam.oncare.careproduct.command.dto.ResponseProductDTO;
 import org.ateam.oncare.config.customexception.NotFoundProductMasterException;
 import org.ateam.oncare.rental.command.dto.*;
 import org.ateam.oncare.rental.command.entity.RentalProduct;
@@ -35,4 +36,6 @@ public interface RentalService {
     ResponseRentalContractDTO terminateContract(RequestRentalContractDTO request);
 
     ResponseRentalProductDTO terminateProduct(Long id);
+
+    ResponseRentalContractDTO registRentalContract(RequestRentalContractDTO request, ResponseProductDTO product);
 }

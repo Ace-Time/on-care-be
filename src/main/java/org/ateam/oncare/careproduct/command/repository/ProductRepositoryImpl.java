@@ -123,4 +123,14 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
                 });
 
     }
+
+    @Override
+    public CareProduct selelctAvalableItem(String productCd) {
+
+        return queryFactory.selectFrom(product)
+                .where(product.productCd.eq(productCd)
+                        .and(product.productStatus.eq(1)))
+                .limit(1)
+                .fetchOne();
+    }
 }
