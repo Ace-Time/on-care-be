@@ -104,7 +104,7 @@
 
         <include refid="KeywordFilter"/>
 
-        ORDER BY vs.start_dt
+        ORDER BY vs.start_dt ASC, vs.vs_id ASC
     </select>
 
     <!-- ✅ 2-1) 날짜 클릭 리스트 페이징: 5개씩 (offset/limit) -->
@@ -147,7 +147,7 @@
 
         <include refid="KeywordFilter"/>
 
-        ORDER BY vs.start_dt
+        ORDER BY vs.start_dt ASC, vs.vs_id ASC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
